@@ -36,7 +36,6 @@ const FALLBACK: AppConfig = {
 export const REPO_URL = "https://github.com/Wedrock/Projetos-F1";
 /** The project Box Box is based on (MIT), credited on the About page */
 export const UPSTREAM_URL = "https://github.com/adn8naiagent/F1ReplayTiming";
-export const KOFI_URL = "https://ko-fi.com/addevaccount";
 
 let configPromise: Promise<AppConfig> | null = null;
 

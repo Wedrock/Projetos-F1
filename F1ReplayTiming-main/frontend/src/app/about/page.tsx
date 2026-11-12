@@ -1,6 +1,6 @@
 import SiteFooter from "@/components/SiteFooter";
 import PaywallNotice from "@/components/PaywallNotice";
-import { REPO_URL, KOFI_URL, UPSTREAM_URL } from "@/lib/config";
+import { REPO_URL, UPSTREAM_URL } from "@/lib/config";
 
 export default function AboutPage() {
   return (
@@ -22,7 +22,7 @@ export default function AboutPage() {
         <div className="bg-f1-card border border-f1-red/40 rounded-xl p-6">
           <h2 className="text-lg font-bold text-f1-red mb-3">Aviso legal</h2>
           <p className="text-f1-text leading-relaxed">
-            O Box Box e este site não são oficiais e não têm nenhuma ligação com as empresas da Fórmula 1. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX e marcas relacionadas são marcas registradas da Formula One Licensing B.V.
+            O Box Box e este site não são oficiais e não têm nenhuma ligação com as empresas da Fórmula 1.
           </p>
         </div>
 
@@ -67,22 +67,6 @@ export default function AboutPage() {
               GitHub
             </a>
             . Relatos de bugs vão em Issues; ideias e perguntas em Discussions.
-          </p>
-        </div>
-
-        <div className="bg-f1-card border border-f1-border rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-3">Apoie o projeto</h2>
-          <p className="text-f1-text leading-relaxed">
-            O F1 Replay Timing, em que o Box Box se baseia, é gratuito e feito nas horas vagas pelo autor original. Se você gosta, pode apoiar o desenvolvimento dele no{" "}
-            <a
-              href={KOFI_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-f1-red hover:underline font-semibold"
-            >
-              Ko-fi
-            </a>
-            .
           </p>
         </div>
 
