@@ -139,14 +139,14 @@ export default function PlaybackControls({
             <button
               onClick={onToggleMute}
               className="w-8 h-8 flex items-center justify-center rounded transition-colors text-f1-muted hover:text-white hover:bg-white/10"
-              title={muted ? "Unmute the broadcast" : "Mute the broadcast"}
+              title={muted ? "Ativar o som da transmissão" : "Silenciar a transmissão"}
             >
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
           )}
           <span className="text-xs font-extrabold text-white tabular-nums flex-1">
             {!isRace && qualiPhase ? formatTime(qualiPhase.remaining) : !isRace ? formatTime(Math.max(0, totalTime - currentTime)) : formatTime(currentTime)}
-            {isRace && currentLap > 0 && <span className="text-f1-muted ml-2">L{currentLap}/{totalLaps}</span>}
+            {isRace && currentLap > 0 && <span className="text-f1-muted ml-2">V{currentLap}/{totalLaps}</span>}
             {!isRace && qualiPhase && <span className="text-f1-muted ml-2">{qualiPhase.phase}</span>}
           </span>
           <span className="text-[10px] font-bold text-f1-muted">{speed}x</span>
@@ -243,12 +243,12 @@ export default function PlaybackControls({
                   onClick={onSyncPhoto}
                   className="px-3 py-1.5 rounded border border-f1-border hover:bg-white/10 transition-colors text-f1-muted hover:text-white text-xs font-bold"
                 >
-                  Sync
+                  Sincronizar
                 </button>
               )}
               {onSeekToLap && (
                 <div className="flex items-center gap-1">
-                  <span className="text-xs font-extrabold text-white">Lap</span>
+                  <span className="text-xs font-extrabold text-white">Volta</span>
                   <select
                     value={currentLap}
                     onChange={(e) => onSeekToLap(Number(e.target.value))}
@@ -269,7 +269,7 @@ export default function PlaybackControls({
             <div className="flex items-center justify-center gap-4">
               <span className="text-xs font-extrabold text-white">{qualiPhase.phase}</span>
               <div className="text-center">
-                <span className="text-[9px] font-bold text-f1-muted uppercase block">Remaining</span>
+                <span className="text-[9px] font-bold text-f1-muted uppercase block">Restante</span>
                 <span className="text-xs font-extrabold text-white tabular-nums">{formatTime(qualiPhase.remaining)}</span>
               </div>
             </div>
@@ -289,7 +289,7 @@ export default function PlaybackControls({
               <button
                 onClick={onToggleMute}
                 className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${muted ? "text-f1-red hover:bg-f1-red/10" : "text-f1-muted hover:text-white hover:bg-white/10"}`}
-                title={muted ? "Unmute the broadcast" : "Mute the broadcast"}
+                title={muted ? "Ativar o som da transmissão" : "Silenciar a transmissão"}
               >
                 {muted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
@@ -301,7 +301,7 @@ export default function PlaybackControls({
                   value={muted ? 0 : Math.round(volume * 100)}
                   onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
                   className="w-0 opacity-0 group-hover/volume:w-20 group-hover/volume:opacity-100 focus:w-20 focus:opacity-100 ml-1 transition-all duration-200 accent-white cursor-pointer"
-                  aria-label="Broadcast volume"
+                  aria-label="Volume da transmissão"
                   title={`Volume ${muted ? 0 : Math.round(volume * 100)}%`}
                 />
               )}
@@ -315,7 +315,7 @@ export default function PlaybackControls({
                 key={`back-${label}`}
                 onClick={() => skip(-seconds)}
                 className="px-1.5 py-1 text-[10px] font-bold text-f1-muted hover:text-white rounded hover:bg-white/10 transition-colors"
-                title={`Back ${label}`}
+                title={`Voltar ${label}`}
               >
                 -{label}
               </button>
@@ -331,7 +331,7 @@ export default function PlaybackControls({
                 key={`fwd-${label}`}
                 onClick={() => skip(seconds)}
                 className="px-1.5 py-1 text-[10px] font-bold text-f1-muted hover:text-white rounded hover:bg-white/10 transition-colors"
-                title={`Forward ${label}`}
+                title={`Avançar ${label}`}
               >
                 +{label}
               </button>
@@ -386,12 +386,12 @@ export default function PlaybackControls({
                   onClick={onSyncPhoto}
                   className="px-3 py-1.5 rounded border border-f1-border hover:bg-white/10 transition-colors text-f1-muted hover:text-white text-xs font-bold"
                 >
-                  Sync
+                  Sincronizar
                 </button>
               )}
 
               <div className="flex items-center gap-1">
-                <span className="text-sm font-extrabold text-white">Lap</span>
+                <span className="text-sm font-extrabold text-white">Volta</span>
                 <select
                   value={currentLap}
                   onChange={(e) => {
@@ -432,7 +432,7 @@ export default function PlaybackControls({
                 <button
                   onClick={onFullscreen}
                   className="px-3 py-1.5 rounded border border-f1-border text-f1-muted hover:text-white hover:bg-white/10 transition-colors text-xs font-bold"
-                  title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
                 >
                   {fullscreen ? <Minimize className="w-4 h-4 inline-block -mt-0.5" /> : <Maximize className="w-4 h-4 inline-block -mt-0.5" />}
                 </button>
@@ -442,13 +442,13 @@ export default function PlaybackControls({
             <div className="flex items-end gap-4 ml-auto">
               <span className="text-sm font-extrabold text-white" style={{ marginBottom: 1, marginRight: -10 }}>{qualiPhase.phase}</span>
               <div className="text-center">
-                <span className="text-[10px] font-bold text-f1-muted uppercase block">Remaining</span>
+                <span className="text-[10px] font-bold text-f1-muted uppercase block">Restante</span>
                 <span className="text-sm font-extrabold text-white tabular-nums">
                   {formatTime(qualiPhase.remaining)}
                 </span>
               </div>
               <div className="text-center">
-                <span className="text-[10px] font-bold text-f1-muted uppercase block">Elapsed</span>
+                <span className="text-[10px] font-bold text-f1-muted uppercase block">Decorrido</span>
                 <span className="text-sm font-extrabold text-f1-muted tabular-nums">{formatTime(currentTime)}</span>
               </div>
               {showSessionTime && (
@@ -478,7 +478,7 @@ export default function PlaybackControls({
                 <button
                   onClick={onFullscreen}
                   className="px-3 py-1.5 rounded border border-f1-border text-f1-muted hover:text-white hover:bg-white/10 transition-colors text-xs font-bold"
-                  title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
                 >
                   {fullscreen ? <Minimize className="w-4 h-4 inline-block -mt-0.5" /> : <Maximize className="w-4 h-4 inline-block -mt-0.5" />}
                 </button>
@@ -487,11 +487,11 @@ export default function PlaybackControls({
           ) : (
             <div className="flex items-center gap-4 ml-auto">
               <div className="text-center">
-                <span className="text-[10px] font-bold text-f1-muted uppercase block">Remaining</span>
+                <span className="text-[10px] font-bold text-f1-muted uppercase block">Restante</span>
                 <span className="text-sm font-extrabold text-white tabular-nums">{formatTime(Math.max(0, totalTime - currentTime))}</span>
               </div>
               <div className="text-center">
-                <span className="text-[10px] font-bold text-f1-muted uppercase block">Elapsed</span>
+                <span className="text-[10px] font-bold text-f1-muted uppercase block">Decorrido</span>
                 <span className="text-sm font-extrabold text-f1-muted tabular-nums">{formatTime(currentTime)}</span>
               </div>
               {onPiP && (
@@ -515,7 +515,7 @@ export default function PlaybackControls({
                 <button
                   onClick={onFullscreen}
                   className="px-3 py-1.5 rounded border border-f1-border text-f1-muted hover:text-white hover:bg-white/10 transition-colors text-xs font-bold"
-                  title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
                 >
                   {fullscreen ? <Minimize className="w-4 h-4 inline-block -mt-0.5" /> : <Maximize className="w-4 h-4 inline-block -mt-0.5" />}
                 </button>

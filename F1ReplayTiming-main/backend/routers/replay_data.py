@@ -56,12 +56,12 @@ async def replay_manifest(
 async def replay_chunk(year: int, round_num: int, session_type: str, version: str, name: str):
     validate_session(year, round_num, session_type)
     if not _VERSION_RE.match(version) or not _CHUNK_RE.match(name):
-        raise HTTPException(status_code=400, detail="Invalid replay file")
+        raise HTTPException(status_code=400, detail="Arquivo de replay inválido")
 
     path = f"{replay_chunks.replay_prefix(year, round_num, session_type)}/{version}/{name}"
     found = await asyncio.to_thread(storage.get_bytes, path)
     if found is None:
-        raise HTTPException(status_code=404, detail="Replay file not found")
+        raise HTTPException(status_code=404, detail="Arquivo de replay não encontrado")
 
     body, gzipped = found
     headers = {}

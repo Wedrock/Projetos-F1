@@ -249,7 +249,7 @@ def sweep(amount: int, unit: str, dry_run: bool = False) -> dict:
 async def start_sweep(amount: int, unit: str) -> dict:
     """Run a sweep in the background so the UI can poll for progress."""
     _sweep_status.clear()
-    _sweep_status.update({"state": "running", "message": "Starting…",
+    _sweep_status.update({"state": "running", "message": "Iniciando…",
                           "done": 0, "total": 0, "count": 0, "freed_bytes": 0})
 
     async def run():

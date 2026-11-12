@@ -9,6 +9,7 @@ import { F1TVAccountDialog } from "./F1TVAccount";
 import { f1tv, type F1TVStatus } from "@/lib/f1tv";
 import { TriangleAlert } from "lucide-react";
 import SiteFooter from "./SiteFooter";
+import BrandMark from "./BrandMark";
 import SiteIntro, { useIntroVisibility } from "./SiteIntro";
 import PaywallNotice from "./PaywallNotice";
 import { useAppConfig } from "@/lib/config";
@@ -130,14 +131,82 @@ function formatLocalTime(dateUtc: string | null): { dayDate: string; time: strin
   try {
     const date = new Date(dateUtc);
     if (isNaN(date.getTime())) return null;
-    const weekday = date.toLocaleString([], { weekday: "short" });
+    const weekday = date.toLocaleString("pt-BR", { weekday: "short" });
     const day = date.getDate();
-    const month = date.toLocaleString([], { month: "short" });
-    const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+    const month = date.toLocaleString("pt-BR", { month: "short" });
+    const time = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     return { dayDate: `${weekday} ${day} ${month}`, time };
   } catch {
     return null;
   }
+}
+
+/** Circuit name and outline per round (/api/seasons/{year}/circuits) */
+interface CircuitInfo {
+  name: string;
+  short_name: string;
+  location: string | null;
+  points: [number, number][];
+  corners: number;
+}
+
+const COUNTRY_PT: Record<string, string> = {
+  Australia: "Austrália", Austria: "Áustria", Azerbaijan: "Azerbaijão", Bahrain: "Bahrein",
+  Belgium: "Bélgica", Brazil: "Brasil", Canada: "Canadá", China: "China", Hungary: "Hungria",
+  Italy: "Itália", Japan: "Japão", Mexico: "México", Monaco: "Mônaco", Netherlands: "Holanda",
+  Qatar: "Catar", "Saudi Arabia": "Arábia Saudita", Singapore: "Singapura", Spain: "Espanha",
+  "United Arab Emirates": "Emirados Árabes Unidos", "United Kingdom": "Reino Unido",
+  "United States": "Estados Unidos", Portugal: "Portugal", France: "França", Germany: "Alemanha",
+  Russia: "Rússia", Turkey: "Turquia", "South Africa": "África do Sul",
+};
+
+const SESSION_NAME_PT: Record<string, string> = {
+  Race: "Corrida",
+  Qualifying: "Classificação",
+  Sprint: "Sprint",
+  "Sprint Qualifying": "Classificação Sprint",
+  "Sprint Shootout": "Classificação Sprint",
+  "Practice 1": "Treino Livre 1",
+  "Practice 2": "Treino Livre 2",
+  "Practice 3": "Treino Livre 3",
+};
+
+function sessionNamePt(name: string): string {
+  return SESSION_NAME_PT[name] ?? name;
+}
+
+function formatRaceDay(isoDate: string): string {
+  const d = new Date(`${isoDate}T12:00:00Z`);
+  if (isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+}
+
+/** The circuit drawn as a line, as the broadcast shows it */
+function TrackOutline({ points, accent, className = "" }: { points?: [number, number][]; accent?: boolean; className?: string }) {
+  if (!points || points.length < 3) {
+    return (
+      <svg viewBox="0 0 24 24" className={`w-8 h-8 text-white/15 ${className}`} fill="none" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 21V4m0 0h11l-1.5 4L15 12H4" />
+      </svg>
+    );
+  }
+  const d = points.map((p, i) => `${i ? "L" : "M"}${(p[0] * 100).toFixed(1)} ${(p[1] * 100).toFixed(1)}`).join(" ") + " Z";
+  const [sx, sy] = points[0];
+  return (
+    <svg viewBox="-8 -8 116 116" className={className} aria-hidden="true">
+      <path d={d} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        d={d}
+        fill="none"
+        strokeWidth={3.4}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        className={`transition-[stroke] duration-300 ${accent ? "stroke-f1-red" : "stroke-white/80 group-hover:stroke-f1-red"}`}
+        style={{ filter: accent ? "drop-shadow(0 0 5px rgba(225,6,0,0.65))" : "drop-shadow(0 0 3px rgba(255,255,255,0.12))" }}
+      />
+      <circle cx={sx * 100} cy={sy * 100} r={4.2} className="fill-white" />
+    </svg>
+  );
 }
 
 function StatusPill({ status }: { status: Event["status"] }) {
@@ -145,19 +214,19 @@ function StatusPill({ status }: { status: Event["status"] }) {
     case "latest":
       return (
         <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-f1-red text-white">
-          Latest
+          Mais recente
         </span>
       );
     case "available":
       return (
         <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-          Available
+          Disponível
         </span>
       );
     case "future":
       return (
         <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-f1-border text-f1-muted">
-          Upcoming
+          Em breve
         </span>
       );
   }
@@ -223,7 +292,7 @@ export default function SessionPicker() {
   async function reprocess(m: SessionMenu) {
     setCtxMenu(null);
     setReprocessing((p) => new Set(p).add(m.key));
-    setReprocessModal({ label: m.label, key: m.key, state: "running", message: "Starting…" });
+    setReprocessModal({ label: m.label, key: m.key, state: "running", message: "Iniciando…" });
     const finish = (state: "done" | "error", message: string) => {
       clearReprocessing(m.key);
       void loadProblems();
@@ -247,7 +316,7 @@ export default function SessionPicker() {
           }
           finish(
             s.state === "done" ? "done" : "error",
-            s.message || (s.state === "done" ? "Reprocess complete" : "Reprocess failed"),
+            s.message || (s.state === "done" ? "Reprocess complete" : "Falha ao reprocessar"),
           );
         } catch {
           finish("error", "Lost connection while reprocessing.");
@@ -255,7 +324,7 @@ export default function SessionPicker() {
       };
       setTimeout(poll, 1500);
     } catch {
-      finish("error", "Failed to start reprocessing.");
+      finish("error", "Não foi possível iniciar o reprocessamento.");
     }
   }
 
@@ -273,10 +342,10 @@ export default function SessionPicker() {
       setDeleteModal({
         ...m,
         state: "done",
-        message: `Freed ${formatSize(body.freed_bytes) || "0 KB"}.`,
+        message: `Liberados ${formatSize(body.freed_bytes) || "0 KB"}.`,
       });
     } catch {
-      setDeleteModal({ ...m, state: "error", message: "Failed to delete this session's data." });
+      setDeleteModal({ ...m, state: "error", message: "Não foi possível apagar os dados desta sessão." });
     }
   }
 
@@ -342,7 +411,7 @@ export default function SessionPicker() {
   const problemLabel = (p: DownloadProblem) => {
     const name = Object.keys(SESSION_LABELS).find((n) => SESSION_LABELS[n] === p.type) ?? p.type;
     const evt = p.year === year ? events.find((e) => e.round_number === p.round) : undefined;
-    return evt ? `${evt.event_name} ${name}` : `${p.year} round ${p.round} ${name}`;
+    return evt ? `${evt.event_name} ${sessionNamePt(name)}` : `${p.year} etapa ${p.round} ${sessionNamePt(name)}`;
   };
   const retryProblem = (p: DownloadProblem) =>
     reprocess({
@@ -356,6 +425,8 @@ export default function SessionPicker() {
   const { data: eventsData, loading: eventsLoading, error: eventsError, retry: retryEvents } = useApi<EventsResponse>(
     `/api/seasons/${year}/events`,
   );
+  const { data: circuitsData } = useApi<{ year: number; rounds: Record<string, CircuitInfo> }>(`/api/seasons/${year}/circuits`);
+  const circuits = circuitsData?.year === year ? circuitsData.rounds : undefined;
   const { data: liveData } = useApi<{ live: LiveSessionInfo | null }>(appConfig?.live ? "/api/live/status" : null);
   const liveSession = liveData?.live || null;
 
@@ -389,10 +460,12 @@ export default function SessionPicker() {
     const isFuture = displayEvt.status === "future";
     const selectionKey = id || String(evt.round_number);
     const isSelected = selectedKey === selectionKey;
+    const featured = id === "featured";
+    const circuit = circuits?.[String(evt.round_number)];
 
     return (
       <div
-        className={`bg-f1-card border rounded-lg overflow-hidden transition-all cursor-pointer ${
+        className={`bg-f1-card border rounded-xl overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-lg hover:shadow-black/30 ${
           isSelected && isLatest
             ? "border-f1-red ring-1 ring-f1-red/30"
             : isSelected
@@ -404,35 +477,51 @@ export default function SessionPicker() {
                 : "border-f1-border hover:border-f1-red/50"
         }`}
       >
-        {/* Compact header row */}
+        {/* Header: circuit outline, name and status */}
         <div
-          className="px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-4 cursor-pointer"
+          className={`group flex cursor-pointer ${featured ? "flex-col sm:flex-row" : "items-stretch"}`}
           onClick={() => { if (isSelected) { setSelectedKey(null); } else { setSelectedKey(selectionKey); setSelectedEvent(evt); } }}
         >
-          <span className="text-xs font-bold text-f1-muted w-8 flex-shrink-0">R{evt.round_number}</span>
-          <div className="flex-1 min-w-0">
-            <span className="text-white font-bold text-sm">
-              {COUNTRY_FLAGS[evt.country] && <span className="mr-1.5">{COUNTRY_FLAGS[evt.country]}</span>}
-              {evt.event_name}
+          <div
+            className={`relative flex-shrink-0 flex items-center justify-center overflow-hidden bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent ${
+              featured ? "h-52 sm:h-auto sm:w-80 sm:min-h-[13rem] border-b sm:border-b-0 sm:border-r" : "w-28 sm:w-44 min-h-[6.5rem] sm:min-h-[8rem] border-r"
+            } border-f1-border`}
+          >
+            <span
+              className={`absolute left-2 top-1 font-black leading-none select-none ${featured ? "text-6xl" : "text-4xl"} ${isLatest ? "text-f1-red/20" : "text-white/[0.06]"}`}
+            >
+              {evt.round_number}
             </span>
-            <div className="sm:hidden flex items-center justify-between mt-0.5">
-              <span className="text-xs text-f1-muted">{evt.event_date}</span>
+            <TrackOutline
+              points={circuit?.points}
+              accent={isLatest}
+              className={featured ? "relative w-48 h-48" : "relative w-[5.5rem] h-[5.5rem] sm:w-[7.5rem] sm:h-[7.5rem]"}
+            />
+          </div>
+          <div className={`flex-1 min-w-0 flex flex-col justify-center gap-1 ${featured ? "px-5 py-4" : "px-3 sm:px-4 py-3"}`}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-f1-red">Etapa {evt.round_number}</span>
               <StatusPill status={isLatest ? "latest" : displayEvt.status === "latest" ? "available" : displayEvt.status} />
             </div>
+            <h3 className={`text-white font-extrabold leading-tight truncate ${featured ? "text-xl sm:text-2xl" : "text-sm sm:text-base"}`}>
+              {evt.event_name}
+            </h3>
+            <p className={`text-white/75 truncate ${featured ? "text-sm" : "text-xs"}`}>
+              {circuit?.name || evt.location}
+            </p>
+            <p className="text-[11px] text-f1-muted truncate">
+              {evt.location}, {COUNTRY_PT[evt.country] ?? evt.country} · {formatRaceDay(evt.event_date)}
+              {circuit?.corners ? ` · ${circuit.corners} curvas` : ""}
+            </p>
           </div>
-          <span className="text-xs text-f1-muted hidden sm:block flex-shrink-0 w-44 text-right truncate">
-            {evt.location}, {evt.country}
-          </span>
-          <span className="text-xs text-f1-muted hidden sm:block flex-shrink-0 w-20 text-right">{evt.event_date}</span>
-          <span className="hidden sm:flex flex-shrink-0 w-20 justify-end">
-            <StatusPill status={isLatest ? "latest" : displayEvt.status === "latest" ? "available" : displayEvt.status} />
-          </span>
-          <svg
-            className={`w-4 h-4 text-f1-muted transition-transform flex-shrink-0 ${isSelected ? "rotate-180" : ""}`}
-            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <div className={`flex items-center pr-3 sm:pr-4 ${featured ? "hidden sm:flex" : ""}`}>
+            <svg
+              className={`w-4 h-4 text-f1-muted group-hover:text-white transition-transform flex-shrink-0 ${isSelected ? "rotate-180" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
 
         {/* Expanded session drawer */}
@@ -463,7 +552,7 @@ export default function SessionPicker() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
                       </span>
-                      {session.name}
+                      {sessionNamePt(session.name)}
                     </a>
                   </div>
                 );
@@ -474,14 +563,14 @@ export default function SessionPicker() {
                 const tooltip = !showAdmin
                   ? undefined
                   : session.precomputed
-                    ? `Downloaded${sizeLabel ? ` · ${sizeLabel}` : ""} — right-click for options`
-                    : "Not downloaded — will process when opened";
+                    ? `Baixada${sizeLabel ? ` · ${sizeLabel}` : ""} — clique com o botão direito para opções`
+                    : "Não baixada — será processada ao abrir";
                 const href = `/replay?year=${year}&round=${evt.round_number}&type=${code}`;
                 const sKey = `${year}_${evt.round_number}_${code}`;
                 const busy = reprocessing.has(sKey);
                 const problem = showAdmin ? problemFor(sKey) : undefined;
                 const openMenu = (x: number, y: number) =>
-                  setCtxMenu({ x, y, href, label: session.name, key: sKey, year, round: evt.round_number, code, precomputed: !!session.precomputed, sizeBytes: session.size_bytes });
+                  setCtxMenu({ x, y, href, label: sessionNamePt(session.name), key: sKey, year, round: evt.round_number, code, precomputed: !!session.precomputed, sizeBytes: session.size_bytes });
                 return (
                   <div key={session.name} className="flex flex-col items-center">
                     {localTime && (
@@ -504,16 +593,16 @@ export default function SessionPicker() {
                       }}
                       onTouchEnd={() => { if (longPressRef.current) clearTimeout(longPressRef.current); }}
                       onTouchMove={() => { if (longPressRef.current) clearTimeout(longPressRef.current); }}
-                      title={problem ? `Couldn't download: ${problem.message} Right-click to reprocess.` : tooltip}
+                      title={problem ? `Não foi possível baixar: ${problem.message} Clique com o botão direito para reprocessar.` : tooltip}
                       className="px-3 py-1.5 bg-f1-border text-white text-xs font-bold rounded hover:bg-f1-red transition-colors flex items-center gap-1.5 select-none"
                     >
-                      {session.name}
+                      {sessionNamePt(session.name)}
                       {busy ? (
-                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0" aria-label="Reprocessing" />
+                        <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0" aria-label="Reprocessando" />
                       ) : problem ? (
-                        <TriangleAlert className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" aria-label="Couldn't download" />
+                        <TriangleAlert className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" aria-label="Não foi possível baixar" />
                       ) : session.precomputed && showAdmin ? (
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" aria-label="Downloaded" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" aria-label="Baixada" />
                       ) : null}
                     </a>
                   </div>
@@ -527,16 +616,16 @@ export default function SessionPicker() {
                     </span>
                   )}
                   <span
-                    title={session.available ? "Not available yet" : undefined}
+                    title={session.available ? "Ainda não disponível" : undefined}
                     className="px-3 py-1.5 bg-f1-border/40 text-f1-muted opacity-60 text-xs font-bold rounded cursor-not-allowed"
                   >
-                    {session.name}
+                    {sessionNamePt(session.name)}
                   </span>
                 </div>
               );
             })}
             {isFuture && (
-              <p className="text-xs text-f1-muted w-full">Sessions not yet started</p>
+              <p className="text-xs text-f1-muted w-full">Sessões que ainda não começaram</p>
             )}
           </div>
         )}
@@ -551,7 +640,7 @@ export default function SessionPicker() {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="w-10 h-10 border-3 border-f1-muted border-t-f1-red rounded-full animate-spin" />
-            <p className="text-white font-bold text-sm">Loading session...</p>
+            <p className="text-white font-bold text-sm">Carregando a sessão...</p>
           </div>
         </div>
       )}
@@ -567,26 +656,26 @@ export default function SessionPicker() {
             onClick={() => { setNavigating(true); window.location.href = ctxMenu.href; }}
             className="block w-full text-left px-4 py-2 text-white hover:bg-white/5 transition-colors"
           >
-            Open
+            Abrir
           </button>
           <button
             onClick={() => { window.open(ctxMenu.href, "_blank", "noopener,noreferrer"); setCtxMenu(null); }}
             className="block w-full text-left px-4 py-2 text-white hover:bg-white/5 transition-colors"
           >
-            Open in new tab
+            Abrir em nova aba
           </button>
           <button
             onClick={() => { window.open(ctxMenu.href, "_blank", "noopener,noreferrer,width=1280,height=820"); setCtxMenu(null); }}
             className="block w-full text-left px-4 py-2 text-white hover:bg-white/5 transition-colors"
           >
-            Open in new window
+            Abrir em nova janela
           </button>
           <div className="my-1 border-t border-f1-border" />
           <button
             onClick={() => reprocess(ctxMenu)}
             className="block w-full text-left px-4 py-2 text-white hover:bg-white/5 transition-colors"
           >
-            ↻ Reprocess
+            ↻ Reprocessar
           </button>
           {ctxMenu.precomputed && (
             <button
@@ -604,7 +693,7 @@ export default function SessionPicker() {
               }}
               className="block w-full text-left px-4 py-2 text-red-400 hover:bg-white/5 transition-colors"
             >
-              Delete data{ctxMenu.sizeBytes ? ` (${formatSize(ctxMenu.sizeBytes)})` : ""}
+              Apagar dados{ctxMenu.sizeBytes ? ` (${formatSize(ctxMenu.sizeBytes)})` : ""}
             </button>
           )}
         </div>
@@ -618,27 +707,26 @@ export default function SessionPicker() {
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="bg-f1-card border border-f1-border rounded-xl shadow-xl w-full max-w-sm p-6">
             <h3 className="text-white font-bold text-base mb-1">
-              {deleteModal.state === "done" ? "Data deleted" : `Delete ${deleteModal.label} data?`}
+              {deleteModal.state === "done" ? "Dados apagados" : `Apagar os dados de ${deleteModal.label} ?`}
             </h3>
             {deleteModal.state === "confirm" && (
               <>
                 <p className="text-f1-muted text-sm mb-4">
-                  Removes the stored data for this session
-                  {deleteModal.sizeLabel ? `, freeing ${deleteModal.sizeLabel}` : ""}. Open the
-                  session to download it again.
+                  Remove os dados guardados desta sessão
+                  {deleteModal.sizeLabel ? `, liberando ${deleteModal.sizeLabel}` : ""}. Abra a sessão para baixá-la de novo.
                 </p>
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => setDeleteModal(null)}
                     className="px-4 py-2 bg-f1-border text-white text-sm font-bold rounded hover:bg-white/10 transition-colors"
                   >
-                    Cancel
+                    Cancelar
                   </button>
                   <button
                     onClick={confirmDelete}
                     className="px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors"
                   >
-                    Delete
+                    Apagar
                   </button>
                 </div>
               </>
@@ -646,7 +734,7 @@ export default function SessionPicker() {
             {deleteModal.state === "deleting" && (
               <div className="flex items-center gap-3 mt-3">
                 <span className="w-5 h-5 border-2 border-f1-muted border-t-f1-red rounded-full animate-spin flex-shrink-0" />
-                <span className="text-white text-sm">Deleting…</span>
+                <span className="text-white text-sm">Apagando…</span>
               </div>
             )}
             {(deleteModal.state === "done" || deleteModal.state === "error") && (
@@ -662,7 +750,7 @@ export default function SessionPicker() {
                     }}
                     className="px-4 py-2 bg-f1-border text-white text-sm font-bold rounded hover:bg-f1-red transition-colors"
                   >
-                    Close
+                    Fechar
                   </button>
                 </div>
               </>
@@ -675,11 +763,11 @@ export default function SessionPicker() {
       {reprocessModal && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
           <div className="bg-f1-card border border-f1-border rounded-xl shadow-xl w-full max-w-sm p-6">
-            <h3 className="text-white font-bold text-base mb-1">Reprocessing {reprocessModal.label}</h3>
+            <h3 className="text-white font-bold text-base mb-1">Reprocessando {reprocessModal.label}</h3>
             {reprocessModal.state === "running" && (
               <>
                 <p className="text-f1-muted text-sm mb-4">
-                  Rebuilding this session&apos;s data. This usually takes 1–3 minutes. You can close this and it will keep running.
+                  Recriando os dados desta sessão. Isso costuma levar de 1 a 3 minutos. Você pode fechar esta janela que o processo continua.
                 </p>
                 <div className="flex items-center gap-3">
                   <span className="w-5 h-5 border-2 border-f1-muted border-t-f1-red rounded-full animate-spin flex-shrink-0" />
@@ -689,7 +777,7 @@ export default function SessionPicker() {
             )}
             {reprocessModal.state === "done" && (
               <p className="text-green-400 text-sm mb-2">
-                Done. Reopen the session to see the updated data.
+                Pronto. Abra a sessão de novo para ver os dados atualizados.
               </p>
             )}
             {reprocessModal.state === "error" && (
@@ -700,7 +788,7 @@ export default function SessionPicker() {
                 onClick={() => setReprocessModal(null)}
                 className="px-4 py-2 bg-f1-border text-white text-sm font-bold rounded hover:bg-f1-red transition-colors"
               >
-                {reprocessModal.state === "running" ? "Hide" : "Close"}
+                {reprocessModal.state === "running" ? "Ocultar" : "Fechar"}
               </button>
             </div>
           </div>
@@ -708,89 +796,95 @@ export default function SessionPicker() {
       )}
 
       {/* Header */}
-      <div className="bg-f1-card border-b border-f1-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 flex items-center gap-3 sm:gap-4">
-          <img src="/logo.png" alt="F1 Replay" className="w-12 h-12 sm:w-[72px] sm:h-[72px] rounded-lg" />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-3xl font-bold text-white mb-0.5 sm:mb-1">F1 Replay Timing</h1>
-            <p className="text-f1-muted text-xs sm:text-base">Select a session to replay</p>
-          </div>
+      <header className="sticky top-0 z-40 bg-f1-dark/75 backdrop-blur-xl border-b border-white/[0.06] supports-[backdrop-filter]:bg-f1-dark/60">
+        <div className="h-[2px] bg-gradient-to-r from-transparent via-f1-red to-transparent opacity-70" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-1 sm:gap-2">
+          <a href="/" className="flex items-center gap-3 flex-1 min-w-0 group">
+            <BrandMark className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 drop-shadow-[0_4px_12px_rgba(225,6,0,0.35)] transition-transform group-hover:-rotate-6" />
+            <div className="min-w-0 leading-none">
+              <h1 className="text-lg sm:text-xl font-black italic tracking-tight text-white">
+                Box Box<span className="text-f1-red">.</span>
+              </h1>
+              <p className="hidden sm:block mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-f1-muted">Replays e telemetria da F1</p>
+            </div>
+          </a>
           {/* Desktop: text buttons */}
           {showOverviewButton && (
             <button
               onClick={intro.open}
-              className="hidden sm:block px-4 py-2 bg-f1-border text-f1-muted text-sm font-bold rounded hover:text-white transition-colors"
+              className="hidden sm:block px-3 py-2 rounded-lg text-sm font-semibold text-f1-muted hover:text-white hover:bg-white/[0.06] transition-colors"
             >
-              Overview
+              Visão geral
             </button>
           )}
           <a
             href="/features"
-            className="hidden sm:block px-4 py-2 bg-f1-border text-f1-muted text-sm font-bold rounded hover:text-white transition-colors"
+            className="hidden sm:block px-3 py-2 rounded-lg text-sm font-semibold text-f1-muted hover:text-white hover:bg-white/[0.06] transition-colors"
           >
-            Features
+            Recursos
           </a>
           <a
             href="/about"
-            className="hidden sm:block px-4 py-2 bg-f1-border text-f1-muted text-sm font-bold rounded hover:text-white transition-colors"
+            className="hidden sm:block px-3 py-2 rounded-lg text-sm font-semibold text-f1-muted hover:text-white hover:bg-white/[0.06] transition-colors"
           >
-            About
+            Sobre
           </a>
           {showAdmin && (
             <button
               onClick={() => setStorageOpen(true)}
-              className="hidden sm:block px-4 py-2 bg-f1-border text-f1-muted text-sm font-bold rounded hover:text-white transition-colors"
+              className="hidden sm:block px-3 py-2 rounded-lg text-sm font-semibold text-f1-muted hover:text-white hover:bg-white/[0.06] transition-colors"
             >
-              Storage
+              Armazenamento
             </button>
           )}
           {showF1TV && (
             <button
               onClick={() => setF1tvOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-f1-border text-f1-muted text-sm font-bold rounded hover:text-white transition-colors"
+              className="hidden sm:flex items-center gap-2 ml-2 pl-3 pr-4 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-sm font-semibold text-white hover:border-f1-red/60 hover:bg-f1-red/10 transition-colors"
+              title={f1tvSignedOut ? "Não conectado: as sessões vêm do OpenF1" : "Conectado ao F1 TV"}
             >
+              <span className={`w-2 h-2 rounded-full ${f1tvSignedOut ? "bg-amber-400" : "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.8)]"}`} />
               F1 TV
-              {f1tvSignedOut && <TriangleAlert className="w-4 h-4 text-amber-400" aria-label="Not signed in" />}
             </button>
           )}
           {/* Mobile: hamburger menu */}
           <div className="relative sm:hidden" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded bg-f1-border text-f1-muted hover:text-white transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-f1-muted hover:text-white hover:bg-white/[0.06] transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-11 w-40 bg-f1-card border border-f1-border rounded-lg shadow-xl z-50 py-1">
+              <div className="absolute right-0 top-11 w-44 bg-f1-card/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 py-1">
                 {showOverviewButton && (
                   <button
                     onClick={() => { setMenuOpen(false); intro.open(); }}
                     className="block w-full text-left px-4 py-2.5 text-sm font-bold text-f1-muted hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    Overview
+                    Visão geral
                   </button>
                 )}
                 <a
                   href="/features"
                   className="block px-4 py-2.5 text-sm font-bold text-f1-muted hover:text-white hover:bg-white/5 transition-colors"
                 >
-                  Features
+                  Recursos
                 </a>
                 <a
                   href="/about"
                   className="block px-4 py-2.5 text-sm font-bold text-f1-muted hover:text-white hover:bg-white/5 transition-colors"
                 >
-                  About
+                  Sobre
                 </a>
                 {showAdmin && (
                   <button
                     onClick={() => { setMenuOpen(false); setStorageOpen(true); }}
                     className="block w-full text-left px-4 py-2.5 text-sm font-bold text-f1-muted hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    Storage
+                    Armazenamento
                   </button>
                 )}
                 {showF1TV && (
@@ -800,7 +894,7 @@ export default function SessionPicker() {
                   >
                     <span className="flex items-center gap-1.5">
                       F1 TV
-                      {f1tvSignedOut && <TriangleAlert className="w-4 h-4 text-amber-400" aria-label="Not signed in" />}
+                      {f1tvSignedOut && <TriangleAlert className="w-4 h-4 text-amber-400" aria-label="Não conectado" />}
                     </span>
                   </button>
                 )}
@@ -808,30 +902,29 @@ export default function SessionPicker() {
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {f1tvSignedOut && (
-          <div className="max-w-3xl mx-auto mb-6 bg-f1-card border border-f1-red/40 rounded-xl px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+          <div className="max-w-4xl mx-auto mb-6 bg-f1-card border border-f1-border rounded-xl px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
             <p className="text-sm text-f1-muted leading-relaxed flex-1 min-w-[200px]">
-              <span className="font-bold text-white">Sign in to F1 TV to download new sessions.</span> Since 15 October
-              2026 F1 requires an F1 TV subscription for timing data. Sessions already downloaded keep working.
+              <span className="font-bold text-white">Sem login, as sessões vêm do OpenF1.</span> É grátis e cobre de 2023 em diante; as corridas mais recentes podem levar alguns dias para aparecer. Entre com o F1 TV para baixá-las direto da F1 e ter a transmissão.
             </p>
             <button
               onClick={() => setF1tvOpen(true)}
-              className="px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors"
+              className="px-4 py-2 bg-f1-border text-white text-sm font-bold rounded hover:bg-f1-red transition-colors"
             >
-              Sign in
+              Entrar no F1 TV
             </button>
           </div>
         )}
         {showAdmin && newProblems.length > 0 && (
-          <div className="max-w-3xl mx-auto mb-6 bg-f1-card border border-amber-500/40 rounded-xl px-4 py-3">
+          <div className="max-w-4xl mx-auto mb-6 bg-f1-card border border-amber-500/40 rounded-xl px-4 py-3">
             <div className="flex items-start gap-3">
               <TriangleAlert className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white">
-                  {newProblems.length === 1 ? "A session couldn't download" : `${newProblems.length} sessions couldn't download`}
+                  {newProblems.length === 1 ? "Uma sessão não pôde ser baixada" : `${newProblems.length} sessões não puderam ser baixadas`}
                 </p>
                 <ul className="mt-2 space-y-2">
                   {newProblems.map((p) => {
@@ -842,7 +935,7 @@ export default function SessionPicker() {
                           <p className="text-xs font-bold text-white">
                             {problemLabel(p)}
                             <span className="ml-2 font-normal text-f1-muted">
-                              {new Date(p.time * 1000).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}
+                              {new Date(p.time * 1000).toLocaleString("pt-BR", { weekday: "short", hour: "numeric", minute: "2-digit" })}
                             </span>
                           </p>
                           <p className="text-xs text-f1-muted leading-relaxed">{p.message}</p>
@@ -852,24 +945,24 @@ export default function SessionPicker() {
                           disabled={reprocessing.has(key)}
                           className="px-3 py-1 bg-f1-border text-white text-xs font-bold rounded hover:bg-f1-red transition-colors disabled:opacity-50"
                         >
-                          {reprocessing.has(key) ? "Retrying…" : "Retry"}
+                          {reprocessing.has(key) ? "Tentando de novo…" : "Tentar de novo"}
                         </button>
                       </li>
                     );
                   })}
                 </ul>
               </div>
-              <button onClick={dismissProblems} className="text-xs text-f1-muted hover:text-white flex-shrink-0" title="Hide until another session fails">
-                Dismiss
+              <button onClick={dismissProblems} className="text-xs text-f1-muted hover:text-white flex-shrink-0" title="Ocultar até outra sessão falhar">
+                Dispensar
               </button>
             </div>
           </div>
         )}
-        {publicMode && <PaywallNotice className="max-w-3xl mx-auto mb-6" />}
+        {publicMode && <PaywallNotice className="max-w-4xl mx-auto mb-6" />}
         {publicMode && intro.show && <SiteIntro onDismiss={intro.dismiss} />}
 
         {/* Season selector */}
-        <div className="flex gap-2 mb-8 flex-wrap max-w-3xl mx-auto">
+        <div className="flex gap-2 mb-8 flex-wrap max-w-4xl mx-auto">
           {seasons.map((s) => (
             <button
               key={s}
@@ -888,23 +981,23 @@ export default function SessionPicker() {
         {eventsLoading ? (
           <div className="text-f1-muted text-center py-20">
             <div className="inline-block w-8 h-8 border-2 border-f1-muted border-t-f1-red rounded-full animate-spin mb-4" />
-            <p>Loading data...</p>
+            <p>Carregando os dados...</p>
           </div>
         ) : eventsError ? (
           <div className="text-f1-muted text-center py-20">
-            <p className="mb-4">Couldn&apos;t load the {year} season.</p>
+            <p className="mb-4">Não foi possível carregar a temporada de {year} .</p>
             <button
               onClick={retryEvents}
               className="px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors"
             >
-              Retry
+              Tentar de novo
             </button>
           </div>
         ) : (
           <>
             {/* Live session banner — only show on the year that has the live session */}
             {liveSession && liveSession.year === year && (
-              <div className="mb-8 max-w-3xl mx-auto">
+              <div className="mb-8 max-w-4xl mx-auto">
                 <a
                   href={`/live?year=${liveSession.year}&round=${liveSession.round_number}&type=${liveSession.session_type}`}
                   onClick={(e) => { if (opensHere(e)) setNavigating(true); }}
@@ -916,15 +1009,15 @@ export default function SessionPicker() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
                       </span>
-                      LIVE
+                      AO VIVO
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white font-bold group-hover:text-red-400 transition-colors">
                         {COUNTRY_FLAGS[liveSession.country] && <span className="mr-1.5">{COUNTRY_FLAGS[liveSession.country]}</span>}
-                        {liveSession.event_name} — {liveSession.session_name}
+                        {liveSession.event_name} — {sessionNamePt(liveSession.session_name)}
                       </h3>
                       <p className="text-f1-muted text-sm">
-                        {liveSession.pre_session ? "Starting soon — click to open live timing" : "Session in progress — click to open live timing"}
+                        {liveSession.pre_session ? "Começa em breve — clique para abrir a cronometragem ao vivo" : "Sessão em andamento — clique para abrir a cronometragem ao vivo"}
                       </p>
                     </div>
                     <svg className="w-5 h-5 text-f1-muted group-hover:text-white transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -937,19 +1030,19 @@ export default function SessionPicker() {
 
             {/* Latest round at top */}
             {latestEvent && (
-              <div className="mb-6 max-w-3xl mx-auto">
+              <div className="mb-6 max-w-4xl mx-auto">
                 <h2 className="text-sm font-bold text-f1-muted uppercase tracking-wider mb-3">
-                  Most Recent Round
+                  Etapa mais recente
                 </h2>
                 <EventRow evt={latestEvent} id="featured" />
               </div>
             )}
 
             {/* Season list */}
-            <h2 className="text-sm font-bold text-f1-muted uppercase tracking-wider mb-4 max-w-3xl mx-auto">
-              {year} Season
+            <h2 className="text-sm font-bold text-f1-muted uppercase tracking-wider mb-4 max-w-4xl mx-auto">
+              Temporada {year}
             </h2>
-            <div className="flex flex-col gap-2 max-w-3xl mx-auto">
+            <div className="flex flex-col gap-3 max-w-4xl mx-auto">
               {displayEvents.map((evt) => (
                 <EventRow key={evt.round_number} evt={evt} />
               ))}

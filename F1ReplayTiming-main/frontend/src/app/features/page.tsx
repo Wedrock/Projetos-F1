@@ -8,7 +8,7 @@ import BroadcastGuide, { SyncDiagram } from "@/components/BroadcastGuide";
 
 // Which sessions a feature works in, shown under each section's heading.
 function SessionChips({ practice, qualifying, race }: { practice?: boolean; qualifying?: boolean; race?: boolean }) {
-  const chips: [string, boolean | undefined][] = [["Practice", practice], ["Qualifying", qualifying], ["Race", race]];
+  const chips: [string, boolean | undefined][] = [["Treinos", practice], ["Classificação", qualifying], ["Corrida", race]];
   return (
     <div className="flex flex-wrap gap-1.5 mb-3">
       {chips.map(([label, on]) => (
@@ -26,38 +26,38 @@ function SessionChips({ practice, qualifying, race }: { practice?: boolean; qual
 }
 
 const FEATURE_CATEGORIES: [string, string][] = [
-  ["getting-started", "Getting started"],
-  ["leaderboard", "Leaderboard"],
-  ["track-map", "Track map"],
-  ["analysis", "Analysis"],
-  ["session-feed", "Session feed"],
+  ["getting-started", "Primeiros passos"],
+  ["leaderboard", "Tabela"],
+  ["track-map", "Mapa da pista"],
+  ["analysis", "Análise"],
+  ["session-feed", "Feed da sessão"],
   ["watching", "Watching"],
-  ["broadcast", "Broadcast"],
+  ["broadcast", "Transmissão"],
   ["availability", "Availability"],
 ];
 
 // Feature availability: R = replay, L = live, - = not available.
 // Columns: race and sprint, qualifying and sprint qualifying, practice.
-const AVAILABILITY_SESSIONS = ["Race & Sprint", "Qualifying", "Practice"];
+const AVAILABILITY_SESSIONS = ["Corrida e Sprint", "Classificação", "Treinos"];
 const AVAILABILITY: [string, string, string, string][] = [
-  ["Leaderboard, tyres, gaps", "RL", "RL", "RL"],
-  ["Car positions on the track map", "RL", "RL", "RL"],
-  ["Race control messages, weather", "RL", "RL", "RL"],
-  ["Team radio with captions", "RL", "RL", "RL"],
-  ["Pit position prediction", "RL", "-", "-"],
-  ["Sectors and mini-sectors", "-", "RL", "RL"],
-  ["Out-lap indicator", "-", "RL", "RL"],
-  ["Last lap time", "RL", "RL", "RL"],
-  ["Sectors on the track map", "-", "RL", "RL"],
-  ["Lap Analysis", "RL", "RL", "RL"],
-  ["Track dominance", "-", "RL", "RL"],
-  ["Lap notifications", "-", "RL", "-"],
-  ["Telemetry", "RL", "RL", "RL"],
-  ["Track elevation, marshal sector flags", "RL", "RL", "RL"],
+  ["Tabela, pneus, diferenças", "RL", "RL", "RL"],
+  ["Posição dos carros no mapa da pista", "RL", "RL", "RL"],
+  ["Mensagens da direção de prova, clima", "RL", "RL", "RL"],
+  ["Rádio das equipes com legendas", "RL", "RL", "RL"],
+  ["Previsão de posição no pit", "RL", "-", "-"],
+  ["Setores e minissetores", "-", "RL", "RL"],
+  ["Indicador de volta de saída", "-", "RL", "RL"],
+  ["Tempo da última volta", "RL", "RL", "RL"],
+  ["Setores no mapa da pista", "-", "RL", "RL"],
+  ["Análise de voltas", "RL", "RL", "RL"],
+  ["Domínio na pista", "-", "RL", "RL"],
+  ["Avisos de volta", "-", "RL", "-"],
+  ["Telemetria", "RL", "RL", "RL"],
+  ["Altimetria da pista, bandeiras por setor de fiscais", "RL", "RL", "RL"],
   ["Picture-in-picture", "RL", "RL", "RL"],
-  ["Playback controls, sync to a recording", "R", "R", "R"],
-  ["F1 TV broadcast and onboards (F1 TV Pro or Premium)", "R", "R", "R"],
-  ["Broadcast delay", "L", "L", "L"],
+  ["Controles de reprodução, sincronizar com uma gravação", "R", "R", "R"],
+  ["Transmissão do F1 TV e onboards (F1 TV Pro ou Premium)", "R", "R", "R"],
+  ["Atraso da transmissão", "L", "L", "L"],
 ];
 
 // Sections linked to from elsewhere on the page, and the tab they're in
@@ -109,7 +109,7 @@ export default function FeaturesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-white">Features</h1>
+          <h1 className="text-2xl font-bold text-white">Recursos</h1>
         </div>
       </div>
 
@@ -137,42 +137,33 @@ export default function FeaturesPage() {
 
           {/* Session Picker */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Session Picker</h2>
-            <p className="text-xs font-bold text-f1-red uppercase tracking-wider mb-3">Home page</p>
+            <h2 className="text-lg font-bold text-white mb-1">Escolha de sessão</h2>
+            <p className="text-xs font-bold text-f1-red uppercase tracking-wider mb-3">Página inicial</p>
             <p className="text-f1-text leading-relaxed">
-              A green dot
+              Um ponto verde
               <span className="inline-block align-middle w-1.5 h-1.5 rounded-full bg-green-400 mx-1.5" />
-              next to a session means it has already been downloaded and will play instantly. Hover over
-              a session to see its stored size. Sessions without a dot are processed on demand the first
-              time you open them.
+              ao lado de uma sessão indica que ela já foi baixada e toca na hora. Passe o mouse sobre a sessão para ver o espaço que ocupa. Sessões sem o ponto são processadas na primeira vez que você as abre.
             </p>
           </section>
 
           {/* F1 TV sign-in */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">F1 TV Sign-in</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Login no F1 TV</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Since 15 October 2026, F1 requires an F1 TV subscription (Access or higher) for timing
-              data. Sign in from <span className="font-bold text-white">F1 TV</span> on the home page or the
-              F1 TV tab in a replay&apos;s Settings. With <span className="font-bold text-white">Keep me signed in</span>,
-              you stay signed in, including for race-weekend background downloads.
+              Desde 15 de outubro de 2026, a F1 exige uma assinatura do F1 TV (Access ou superior) para os dados de cronometragem. Entre pelo botão <span className="font-bold text-white">F1 TV</span> na página inicial ou pela aba F1 TV nas Configurações de um replay. Com <span className="font-bold text-white">Manter conectado</span>, você continua conectado, inclusive para os downloads automáticos dos fins de semana de corrida.
             </p>
             <p className="text-f1-text leading-relaxed">
-              Signing in is needed to download new sessions, and adds car positions and team radio to
-              live timing. Sessions already downloaded play without it.
+              O login é necessário para baixar novas sessões e acrescenta a posição dos carros e o rádio das equipes à cronometragem ao vivo. Sessões já baixadas tocam sem ele.
             </p>
           </section>
 
           {/* Data Availability */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Data Availability</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Disponibilidade dos dados</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed">
-              Occasionally, timing data may be temporarily unavailable for a driver &mdash; for example,
-              during pit stops or if the F1 timing system has a brief gap. When this happens, the
-              affected driver is shown greyed out at the bottom of the leaderboard. They return to
-              their correct position as soon as data is available again.
+              De vez em quando, os dados de cronometragem de um piloto podem ficar indisponíveis por um tempo &mdash; por exemplo, durante pit stops ou numa falha breve do sistema da F1. Quando isso acontece, o piloto aparece acinzentado no fim da tabela e volta à posição certa assim que os dados voltam.
             </p>
           </section>
           </>
@@ -183,79 +174,77 @@ export default function FeaturesPage() {
 
           {/* Reading the leaderboard */}
           <section className="bg-f1-card border border-f1-red/40 rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Reading the Leaderboard</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Como ler a tabela</h2>
             <p className="text-f1-text leading-relaxed mb-4">
-              What each column on the leaderboard means. More detail in{" "}
-              <a href="#driver-leaderboard" className="text-f1-red hover:underline font-semibold">Driver Leaderboard</a> below.
+              O que significa cada coluna da tabela. Mais detalhes em{" "}
+              <a href="#driver-leaderboard" className="text-f1-red hover:underline font-semibold">Tabela de pilotos</a> abaixo.
             </p>
             <LeaderboardGuide />
           </section>
 
           {/* Driver Leaderboard */}
           <section id="driver-leaderboard" className="bg-f1-card border border-f1-border rounded-xl p-6 scroll-mt-20">
-            <h2 className="text-lg font-bold text-white mb-1">Driver Leaderboard</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Tabela de pilotos</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-4">
-              The leaderboard displays all drivers sorted by position, with data sourced directly from
-              the official F1 live timing feed. Each row can show a range of information, all toggleable
-              from the settings menu:
+              A tabela mostra todos os pilotos ordenados pela posição, com dados vindos direto da cronometragem oficial da F1. Cada linha pode mostrar várias informações, todas ativáveis no menu de configurações:
             </p>
             <div className="space-y-4">
               {/* Position */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Position</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Posição</span>
                 <span className="flex items-center gap-2 flex-shrink-0">
                   <span className="w-6 h-6 flex items-center justify-center rounded bg-f1-red text-white text-sm font-extrabold">1</span>
                   <span className="w-6 text-sm font-extrabold text-white text-right">2</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Current race or session position. The leader is highlighted with a red badge.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Posição atual na corrida ou na sessão. O líder é destacado com um selo vermelho.</span>
               </div>
 
               {/* Team colour */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Team colour</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Cor da equipe</span>
                 <span className="flex items-center gap-1.5 flex-shrink-0">
                   <span className="w-1 h-6 rounded-sm" style={{ backgroundColor: "#FF8000" }} />
                   <span className="w-1 h-6 rounded-sm" style={{ backgroundColor: "#E80020" }} />
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">A colour bar next to each driver matching their constructor.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Uma barra com a cor da equipe ao lado de cada piloto.</span>
               </div>
 
               {/* Team abbr */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Team abbr.</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Sigla da equipe</span>
                 <span className="flex items-center gap-1.5 flex-shrink-0">
                   <span className="text-[10px] font-bold text-f1-muted">MCL</span>
                   <span className="text-[10px] font-bold text-f1-muted">FER</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Three-letter constructor abbreviation. Off by default.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Sigla de três letras da equipe. Desligada por padrão.</span>
               </div>
 
               {/* Gap */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Gap</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Diferença</span>
                 <span className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-xs font-bold text-f1-muted">+3.200</span>
                   <span className="text-xs font-bold text-yellow-400">PIT</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Gap to the leader (races) or best lap time (practice/qualifying). Shows &quot;PIT&quot; when in the pit lane.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Diferença para o líder (corridas) ou melhor volta (treinos/classificação). Mostra &quot;PIT&quot; quando o carro está no pit lane.</span>
               </div>
 
               {/* Last lap time */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Last lap</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Última volta</span>
                 <span className="text-xs tabular-nums text-f1-muted flex-shrink-0">1:32.456</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">The driver&apos;s most recently completed lap time. Purple for the session&apos;s fastest, green for a personal best.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">O tempo da volta mais recente do piloto. Roxo para a mais rápida da sessão, verde para o melhor pessoal.</span>
               </div>
 
               {/* Grid delta */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Grid delta</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Ganho no grid</span>
                 <span className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-[10px] font-bold text-green-400">&#9650;3</span>
                   <span className="text-[10px] font-bold text-red-400">&#9660;2</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Positions gained or lost compared to the starting grid. Race only.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Posições ganhas ou perdidas em relação ao grid de largada. Só em corridas.</span>
               </div>
 
               {/* Pit stops */}
@@ -264,12 +253,12 @@ export default function FeaturesPage() {
                 <span className="w-5 h-5 border border-f1-muted rounded-sm flex items-center justify-center text-[10px] font-extrabold text-white flex-shrink-0">
                   2
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Number of pit stops completed so far. Race only.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Número de pit stops feitos até agora. Só em corridas.</span>
               </div>
 
               {/* Pit prediction */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Pit prediction</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Previsão de pit</span>
                 <span className="flex items-center gap-0.5 flex-shrink-0">
                   <img src="/pit-return.png" alt="" className="w-3 h-3 opacity-50 invert" />
                   <span className="text-[10px] font-bold text-f1-muted">P5</span>
@@ -278,158 +267,137 @@ export default function FeaturesPage() {
                   <span className="text-[8px] font-bold text-f1-muted">↑3.2s</span>
                   <span className="text-[8px] font-bold text-f1-muted">↓8.4s</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Predicted return position with gap ahead (top) and gap behind (bottom). Race only.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Posição prevista na volta do pit, com a diferença para o carro da frente (em cima) e para o de trás (embaixo). Só em corridas.</span>
               </div>
 
               {/* Tyre compound */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Tyre compound</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Composto do pneu</span>
                 <span className="flex items-center gap-1.5 flex-shrink-0">
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold leading-none border-2" style={{ borderColor: "#E80020", color: "#E80020" }}>S</span>
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold leading-none border-2" style={{ borderColor: "#FFC800", color: "#FFC800" }}>M</span>
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold leading-none border-2" style={{ borderColor: "#FFFFFF", color: "#FFFFFF" }}>H</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">The current tyre compound shown as a colour-coded circle.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">O composto atual, mostrado num círculo colorido.</span>
               </div>
 
               {/* Tyre age */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Tyre age</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Idade do pneu</span>
                 <span className="text-xs font-extrabold text-white flex-shrink-0">12</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Number of laps on the current set of tyres.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Número de voltas com o jogo de pneus atual.</span>
               </div>
 
               {/* Tyre history */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Tyre history</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Histórico de pneus</span>
                 <span className="flex items-center gap-0.5 flex-shrink-0">
                   <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-extrabold leading-none border opacity-50" style={{ borderColor: "#E80020", color: "#E80020" }}>S</span>
                   <span className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-extrabold leading-none border opacity-50" style={{ borderColor: "#FFC800", color: "#FFC800" }}>M</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">The last two tyre compounds used, shown as smaller icons. Race only.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Os dois últimos compostos usados, em ícones menores. Só em corridas.</span>
               </div>
 
               {/* Flags */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Fastest lap</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Volta mais rápida</span>
                 <span className="flex items-center gap-1.5 flex-shrink-0">
                   <svg className="w-3.5 h-3.5 text-purple-500" viewBox="0 0 24 24" fill="currentColor">
                     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" />
                     <path d="M12 6v7l4.5 2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Purple clock icon shown next to the driver with the fastest lap.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Ícone de relógio roxo ao lado do piloto com a volta mais rápida.</span>
               </div>
 
               {/* Highlight under 1s */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Under 1s</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Abaixo de 1s</span>
                 <span className="text-xs font-bold tabular-nums text-green-400 flex-shrink-0">+0.684</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">When showing the interval to the car ahead, gaps under a second turn green. Race only.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Ao mostrar o intervalo para o carro da frente, diferenças abaixo de um segundo ficam verdes. Só em corridas.</span>
               </div>
 
               {/* Knocked out */}
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Knocked out</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Eliminados</span>
                 <span className="text-xs font-extrabold text-white opacity-50 flex-shrink-0">STR</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Drivers knocked out in Q1 or Q2 stay on the leaderboard, dimmed, with their best time. Qualifying only.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Pilotos eliminados no Q1 ou Q2 continuam na tabela, esmaecidos, com o melhor tempo. Só na classificação.</span>
               </div>
             </div>
           </section>
 
           {/* Sectors */}
           <section id="sectors" className="bg-f1-card border border-f1-border rounded-xl p-6 scroll-mt-20">
-            <h2 className="text-lg font-bold text-white mb-1">Sectors and Mini-sectors</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Setores e minissetores</h2>
             <SessionChips practice qualifying />
             <p className="text-f1-text leading-relaxed mb-3">
-              Each driver&apos;s row shows their progress through the three sectors of the current lap
-              &mdash; purple for the session best, green for a personal best, yellow otherwise.
+              A linha de cada piloto mostra o andamento dele pelos três setores da volta atual &mdash; roxo para o melhor da sessão, verde para o melhor pessoal, amarelo nos demais casos.
             </p>
             <p className="text-f1-text leading-relaxed mb-3">
-              F1 also times each sector in smaller pieces. With Mini-sectors on, the row fills in
-              mini-sector by mini-sector as the driver goes round, in the same colours. Desktop only, in
-              replays and live timing. Switch between the two in Settings &gt; Leaderboard, or next to the
-              Show/Hide Sectors button on the track map. They can also be drawn on the track map; see{" "}
-              <a href="#sectors-map" className="text-f1-red hover:underline font-semibold">Sectors on the Track Map</a>.
+              A F1 também cronometra cada setor em pedaços menores. Com os minissetores ligados, a linha vai sendo preenchida minissetor a minissetor conforme o piloto anda, nas mesmas cores. Só no computador, em replays e ao vivo. Alterne entre os dois em Configurações &gt; Tabela, ou ao lado do botão Mostrar/Ocultar setores no mapa da pista. Eles também podem ser desenhados no mapa; veja{" "}
+              <a href="#sectors-map" className="text-f1-red hover:underline font-semibold">Setores no mapa da pista</a>.
             </p>
             <p className="text-f1-text leading-relaxed">
-              While a driver is on an out-lap, from pit exit until the lap is completed, the row shows{" "}
-            <span className="font-bold text-white">OUT</span> instead.
+              Enquanto o piloto está numa volta de saída, da saída do pit até completar a volta, a linha mostra{" "}
+            <span className="font-bold text-white">OUT</span> no lugar.
           </p>
           <p className="text-f1-text leading-relaxed">
-            Replays of sessions processed before mini-sectors were added show the three sectors until they&apos;re reprocessed.
+            Replays de sessões processadas antes da chegada dos minissetores mostram os três setores até serem reprocessados.
             </p>
           </section>
 
           {/* Lap notifications */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Lap Notifications</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Avisos de volta</h2>
             <SessionChips qualifying />
             <p className="text-f1-text leading-relaxed">
-              When a driver completes a lap, a pop-up shows their lap time, coloured purple for the
-              session best or green for a personal best, with each sector&apos;s time beside its marker.
-              Turn them off, or just the sector times, in Settings &gt; Leaderboard.
+              Quando um piloto completa uma volta, um aviso mostra o tempo, em roxo para o melhor da sessão ou verde para o melhor pessoal, com o tempo de cada setor ao lado do marcador. Desligue os avisos, ou só os tempos de setor, em Configurações &gt; Tabela.
             </p>
           </section>
 
           {/* Starting Grid */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Starting Grid</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Grid de largada</h2>
             <SessionChips race />
             <p className="text-f1-text leading-relaxed mb-3">
-              For the first 10 seconds of the race, the leaderboard displays the starting grid order
-              before live timing data takes over.
+              Nos primeiros 10 segundos da corrida, a tabela mostra a ordem do grid de largada antes de os dados ao vivo assumirem.
             </p>
             <p className="text-f1-text leading-relaxed">
-              Where official starting grid data is unavailable, qualifying positions are used as a
-              fallback. This may not reflect grid penalties or other post-qualifying changes to the
-              starting order.
+              Quando não há dados oficiais do grid, as posições da classificação são usadas no lugar. Isso pode não refletir punições de grid ou outras mudanças na ordem de largada.
             </p>
           </section>
 
           {/* Pit Position Prediction */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-lg font-bold text-white">Pit Position Prediction</h2>
+              <h2 className="text-lg font-bold text-white">Previsão de posição no pit</h2>
             </div>
             <SessionChips race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Shows the predicted position a driver would return to if they pitted right now. The prediction
-              uses precise pit lane times for each circuit, calculated from the actual pit entry and exit
-              timestamps across all 2025 race data.
+              Mostra a posição em que o piloto voltaria se parasse agora. A previsão usa o tempo exato de pit lane de cada circuito, calculado a partir das entradas e saídas de pit de todas as corridas de 2025.
             </p>
             <p className="text-f1-text leading-relaxed mb-3">
-              Pit loss is measured using the exact time each driver spends in the pit lane
-              (PitOutTime &minus; PitInTime), giving a precise per-circuit baseline unaffected by
-              driving pace on the rest of the lap. The prediction adds this loss to the driver&apos;s
-              current gap and finds where they&apos;d slot back into the order.
+              A perda no pit é medida pelo tempo exato que cada piloto passa no pit lane (PitOutTime &minus; PitInTime), o que dá uma base precisa por circuito, sem influência do ritmo no resto da volta. A previsão soma essa perda à diferença atual do piloto e vê onde ele se encaixaria na ordem.
             </p>
             <p className="text-f1-text leading-relaxed mb-3">
-              Under Safety Car or Virtual Safety Car conditions, a reduced pit loss value is used
-              (73% of the green flag loss), reflecting the lower relative time cost of pitting
-              under caution. Predictions appear from lap 5 onwards.
+              Com Safety Car ou Virtual Safety Car, é usada uma perda menor (73% da perda em bandeira verde), já que parar sob neutralização custa relativamente menos. As previsões aparecem a partir da volta 5.
             </p>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mb-2">
-              Confidence indicator
+              Indicador de confiança
             </h3>
             <p className="text-f1-text leading-relaxed mb-3">
-              Since predictions use average pit loss times, the actual result may vary. The confidence
-              indicator (togglable via settings) colour-codes each prediction based on the margin to the
-              next position behind:
+              Como as previsões usam tempos médios de pit, o resultado real pode variar. O indicador de confiança (ativável nas configurações) colore cada previsão conforme a margem para a posição de trás:
             </p>
             <ul className="text-f1-text leading-relaxed space-y-1 ml-4 list-disc">
-              <li><span className="text-f1-muted font-bold">Default</span> — more than 2.5s margin, high confidence</li>
-              <li><span className="text-yellow-400 font-bold">Yellow</span> — 1s to 2.5s margin, a slower pit stop could cost a position</li>
-              <li><span className="text-red-400 font-bold">Red</span> — less than 1s margin, very tight</li>
+              <li><span className="text-f1-muted font-bold">Padrão</span> 986</li>
+              <li><span className="text-yellow-400 font-bold">999</span> — margem de 1s a 2,5s, um pit mais lento pode custar uma posição</li>
+              <li><span className="text-red-400 font-bold">Vermelho</span> — margem abaixo de 1s, muito apertado</li>
             </ul>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mt-4 mb-2">
-              Pit gaps
+              Diferenças no pit
             </h3>
             <p className="text-f1-text leading-relaxed">
-              Alongside the predicted position, two gap values are stacked showing the predicted
-              gap to the car ahead (top) and the gap to the car behind (bottom) after the pit stop.
-              This helps assess whether the driver would rejoin in clean air or in traffic, and how
-              secure their predicted position would be.
+              Ao lado da posição prevista, aparecem duas diferenças empilhadas: para o carro da frente (em cima) e para o de trás (embaixo) depois do pit stop. Isso ajuda a ver se o piloto voltaria com pista livre ou no tráfego, e o quão segura seria a posição prevista.
             </p>
           </section>
           </>
@@ -440,90 +408,76 @@ export default function FeaturesPage() {
 
           {/* Track Map & Car Positions */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Car Positions</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Posição dos carros</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed">
-              A track map shows car positions, updating every 0.5 seconds with smooth interpolation.
-              Click any driver on the leaderboard or map to highlight them. The track orientation matches
-              the conventional broadcast view for each circuit. In replays, positions come from the
-              processed session; in live timing, from F1&apos;s live feed, which needs an F1 TV sign-in.
+              Um mapa da pista mostra a posição dos carros, atualizada a cada 0,5 segundo com movimento suave. Clique num piloto na tabela ou no mapa para destacá-lo. A orientação da pista segue a visão usual da transmissão de cada circuito. Nos replays, as posições vêm da sessão processada; ao vivo, vêm da transmissão ao vivo da F1, que exige login no F1 TV.
             </p>
           </section>
 
           {/* Track Elevation */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Track Elevation</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Altimetria da pista</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-4">
-              The track line can be coloured by elevation, derived from the same GPS telemetry as the map.
-              The lowest point of the lap is dark and the highest is bright:
+              A linha da pista pode ser colorida pela altitude, tirada da mesma telemetria de GPS do mapa. O ponto mais baixo da volta fica escuro e o mais alto, claro:
             </p>
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-xs text-f1-muted">Low</span>
+              <span className="text-xs text-f1-muted">Baixo</span>
               <div
                 className="h-3 flex-1 max-w-xs rounded-sm border border-black/30"
                 style={{ background: "linear-gradient(to right, #33384a, #6fb7d6, #ffffff)" }}
               />
-              <span className="text-xs text-f1-muted">High</span>
+              <span className="text-xs text-f1-muted">Alto</span>
             </div>
             <p className="text-f1-text leading-relaxed">
-              Colours use a fixed scale across every circuit rather than each track&apos;s own range, so a flat
-              circuit stays uniformly dark while a hilly one shows a strong gradient. A legend on the map shows
-              the total elevation change. Toggle it in Settings &gt; Track Map.
+              As cores usam uma escala fixa para todos os circuitos, e não a variação de cada pista, então um circuito plano fica todo escuro e um com morros mostra um degradê forte. Uma legenda no mapa mostra a variação total de altitude. Ative em Configurações &gt; Mapa da pista.
             </p>
           </section>
 
           {/* Track Status */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Track Status &amp; Flags</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Situação da pista e bandeiras</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Flag conditions are shown on the track map at marshal sector level, giving you a precise
-              view of where incidents are occurring rather than just a global status.
+              As bandeiras aparecem no mapa da pista por setor de fiscais, mostrando exatamente onde estão os incidentes, e não só uma situação geral.
             </p>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mb-2">
-              Marshal sector flags
+              Bandeiras por setor de fiscais
             </h3>
             <p className="text-f1-text leading-relaxed mb-3">
-              When a yellow or double yellow flag is waved, a coloured indicator appears at the exact
-              marshal sector position on the track map. If a specific driver is involved, their
-              three-letter abbreviation is shown next to the indicator.
+              Quando é agitada uma bandeira amarela ou amarela dupla, um indicador colorido aparece na posição exata do setor de fiscais no mapa. Se houver um piloto envolvido, a sigla dele aparece ao lado do indicador.
             </p>
             <ul className="text-f1-text leading-relaxed space-y-1 ml-4 list-disc mb-3">
-              <li><span className="text-yellow-400 font-bold">Yellow circle</span> &mdash; single yellow flag in that marshal sector</li>
-              <li><span className="text-yellow-400 font-bold">Yellow circle with outer ring</span> &mdash; double yellow flag (more serious, drivers must slow significantly)</li>
-              <li><span className="text-red-400 font-bold">Red circle</span> &mdash; red flag at that location</li>
+              <li><span className="text-yellow-400 font-bold">Círculo amarelo</span> &mdash; bandeira amarela simples naquele setor</li>
+              <li><span className="text-yellow-400 font-bold">Círculo amarelo com anel externo</span> &mdash; bandeira amarela dupla (mais grave, os pilotos precisam reduzir bastante)</li>
+              <li><span className="text-red-400 font-bold">Círculo vermelho</span> &mdash; bandeira vermelha naquele local</li>
             </ul>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mb-2">
-              Full track colouring
+              Pista inteira colorida
             </h3>
             <p className="text-f1-text leading-relaxed mb-3">
-              For track-wide conditions, the entire track outline changes colour:
+              Para situações que valem para a pista toda, o contorno inteiro muda de cor:
             </p>
             <ul className="text-f1-text leading-relaxed space-y-1 ml-4 list-disc mb-3">
-              <li><span className="text-yellow-400 font-bold">Yellow</span> &mdash; Safety Car or Virtual Safety Car deployed</li>
-              <li><span className="text-red-400 font-bold">Red</span> &mdash; session red flagged</li>
+              <li><span className="text-yellow-400 font-bold">Amarelo</span> &mdash; Safety Car ou Virtual Safety Car na pista</li>
+              <li><span className="text-red-400 font-bold">Vermelho</span> &mdash; sessão com bandeira vermelha</li>
             </ul>
             <p className="text-f1-text leading-relaxed">
-              Localised yellow flags (affecting one or two marshal sectors) do not colour the full track,
-              keeping the view clear so you can see exactly where the incident is.
+              Bandeiras amarelas localizadas (em um ou dois setores) não colorem a pista toda, para deixar claro exatamente onde está o incidente.
             </p>
           </section>
 
           {/* Sectors on the track map */}
           <section id="sectors-map" className="bg-f1-card border border-f1-border rounded-xl p-6 scroll-mt-20">
-            <h2 className="text-lg font-bold text-white mb-1">Sectors on the Track Map</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Setores no mapa da pista</h2>
             <SessionChips practice qualifying />
             <p className="text-f1-text leading-relaxed mb-3">
-              Click <span className="font-bold text-white">Show Sectors</span> on the track map. The track is
-              coloured by the selected driver&apos;s sectors on the current lap &mdash; purple, green or yellow, and
-              grey until each is completed. With two drivers selected, switch between them beside the button;
-              with none, it shows the leader.
+              Clique em <span className="font-bold text-white">Mostrar setores</span> no mapa da pista. A pista é colorida pelos setores do piloto selecionado na volta atual &mdash; roxo, verde ou amarelo, e cinza até cada um ser completado. Com dois pilotos selecionados, alterne entre eles ao lado do botão; sem nenhum, mostra o líder.
             </p>
             <p className="text-f1-text leading-relaxed">
-              On desktop, switch between <span className="font-bold text-white">Sectors</span> and{" "}
-              <span className="font-bold text-white">Mini-sectors</span> beside the button to colour the track
-              mini-sector by mini-sector instead. In live timing, mini-sectors appear on the map once each has been passed a few times, usually within a lap or two.
+              No computador, alterne entre <span className="font-bold text-white">Setores</span> e{" "}
+              <span className="font-bold text-white">Minissetores</span> ao lado do botão para colorir a pista minissetor a minissetor. Ao vivo, os minissetores aparecem no mapa depois que cada um foi percorrido algumas vezes, geralmente em uma ou duas voltas.
             </p>
           </section>
           </>
@@ -535,94 +489,87 @@ export default function FeaturesPage() {
           {/* Lap Analysis */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-lg font-bold text-white">Lap Analysis</h2>
+              <h2 className="text-lg font-bold text-white">Análise de voltas</h2>
               <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-f1-red/20 text-f1-red leading-none">Beta</span>
             </div>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              A dedicated panel for analysing driver pace. On desktop, open it via the
-              &quot;Laps&quot; button on the track map &mdash; the panel slides out to the left. On mobile,
-              it appears as a collapsible section. In live timing, it builds up from the laps completed since
-              live timing connected.
+              Um painel para analisar o ritmo dos pilotos. No computador, abra pelo botão &quot;Voltas&quot; no mapa da pista &mdash; o painel abre à esquerda. No celular, aparece como uma seção recolhível. Ao vivo, ele vai sendo montado com as voltas completadas desde que a cronometragem ao vivo conectou.
             </p>
-            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">Races</p>
+            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">Corridas</p>
             <p className="text-f1-text leading-relaxed mb-3">
-              Select up to two drivers using the dropdown menus at the top of the panel to compare their
-              lap times side by side.
+              Escolha até dois pilotos nos menus do topo do painel para comparar os tempos de volta lado a lado.
             </p>
             <div className="space-y-4">
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Lap chart</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Gráfico de voltas</span>
                 <span className="flex items-center gap-1 flex-shrink-0">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Line chart of lap times over the race. Each driver is coloured by their team. Pit laps are excluded from the line and marked with dots.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Gráfico de linha dos tempos de volta ao longo da corrida. Cada piloto tem a cor da sua equipe. As voltas de pit ficam fora da linha e são marcadas com pontos.</span>
               </div>
               <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Lap list</span>
+                <span className="w-24 flex-shrink-0 text-sm font-bold text-f1-muted">Lista de voltas</span>
                 <span className="flex items-center gap-1.5 flex-shrink-0">
                   <span className="text-[10px] tabular-nums text-white">1:32.456</span>
                   <span className="text-[8px] font-bold text-yellow-400">PIT</span>
                   <span className="w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-extrabold leading-none border" style={{ borderColor: "#FF3333", color: "#FF3333" }}>S</span>
                 </span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Full lap-by-lap breakdown showing lap time, tyre compound, and pit stop indicators for each selected driver.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Volta a volta, com o tempo, o composto do pneu e os pit stops de cada piloto selecionado.</span>
               </div>
             </div>
-            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mt-6 mb-3">Qualifying and practice</p>
+            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mt-6 mb-3">Classificação e treinos</p>
             <LapAnalysisGuide />
 
             <div className="mt-6 pt-5 border-t border-f1-border">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-base font-bold text-white">Track dominance</h3>
-                <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-white/10 text-f1-muted leading-none">Desktop</span>
+                <h3 className="text-base font-bold text-white">Domínio na pista</h3>
+                <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-white/10 text-f1-muted leading-none">Computador</span>
               </div>
               <SessionChips practice qualifying />
               <p className="text-f1-text leading-relaxed mb-3">
-                See where on the track one driver beats another. In Lap Analysis &gt; Compare, pick two drivers and
-                press Track dominance: the track map is coloured by who was faster through each part of their best
-                laps, with a count of the parts each one won. Works in replays and live timing.
+                Veja em que parte da pista um piloto supera o outro. Em Análise de voltas &gt; Comparar, escolha dois pilotos e aperte Domínio na pista: o mapa é colorido por quem foi mais rápido em cada trecho das melhores voltas, com a contagem de trechos que cada um venceu. Funciona em replays e ao vivo.
               </p>
               <img
                 src="/track-dominance.png"
-                alt="Track dominance: Antonelli and Leclerc's best laps in qualifying at the 2026 United States Grand Prix, with the track coloured by who was faster in each part"
+                alt="Domínio na pista: as melhores voltas de Antonelli e Leclerc na classificação do GP dos Estados Unidos de 2026, com a pista colorida por quem foi mais rápido em cada trecho"
                 className="w-full max-w-2xl rounded-lg border border-f1-border"
               />
               <p className="text-xs text-f1-muted mt-2">
-                Antonelli (16 parts) and Leclerc (9) in qualifying at the 2026 United States Grand Prix.
+                Antonelli (16 trechos) e Leclerc (9) na classificação do GP dos Estados Unidos de 2026.
               </p>
             </div>
           </section>
 
           {/* Telemetry */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Telemetry</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Telemetria</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Click any driver to open a detailed telemetry view showing real-time data for their current lap.
-            In live timing, telemetry needs an F1 TV sign-in. Desktop only in live timing.
+              Clique em qualquer piloto para abrir a telemetria detalhada da volta atual. Ao vivo, a telemetria exige login no F1 TV e só aparece no computador.
             </p>
             <div className="space-y-3">
               <div className="flex gap-3">
-                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Speed</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Vehicle speed in km/h, plotted against track distance.</span>
+                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Velocidade</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Velocidade do carro em km/h, em relação à distância percorrida na pista.</span>
               </div>
               <div className="flex gap-3">
-                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Throttle</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Throttle application from 0-100%.</span>
+                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Acelerador</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Uso do acelerador de 0 a 100%.</span>
               </div>
               <div className="flex gap-3">
-                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Brake</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Brake pressure, shown as on/off.</span>
+                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Freio</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Pressão no freio, mostrada como ligado/desligado.</span>
               </div>
               <div className="flex gap-3">
-                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Gear</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">Current gear selection from 1-8.</span>
+                <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">Marcha</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Marcha engatada, de 1 a 8.</span>
               </div>
               <div className="flex gap-3">
                 <span className="w-20 flex-shrink-0 text-sm font-bold text-f1-muted">DRS</span>
-                <span className="w-full sm:w-auto text-sm text-f1-text">DRS activation status. Available for 2025 and earlier sessions. DRS was removed from cars in 2026.</span>
+                <span className="w-full sm:w-auto text-sm text-f1-text">Acionamento do DRS. Disponível em sessões de 2025 e anteriores. O DRS saiu dos carros em 2026.</span>
               </div>
             </div>
           </section>
@@ -634,60 +581,46 @@ export default function FeaturesPage() {
 
           {/* Race Control Messages */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Race Control Messages</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Mensagens da direção de prova</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              A live feed of all race control messages is accessible via the RC button on the track map.
-              Messages include steward investigations, penalties, track limit deletions, DRS activations,
-              safety car deployments, and other official communications.
+              Um feed de todas as mensagens da direção de prova fica no botão RC do mapa da pista. Inclui investigações dos comissários, punições, voltas anuladas por limite de pista, liberação do DRS, entrada do safety car e outros comunicados oficiais.
             </p>
             <p className="text-f1-text leading-relaxed mb-3">
-              Each message is colour-coded for quick scanning:
+              Cada mensagem tem uma cor para facilitar a leitura:
             </p>
             <ul className="text-f1-text leading-relaxed space-y-1 ml-4 list-disc mb-3">
-              <li><span className="text-orange-400 font-bold">Orange</span> — incident noted or under investigation</li>
-              <li><span className="text-red-400 font-bold">Red</span> — penalty issued</li>
-              <li><span className="text-green-400 font-bold">Green</span> — cleared / no further action</li>
-              <li><span className="text-f1-muted font-bold">Grey</span> — other messages (DRS, flags, etc.)</li>
+              <li><span className="text-orange-400 font-bold">Laranja</span> — incidente anotado ou em investigação</li>
+              <li><span className="text-red-400 font-bold">Vermelho</span> — punição aplicada</li>
+              <li><span className="text-green-400 font-bold">Verde</span> — liberado / nenhuma ação</li>
+              <li><span className="text-f1-muted font-bold">Cinza</span> — outras mensagens (DRS, bandeiras etc.)</li>
             </ul>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mb-2">
-              Driver indicators
+              Indicadores nos pilotos
             </h3>
             <p className="text-f1-text leading-relaxed">
-              When a driver is under investigation or has received a penalty, an indicator appears next to
-              their name on the leaderboard: a warning triangle
-              (<svg className="w-3.5 h-3.5 text-orange-400 inline -mt-0.5" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 6v7m0 2v2" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>)
-              for investigations and a circled exclamation
-              (<svg className="w-3.5 h-3.5 text-red-500 inline -mt-0.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" /><path d="M12 8v5m0 3v.01" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>)
-              for penalties. These clear automatically when the stewards issue a decision.
+              Quando um piloto está sob investigação ou foi punido, aparece um indicador ao lado do nome na tabela: um triângulo de alerta (<svg className="w-3.5 h-3.5 text-orange-400 inline -mt-0.5" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 6v7m0 2v2" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>) para investigações e uma exclamação num círculo (<svg className="w-3.5 h-3.5 text-red-500 inline -mt-0.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" /><path d="M12 8v5m0 3v.01" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" /></svg>) para punições. Eles somem sozinhos quando os comissários dão a decisão.
             </p>
           </section>
 
           {/* Weather */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Weather</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Clima</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed">
-              Real-time weather conditions are displayed in the session header, including air temperature,
-              track temperature, humidity, wind speed and direction, and rainfall status. Each weather
-              metric can be individually toggled from the settings menu.
+              As condições do tempo aparecem no cabeçalho da sessão: temperatura do ar, temperatura da pista, umidade, velocidade e direção do vento e se está chovendo. Cada item pode ser ligado ou desligado nas configurações.
             </p>
           </section>
 
           {/* Team radio */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Team Radio</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Rádio das equipes</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              The radio messages F1 picks for the world feed pop up over the track map with the driver,
-              a caption and the audio, in replays and live timing. In replays, audio plays at 1x speed.
-              Needs an F1 TV sign-in.
+              As mensagens de rádio que a F1 escolhe para a transmissão mundial aparecem sobre o mapa da pista, com o piloto, a legenda e o áudio, em replays e ao vivo. Nos replays, o áudio toca em velocidade 1x. Exige login no F1 TV.
             </p>
             <p className="text-f1-text leading-relaxed">
-              Captions are made locally using Whisper. Accuracy varies depending on quality and clarity.
-              Turn team radio or its audio off in Settings &gt; Team Radio. The same tab chooses the caption
-              models for replays and live timing and, with an OpenRouter key, can have an AI model listen to
-              each clip and correct its caption.
+              As legendas são feitas localmente com o Whisper. A precisão varia com a qualidade e a clareza do áudio. Desligue o rádio ou o áudio dele em Configurações &gt; Rádio das equipes. A mesma aba escolhe os modelos de legenda para replays e ao vivo e, com uma chave do OpenRouter, pode pedir a um modelo de IA que ouça cada mensagem e corrija a legenda.
             </p>
           </section>
           </>
@@ -698,72 +631,57 @@ export default function FeaturesPage() {
 
           {/* Live Timing */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Live Timing</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Cronometragem ao vivo</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              During active F1 sessions, live timing connects directly to F1&apos;s live feed for the
-              leaderboard, tyres, sectors and mini-sectors, race control messages and weather. In
-              qualifying, the current part (Q1, Q2 or Q3) and the time remaining are shown.
+              Durante as sessões da F1, a cronometragem ao vivo se conecta direto à transmissão de dados da F1 para a tabela, pneus, setores e minissetores, mensagens da direção de prova e clima. Na classificação, mostra a parte atual (Q1, Q2 ou Q3) e o tempo restante.
             </p>
             <p className="text-f1-text leading-relaxed mb-3">
-              With an F1 TV sign-in, the track map shows every car and team radio plays as it&apos;s
-              broadcast, and selected drivers show telemetry. Lap Analysis and the other replay-only features (see{" "}
-              <a href="#availability" className="text-f1-red hover:underline font-semibold">Feature Availability</a>)
-              are available once the session is processed, usually 1&ndash;2 hours after the chequered flag.
+              Com login no F1 TV, o mapa mostra todos os carros, o rádio das equipes toca conforme é transmitido e os pilotos selecionados mostram telemetria. A Análise de voltas e os outros recursos só de replay (veja{" "}
+              <a href="#availability" className="text-f1-red hover:underline font-semibold">Disponibilidade dos recursos</a>) ficam disponíveis quando a sessão é processada, geralmente 1&ndash;2 horas depois da bandeirada.
             </p>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mb-2">
-              Broadcast delay
+              Atraso da transmissão
             </h3>
             <p className="text-f1-text leading-relaxed">
-              The broadcast delay slider pauses the live data feed until it aligns with your streaming
-              service or TV broadcast. Set the delay to match how far behind your broadcast is, and the
-              leaderboard will update in sync with what you see on screen. Your delay setting is saved
-              automatically. You can also enter an exact delay value manually.
+              O controle de atraso segura os dados ao vivo até ficarem alinhados com o seu streaming ou a TV. Ajuste o atraso para o quanto a sua transmissão está atrasada, e a tabela vai atualizar junto com o que você vê na tela. O ajuste é salvo automaticamente. Você também pode digitar um valor exato.
             </p>
           </section>
 
           {/* Playback */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Playback Controls</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Controles de reprodução</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Control replay speed from 0.5x to 20x, skip forward and backward by 5 seconds, 30 seconds,
-              1 minute, or 5 minutes, or jump directly to any lap. A progress bar shows the current position
-              within the session. For qualifying and practice, elapsed and remaining session time are displayed.
+              Controle a velocidade do replay de 0,5x a 20x, avance ou volte 5 segundos, 30 segundos, 1 minuto ou 5 minutos, ou pule direto para qualquer volta. Uma barra mostra a posição atual na sessão. Em classificações e treinos, aparecem o tempo decorrido e o restante.
             </p>
             <h3 className="text-sm font-bold text-f1-red uppercase tracking-wider mb-2">
-              Session time
+              Tempo da sessão
             </h3>
             <p className="text-f1-text leading-relaxed">
-              Total session time is hidden by default to avoid spoilers &mdash; a longer-than-expected
-              session can reveal red flags and stoppages. You can enable it in the settings menu.
+              O tempo total da sessão fica oculto por padrão para evitar spoilers &mdash; uma sessão mais longa que o normal pode revelar bandeiras vermelhas e interrupções. Você pode ativá-lo nas configurações.
             </p>
           </section>
 
           {/* Sync to a recording */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Sync to a Recording</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Sincronizar com uma gravação</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Watching a recording somewhere else? Sync the replay to it so the timing data matches what&apos;s on
-              screen. (To watch F1 TV inside the app, see{" "}
-              <a href="#broadcast" className="text-f1-red hover:underline font-semibold">Broadcast</a>.)
-              There are two sync methods:
+              Está assistindo uma gravação em outro lugar? Sincronize o replay com ela para os dados baterem com o que está na tela. (Para assistir o F1 TV dentro do app, veja{" "}
+              <a href="#broadcast" className="text-f1-red hover:underline font-semibold">Transmissão</a>.) Há duas formas de sincronizar:
             </p>
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-white mb-1">Photo Sync</h3>
+                <h3 className="text-sm font-bold text-white mb-1">Sincronizar por foto</h3>
                 <p className="text-sm text-f1-text leading-relaxed">
-                  Take a screenshot of the broadcast showing the leaderboard, then upload it. A vision model
-                  reads the driver positions and gap times from the image and finds the matching point in the
-                  replay data, automatically jumping to the correct moment.
+                  Tire uma captura da transmissão mostrando a tabela e envie. Um modelo de visão lê as posições e as diferenças da imagem e encontra o ponto correspondente no replay, pulando automaticamente para o momento certo.
                 </p>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white mb-1">Manual Sync</h3>
+                <h3 className="text-sm font-bold text-white mb-1">Sincronização manual</h3>
                 <p className="text-sm text-f1-text leading-relaxed">
-                  Enter the gap times for the top two drivers as shown on the broadcast. The replay searches
-                  for the closest matching frame based on those gaps and syncs to it.
+                  Digite as diferenças dos dois primeiros pilotos como aparecem na transmissão. O replay procura o momento mais parecido com essas diferenças e sincroniza nele.
                 </p>
               </div>
             </div>
@@ -774,8 +692,7 @@ export default function FeaturesPage() {
             <h2 className="text-lg font-bold text-white mb-1">Picture-in-Picture</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed">
-              Pop the track map and leaderboard out into their own small window, so you can place them
-              beside a broadcast. Use the Picture-in-Picture button, in replays and live timing. Desktop only.
+              Abra o mapa da pista e a tabela numa janelinha separada, para colocá-la ao lado de uma transmissão. Use o botão Picture-in-Picture, em replays e ao vivo. Só no computador.
             </p>
           </section>
           </>
@@ -786,83 +703,68 @@ export default function FeaturesPage() {
           {/* Broadcast */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h2 className="text-lg font-bold text-white">Broadcast</h2>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-f1-red/20 text-f1-red leading-none">F1 TV Pro or Premium</span>
-              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-white/10 text-f1-muted leading-none">Replays only</span>
+              <h2 className="text-lg font-bold text-white">Transmissão</h2>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-f1-red/20 text-f1-red leading-none">F1 TV Pro ou Premium</span>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-white/10 text-f1-muted leading-none">Só em replays</span>
             </div>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Watch the session&apos;s F1 TV replay inside the app, in step with the timing. Switch the track map to{" "}
-              <span className="font-bold text-white">Broadcast</span> (top right of the track map). The app finds the
-              session on F1 TV for you, and the video follows the replay: play, pause, speed changes and skips,
-              including Skip to restart after a red flag.
+              Assista o replay do F1 TV da sessão dentro do app, junto com a cronometragem. Mude o mapa da pista para{" "}
+              <span className="font-bold text-white">Transmissão</span> (no canto superior direito do mapa). O app encontra a sessão no F1 TV para você, e o vídeo segue o replay: tocar, pausar, mudar a velocidade e pular, inclusive Pular para a relargada depois de uma bandeira vermelha.
             </p>
             <p className="text-f1-text leading-relaxed mb-3">
-              <span className="font-bold text-white">Multi-view</span> puts the broadcast beside up to two drivers&apos;
-              onboard cameras and the track map. <span className="font-bold text-white">Single view</span> shows the
-              broadcast full width with the track map over it. Choose which opens in Settings &gt; Broadcast, along
-              with onboard telemetry, the track map and race control.
+              <span className="font-bold text-white">Multivisão</span> coloca a transmissão ao lado das câmeras onboard de até dois pilotos e do mapa da pista. <span className="font-bold text-white">Visão única</span> mostra a transmissão na largura toda, com o mapa por cima. Escolha qual abre em Configurações &gt; Transmissão, junto com a telemetria onboard, o mapa da pista e a direção de prova.
             </p>
             <p className="text-f1-text leading-relaxed mb-5">
-              Each onboard can show the driver&apos;s <span className="font-bold text-white">telemetry</span> (speed,
-              gear, throttle and brake) and, in qualifying and practice, a{" "}
-              <span className="font-bold text-white">sector strip</span>: their mini-sectors as one line along the
-              bottom edge of the video, filling in purple, green or yellow as they complete each one, so you can see
-              how the lap is going while you watch it.
+              Cada onboard pode mostrar a <span className="font-bold text-white">telemetria</span> (velocidade, marcha, acelerador e freio) do piloto e, em classificações e treinos, uma{" "}
+              <span className="font-bold text-white">faixa de setores</span>: os minissetores dele numa linha ao longo da borda inferior do vídeo, preenchidos de roxo, verde ou amarelo conforme ele completa cada um, para você acompanhar a volta enquanto assiste.
             </p>
             <BroadcastGuide />
           </section>
 
           {/* Automatic sync */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1">Automatic Sync</h2>
+            <h2 className="text-lg font-bold text-white mb-1">Sincronização automática</h2>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              The first time you open a session&apos;s broadcast, the server works out where the replay starts in
-              F1 TV&apos;s video. An onboard camera&apos;s sound is mostly its car&apos;s engine, and the engine&apos;s
-              pitch rises and falls with its revs, which are in the timing data. The server slides the two against
-              each other until they line up, then checks the answer with a second driver.
+              Na primeira vez que você abre a transmissão de uma sessão, o servidor descobre onde o replay começa no vídeo do F1 TV. O som de uma câmera onboard é quase todo o motor do carro, e o tom do motor sobe e desce com a rotação, que está nos dados de cronometragem. O servidor desliza um contra o outro até se alinharem e confere a resposta com um segundo piloto.
             </p>
             <div className="mb-4">
               <SyncDiagram />
             </div>
             <ul className="space-y-2 mb-4 text-sm text-f1-text leading-relaxed">
-              <li><span className="font-bold text-white">Races and sprints</span> use the start, which never repeats.</li>
-              <li><span className="font-bold text-white">Qualifying and practice</span> use a flying lap.</li>
-              <li>It runs when the session is processed, while F1 TV&apos;s audio can still be read. If that doesn&apos;t work, it tries again the first time you open the broadcast (about a minute). The result is saved for that session.</li>
-              <li>The onboards follow the broadcast: all of F1 TV&apos;s feeds for a session share one timeline.</li>
+              <li><span className="font-bold text-white">Corridas e sprints</span> usam a largada, que nunca se repete.</li>
+              <li><span className="font-bold text-white">Classificações e treinos</span> usam uma volta lançada.</li>
+              <li>Isso roda quando a sessão é processada, enquanto o áudio do F1 TV ainda pode ser lido. Se não der certo, tenta de novo na primeira vez que você abre a transmissão (cerca de um minuto). O resultado fica salvo para aquela sessão.</li>
+              <li>As onboards seguem a transmissão: todos os vídeos do F1 TV de uma sessão compartilham a mesma linha do tempo.</li>
             </ul>
-            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">How it&apos;s synced</p>
+            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">Como foi sincronizado</p>
             <p className="text-sm text-f1-text leading-relaxed mb-3">
-              The hover controls show a line saying how the session is synced:
+              Os controles que aparecem ao passar o mouse mostram uma linha dizendo como a sessão foi sincronizada:
             </p>
             <ul className="space-y-2 mb-4 text-sm text-f1-text leading-relaxed">
-              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-green-400 flex-shrink-0" /><span><span className="font-bold text-white">Synced by engine sound</span> — matched as above, with the drivers it used. Accurate to a fraction of a second.</span></li>
-              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-white/50 flex-shrink-0" /><span><span className="font-bold text-white">Lining up with the timing</span> — the first match is running.</span></li>
-              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" /><span><span className="font-bold text-white">Synced by video time stamp</span> — F1 TV protects some sessions&apos; audio, so the engine sound can&apos;t be matched. The time stamp in F1 TV&apos;s video is used instead, usually within a second or two.</span></li>
-              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" /><span><span className="font-bold text-white">Synced manually</span> — you lined it up yourself.</span></li>
+              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-green-400 flex-shrink-0" /><span><span className="font-bold text-white">Sincronizado pelo som do motor</span> — alinhado como acima, com os pilotos usados. Preciso em frações de segundo.</span></li>
+              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-white/50 flex-shrink-0" /><span><span className="font-bold text-white">Alinhando com a cronometragem</span> — o primeiro alinhamento está rodando.</span></li>
+              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" /><span><span className="font-bold text-white">Sincronizado pela marca de tempo do vídeo</span> — o F1 TV protege o áudio de algumas sessões, então o som do motor não pode ser comparado. Usa-se a marca de tempo do vídeo do F1 TV, geralmente com erro de um ou dois segundos.</span></li>
+              <li className="flex items-start gap-2"><span className="mt-1.5 w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" /><span><span className="font-bold text-white">Sincronizado manualmente</span> — você mesmo alinhou.</span></li>
             </ul>
-            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">Adjusting it</p>
+            <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">Ajustando</p>
             <p className="text-sm text-f1-text leading-relaxed">
-              Use <span className="font-bold text-white">Fine-tune video sync</span> to nudge the video ±0.5s or ±5s;
-              the adjustment shows as a chip, and its × goes back to the automatic sync. For full control, press{" "}
-              <span className="font-bold text-white">Sync manually</span>, beside the sync status:
-              the video gets its own play bar, you find the moment that matches the timing (lights out or a car
-              crossing the line works well), and press <span className="font-bold text-white">Set sync here</span>.
-              Pausing the replay first makes this easier. A manual sync is kept until you clear it.
+              Use <span className="font-bold text-white">Ajuste fino da sincronização</span> para mover o vídeo ±0,5s ou ±5s; o ajuste aparece numa etiqueta, e o × dela volta à sincronização automática. Para controle total, aperte{" "}
+              <span className="font-bold text-white">Sincronizar manualmente</span>, ao lado do status da sincronização: o vídeo ganha a própria barra de reprodução, você encontra o momento que bate com a cronometragem (o apagar das luzes ou um carro cruzando a linha funcionam bem) e aperta <span className="font-bold text-white">Sincronizar aqui</span>. Pausar o replay antes facilita. A sincronização manual fica valendo até você apagá-la.
             </p>
           </section>
 
           {/* Good to know */}
           <section className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-3">Good to Know</h2>
+            <h2 className="text-lg font-bold text-white mb-3">Bom saber</h2>
             <ul className="space-y-2 text-sm text-f1-text leading-relaxed">
-              <li><span className="font-bold text-white">Replays only for now.</span> Broadcast isn&apos;t available in live timing yet.</li>
-              <li><span className="font-bold text-white">Needs F1 TV Pro or Premium.</span> The Broadcast button appears once you&apos;re signed in with one of these. Self-hosted only.</li>
-              <li><span className="font-bold text-white">Tablets and larger screens.</span> On touch screens, tap the video to show its controls.</li>
-              <li><span className="font-bold text-white">Where you are matters.</span> F1 TV only streams in some countries and decides by your internet address, so a VPN can stop the video. If it won&apos;t play, the message says why, with a Retry button.</li>
-              <li><span className="font-bold text-white">Picture quality adjusts to your connection.</span> It starts lower and improves after a few seconds, and drops briefly after a skip.</li>
-              <li><span className="font-bold text-white">Team radio plays twice?</span> The broadcast often plays the same message: turn off Radio audio in the hover controls and keep the captions.</li>
+              <li><span className="font-bold text-white">Por enquanto, só em replays.</span> A transmissão ainda não está disponível ao vivo.</li>
+              <li><span className="font-bold text-white">Exige F1 TV Pro ou Premium.</span> O botão Transmissão aparece quando você entra com um desses planos. Só em instalação própria.</li>
+              <li><span className="font-bold text-white">Tablets e telas maiores.</span> Em telas de toque, toque no vídeo para mostrar os controles.</li>
+              <li><span className="font-bold text-white">Onde você está faz diferença.</span> O F1 TV só transmite em alguns países e decide pelo seu endereço de internet, então uma VPN pode impedir o vídeo. Se não tocar, a mensagem diz o motivo, com um botão Tentar de novo.</li>
+              <li><span className="font-bold text-white">A qualidade da imagem se ajusta à sua conexão.</span> Começa mais baixa e melhora depois de alguns segundos, e cai um pouco depois de um salto.</li>
+              <li><span className="font-bold text-white">O rádio toca duas vezes?</span> A transmissão muitas vezes toca a mesma mensagem: desligue o Áudio do rádio nos controles e mantenha as legendas.</li>
             </ul>
           </section>
           </>
@@ -872,12 +774,12 @@ export default function FeaturesPage() {
           <>
           {/* Feature availability */}
           <section id="availability" className="bg-f1-card border border-f1-border rounded-xl p-6 scroll-mt-20">
-            <h2 className="text-lg font-bold text-white mb-4">Feature Availability</h2>
+            <h2 className="text-lg font-bold text-white mb-4">Disponibilidade dos recursos</h2>
             <div className="overflow-x-auto -mx-2">
               <table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">
-                    <th className="text-left font-bold px-2 pb-2">Feature</th>
+                    <th className="text-left font-bold px-2 pb-2">Recurso</th>
                     {AVAILABILITY_SESSIONS.map((s) => (
                       <th key={s} className="text-center font-bold px-2 pb-2 whitespace-nowrap">{s}</th>
                     ))}
@@ -895,7 +797,7 @@ export default function FeaturesPage() {
                             ) : (
                               <>
                                 {c.includes("R") && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white">Replay</span>}
-                                {c.includes("L") && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-f1-red/20 text-f1-red">Live</span>}
+                                {c.includes("L") && <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-f1-red/20 text-f1-red">Ao vivo</span>}
                               </>
                             )}
                           </span>
@@ -907,7 +809,7 @@ export default function FeaturesPage() {
               </table>
             </div>
             <p className="mt-3 text-xs text-f1-muted">
-              Live car positions, telemetry and team radio need an F1 TV sign-in. Mini-sectors are desktop only.
+              Posição dos carros, telemetria e rádio das equipes ao vivo exigem login no F1 TV. Os minissetores são só para computador.
             </p>
           </section>
           </>
@@ -924,7 +826,7 @@ export default function FeaturesPage() {
             }}
             className="text-f1-muted hover:text-white transition-colors text-sm"
           >
-            Back to session picker
+            Voltar à escolha de sessão
           </button>
         </div>
       </div>

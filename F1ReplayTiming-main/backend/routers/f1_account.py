@@ -33,7 +33,7 @@ async def sign_in(body: SignInRequest):
         if body.token:
             return await asyncio.to_thread(f1_account.sign_in_token, body.token)
         if not body.email or not body.password:
-            raise HTTPException(status_code=400, detail="Enter your F1 account email and password.")
+            raise HTTPException(status_code=400, detail="Digite o e-mail e a senha da sua conta F1.")
         return await asyncio.to_thread(f1_account.sign_in_password, body.email, body.password, body.remember)
     except f1_account.F1AccountError as e:
         raise HTTPException(status_code=400, detail=str(e))

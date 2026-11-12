@@ -50,7 +50,7 @@ export default function DriverDropdown({ value, onChange, drivers, placeholder, 
               onClick={() => { onChange(null); setOpen(false); }}
               className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-f1-muted hover:bg-white/5 transition-colors"
             >
-              Clear
+              Limpar
             </button>
           )}
           {drivers.map((d) => (

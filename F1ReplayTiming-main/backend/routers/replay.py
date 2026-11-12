@@ -143,7 +143,7 @@ async def replay_websocket(
         async def send_status(msg: str):
             await websocket.send_json({"type": "status", "message": msg})
 
-        await send_status("Loading session data...")
+        await send_status("Carregando os dados da sessão...")
 
         # On-demand: process session if data doesn't exist yet
         available = await ensure_session_data_ws(year, round_num, type, send_status)
@@ -151,19 +151,19 @@ async def replay_websocket(
         if not available:
             await websocket.send_json({
                 "type": "error",
-                "message": "Failed to load session data. The session may not be available yet.",
+                "message": "Falha ao carregar os dados da sessão. Ela pode ainda não estar disponível.",
             })
             await websocket.close()
             return
 
-        await send_status("Preparing replay...")
+        await send_status("Preparando o replay...")
         frames = await _get_frames(year, round_num, type)
         cache_key = f"{year}_{round_num}_{type}"
         _client_connect(cache_key)
 
         if not frames:
             await _client_disconnect(cache_key)
-            await websocket.send_json({"type": "error", "message": "No position data available"})
+            await websocket.send_json({"type": "error", "message": "Nenhum dado de posição disponível"})
             await websocket.close()
             return
 

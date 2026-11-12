@@ -11,9 +11,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app_config import (
     PAYWALL_SINCE,
+    allowed_hosts,
     is_public_mode,
     public_archive_last,
     origin_secret,
@@ -23,7 +25,7 @@ from app_config import (
 )
 from auth import is_auth_enabled, verify_token
 from routers import sessions, track, laps, results, replay, replay_data, telemetry, sync, live, live_status
-from routers import auth_routes, f1tv, team_radio
+from routers import auth_routes, f1tv, team_radio, insights, circuits
 from routers import f1_account as f1_account_routes
 from services.auto_precompute import auto_precompute_loop, get_allowed_session_types
 from services.retention import retention_loop
@@ -152,6 +154,19 @@ class OriginSecretMiddleware:
 # already gzipped, such as replay chunks passed through from R2).
 app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
 app.add_middleware(OriginSecretMiddleware)
+# Outermost: answer only to the allowed host names (HTTP and WebSocket)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    # No address of this app sent to sites it links to (such as F1 TV)
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    # Not to be framed by other sites (clickjacking)
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    return response
 
 
 @app.middleware("http")
@@ -168,6 +183,8 @@ app.include_router(auth_routes.router)
 app.include_router(sessions.router)
 app.include_router(track.router)
 app.include_router(laps.router)
+app.include_router(insights.router)
+app.include_router(circuits.router)
 app.include_router(team_radio.router)
 app.include_router(results.router)
 app.include_router(replay.router)

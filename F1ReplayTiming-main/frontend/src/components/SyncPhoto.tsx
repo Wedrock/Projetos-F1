@@ -82,7 +82,7 @@ export default function SyncPhoto({
     setError(null);
 
     if (file.size > MAX_UPLOAD_BYTES) {
-      setError("Image is too large (max 20MB).");
+      setError("A imagem é grande demais (máx. 20MB).");
       setStep("capture");
       return;
     }
@@ -100,8 +100,8 @@ export default function SyncPhoto({
       );
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ detail: "Request failed" }));
-        throw new Error(err.detail || `Error ${resp.status}`);
+        const err = await resp.json().catch(() => ({ detail: "Falha na requisição" }));
+        throw new Error(err.detail || `Erro ${resp.status}`);
       }
 
       const body = await resp.json();
@@ -109,7 +109,7 @@ export default function SyncPhoto({
       setResult(data);
       setStep("result");
     } catch (e: any) {
-      setError(e.message || "Failed to sync");
+      setError(e.message || "Falha ao sincronizar");
       setStep("capture");
     }
   }
@@ -117,7 +117,7 @@ export default function SyncPhoto({
   async function handleManualSync() {
     const lap = parseInt(manualLap);
     if (!lap || lap < 1) {
-      setError("Enter a valid lap number");
+      setError("Digite um número de volta válido");
       return;
     }
 
@@ -150,7 +150,7 @@ export default function SyncPhoto({
     }
 
     if (drivers.length === 0) {
-      setError("Enter at least one driver");
+      setError("Digite pelo menos um piloto");
       return;
     }
 
@@ -177,8 +177,8 @@ export default function SyncPhoto({
       );
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ detail: "Request failed" }));
-        throw new Error(err.detail || `Error ${resp.status}`);
+        const err = await resp.json().catch(() => ({ detail: "Falha na requisição" }));
+        throw new Error(err.detail || `Erro ${resp.status}`);
       }
 
       const data: SyncResult = await resp.json();
@@ -186,7 +186,7 @@ export default function SyncPhoto({
       setTab("photo"); // reuse result view
       setStep("result");
     } catch (e: any) {
-      setError(e.message || "Failed to sync");
+      setError(e.message || "Falha ao sincronizar");
     } finally {
       setManualProcessing(false);
     }
@@ -234,7 +234,7 @@ export default function SyncPhoto({
       <div className="bg-f1-card border border-f1-border rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-f1-border">
-          <h2 className="text-lg font-bold text-white">Sync with TV Replay</h2>
+          <h2 className="text-lg font-bold text-white">Sincronizar com o replay da TV</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-f1-muted hover:text-white"
@@ -256,7 +256,7 @@ export default function SyncPhoto({
                   : "text-f1-muted hover:text-white"
               }`}
             >
-              Photo
+              Foto
             </button>
             <button
               onClick={() => { setTab("manual"); resetToStart(); }}
@@ -266,7 +266,7 @@ export default function SyncPhoto({
                   : "text-f1-muted hover:text-white"
               }`}
             >
-              Manual Entry
+              Digitar
             </button>
           </div>
         )}
@@ -279,8 +279,7 @@ export default function SyncPhoto({
               {step === "instructions" && (
                 <div className="space-y-4">
                   <p className="text-sm text-f1-muted leading-relaxed">
-                    Take a photo of the leaderboard on your TV to sync the replay
-                    to the exact moment.
+                    Tire uma foto da tabela na sua TV para sincronizar o replay no momento exato.
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-start gap-3">
@@ -288,7 +287,7 @@ export default function SyncPhoto({
                         1
                       </span>
                       <p className="text-sm text-white">
-                        Pause the TV on a frame where the leaderboard is clearly visible
+                        Pause a TV num quadro em que a tabela apareça bem
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
@@ -296,8 +295,7 @@ export default function SyncPhoto({
                         2
                       </span>
                       <p className="text-sm text-white">
-                        Make sure the lap number and at least the top 5 drivers with
-                        their gap times are visible
+                        Confira se o número da volta e pelo menos os 5 primeiros pilotos com as diferenças estão visíveis
                       </p>
                     </div>
                     <div className="flex items-start gap-3">
@@ -305,7 +303,7 @@ export default function SyncPhoto({
                         3
                       </span>
                       <p className="text-sm text-white">
-                        Take a photo and we will match it to the exact moment in the race
+                        Tire uma foto e nós encontramos o momento exato na corrida
                       </p>
                     </div>
                   </div>
@@ -313,7 +311,7 @@ export default function SyncPhoto({
                     onClick={() => setStep("capture")}
                     className="w-full py-3 bg-f1-red hover:bg-red-700 rounded-lg text-white font-bold text-sm transition-colors"
                   >
-                    Continue
+                    Continuar
                   </button>
                 </div>
               )}
@@ -335,7 +333,7 @@ export default function SyncPhoto({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <circle cx="12" cy="13" r="3" />
                     </svg>
-                    Take Photo
+                    Tirar foto
                   </button>
 
                   <button
@@ -345,12 +343,12 @@ export default function SyncPhoto({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    Upload Image
+                    Enviar imagem
                   </button>
 
                   <div className="flex items-center gap-2 justify-center">
                     <div className="h-px flex-1 bg-f1-border" />
-                    <span className="text-xs text-f1-muted">or</span>
+                    <span className="text-xs text-f1-muted">ou</span>
                     <div className="h-px flex-1 bg-f1-border" />
                   </div>
 
@@ -358,7 +356,7 @@ export default function SyncPhoto({
                     <kbd className="px-1.5 py-0.5 bg-f1-border rounded text-xs font-mono text-white">Ctrl</kbd>{" "}
                     +{" "}
                     <kbd className="px-1.5 py-0.5 bg-f1-border rounded text-xs font-mono text-white">V</kbd>{" "}
-                    to paste from clipboard
+                    para colar da área de transferência
                   </p>
 
                   <input
@@ -381,7 +379,7 @@ export default function SyncPhoto({
                     onClick={() => setStep("instructions")}
                     className="w-full text-sm text-f1-muted hover:text-white transition-colors"
                   >
-                    Back
+                    Voltar
                   </button>
                 </div>
               )}
@@ -390,9 +388,9 @@ export default function SyncPhoto({
               {step === "processing" && (
                 <div className="text-center py-6">
                   <div className="inline-block w-10 h-10 border-3 border-f1-muted border-t-f1-red rounded-full animate-spin mb-4" />
-                  <p className="text-sm text-white font-bold">Analysing leaderboard...</p>
+                  <p className="text-sm text-white font-bold">Analisando a tabela...</p>
                   <p className="text-xs text-f1-muted mt-1">
-                    Extracting positions and gap times
+                    Extraindo posições e diferenças
                   </p>
                 </div>
               )}
@@ -402,15 +400,15 @@ export default function SyncPhoto({
                 <div className="space-y-4">
                   <div className="bg-white/5 rounded-lg px-4 py-3 space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-f1-muted">Matched to</span>
+                      <span className="text-sm text-f1-muted">Encontrado em</span>
                       <span className="text-sm font-extrabold text-white">
-                        Lap {result.lap} - {formatTime(result.timestamp)}
+                        Volta {result.lap} - {formatTime(result.timestamp)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-f1-muted">Detected</span>
+                      <span className="text-sm text-f1-muted">Detectados</span>
                       <span className="text-sm text-white">
-                        {result.extracted.drivers.length} drivers, Lap{" "}
+                        {result.extracted.drivers.length} pilotos, volta{" "}
                         {result.extracted.lap}
                       </span>
                     </div>
@@ -428,7 +426,7 @@ export default function SyncPhoto({
                         </span>
                         <span className="font-extrabold text-white">{d.abbr}</span>
                         <span className="text-f1-muted ml-auto">
-                          {d.gap || "Leader"}
+                          {d.gap || "Líder"}
                         </span>
                       </div>
                     ))}
@@ -445,7 +443,7 @@ export default function SyncPhoto({
                     }}
                     className="w-full py-3 bg-f1-red hover:bg-red-700 rounded-lg text-white font-bold text-sm transition-colors cursor-pointer relative z-[60]"
                   >
-                    Sync to this moment
+                    Sincronizar neste momento
                   </button>
 
                   <button
@@ -455,7 +453,7 @@ export default function SyncPhoto({
                     }}
                     className="w-full text-sm text-f1-muted hover:text-white transition-colors"
                   >
-                    Try again
+                    Tentar de novo
                   </button>
                 </div>
               )}
@@ -466,7 +464,7 @@ export default function SyncPhoto({
           {tab === "manual" && step !== "result" && (
             <div className="space-y-4">
               <p className="text-sm text-f1-muted leading-relaxed">
-                Enter the lap number and the top drivers with their gaps as shown on the TV leaderboard.
+                Digite o número da volta e os primeiros pilotos com as diferenças como aparecem na tabela da TV.
               </p>
 
               {error && (
@@ -478,7 +476,7 @@ export default function SyncPhoto({
               {/* Lap number */}
               <div>
                 <label className="text-xs font-bold text-f1-muted uppercase tracking-wider block mb-1.5">
-                  Lap Number
+                  Número da volta
                 </label>
                 <input
                   type="number"
@@ -493,7 +491,7 @@ export default function SyncPhoto({
               {/* Gap mode toggle */}
               <div>
                 <label className="text-xs font-bold text-f1-muted uppercase tracking-wider block mb-1.5">
-                  Broadcast showing
+                  A transmissão mostra
                 </label>
                 <div className="flex border border-f1-border rounded-lg overflow-hidden">
                   <button
@@ -503,7 +501,7 @@ export default function SyncPhoto({
                       manualGapMode === "interval" ? "bg-f1-red text-white" : "bg-f1-dark text-f1-muted hover:text-white"
                     }`}
                   >
-                    Interval
+                    Intervalo
                   </button>
                   <button
                     type="button"
@@ -512,7 +510,7 @@ export default function SyncPhoto({
                       manualGapMode === "leader" ? "bg-f1-red text-white" : "bg-f1-dark text-f1-muted hover:text-white"
                     }`}
                   >
-                    Leader
+                    Líder
                   </button>
                 </div>
               </div>
@@ -520,7 +518,7 @@ export default function SyncPhoto({
               {/* Driver entries */}
               <div className="space-y-3">
                 <label className="text-xs font-bold text-f1-muted uppercase tracking-wider block">
-                  Drivers
+                  Pilotos
                 </label>
 
                 {/* P1 */}
@@ -536,7 +534,7 @@ export default function SyncPhoto({
                     placeholder="VER"
                     className="w-20 bg-f1-dark border border-f1-border rounded-lg px-3 py-2 text-sm text-white placeholder:text-f1-muted/50 focus:outline-none focus:border-f1-red uppercase"
                   />
-                  <span className="text-xs text-f1-muted flex-1 text-right">{manualGapMode === "interval" ? "Interval" : "Leader"}</span>
+                  <span className="text-xs text-f1-muted flex-1 text-right">{manualGapMode === "interval" ? "Intervalo" : "Líder"}</span>
                 </div>
 
                 {/* P2 */}
@@ -595,7 +593,7 @@ export default function SyncPhoto({
                 disabled={manualProcessing}
                 className="w-full py-3 bg-f1-red hover:bg-red-700 rounded-lg text-white font-bold text-sm transition-colors disabled:opacity-50"
               >
-                {manualProcessing ? "Matching..." : "Find Moment"}
+                {manualProcessing ? "Procurando..." : "Encontrar o momento"}
               </button>
             </div>
           )}

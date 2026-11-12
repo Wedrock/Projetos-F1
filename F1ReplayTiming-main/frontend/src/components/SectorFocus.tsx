@@ -42,7 +42,7 @@ export default function SectorFocusChips({ selected, drivers, target, onPick }: 
 
   if (!target) return null;
   if (selected.length === 0) {
-    return chip(target, true, "Leader", undefined, "Select a driver on the leaderboard to show theirs");
+    return chip(target, true, "Leader", undefined, "Selecione um piloto na tabela para mostrar os setores dele");
   }
   if (selected.length === 1) return chip(target, true);
   return (

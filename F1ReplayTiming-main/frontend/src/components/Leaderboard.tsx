@@ -6,6 +6,7 @@ import { ReplaySettings } from "@/hooks/useSettings";
 import { TYRE_COLORS, TYRE_SHORT, TEAM_ABBR } from "@/lib/constants";
 import { lapColorClass, SectorMarkers } from "@/lib/lapTiming";
 import { MiniSectorMarkers, miniMarkersWidth } from "@/lib/miniSectors";
+import { TyreModel, tyreHealth, healthColor } from "@/lib/tyreModel";
 
 export interface LapEntry {
   driver: string;
@@ -54,6 +55,10 @@ interface Props {
   mobileTeamAbbrHidden?: boolean;
   /** Mini-sector statuses per driver; replaces the three sector squares */
   miniSectors?: { counts: number[]; states: Map<string, number[] | null> } | null;
+  /** Tyre degradation model; shows each tyre's health when given */
+  tyreModel?: TyreModel | null;
+  /** Rain falling, for the model's track condition when it has none for the lap */
+  rainfall?: boolean;
 }
 
 function formatGap(gap: string | null): string {
@@ -62,14 +67,14 @@ function formatGap(gap: string | null): string {
   const lapped = gap.match(/^(\d+)\s*L$/);
   if (lapped) {
     const n = parseInt(lapped[1]);
-    return `+${n} Lap${n > 1 ? "s" : ""}`;
+    return `+${n} Volta${n > 1 ? "s" : ""}`;
   }
   // Handle "LAP 1", "LAP 0" format (interval data)
   const lapFormat = gap.match(/^LAP\s+(\d+)$/i);
   if (lapFormat) {
     const n = parseInt(lapFormat[1]);
-    if (n === 0) return "Interval";
-    return `+${n} Lap${n > 1 ? "s" : ""}`;
+    if (n === 0) return "Intervalo";
+    return `+${n} Volta${n > 1 ? "s" : ""}`;
   }
   return gap;
 }
@@ -112,7 +117,7 @@ function computeIntervals(sorted: ReplayDriver[]): Map<string, string> {
   return intervals;
 }
 
-export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick, settings, currentTime, isRace, isQualifying, compact, onScaleChange, lapData, currentLap, mobileTeamAbbrHidden, miniSectors }: Props) {
+export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick, settings, currentTime, isRace, isQualifying, compact, onScaleChange, lapData, currentLap, mobileTeamAbbrHidden, miniSectors, tyreModel, rainfall }: Props) {
   const [showInterval, setShowInterval] = useState(true);
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -165,10 +170,10 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
           const tyreLabel = compound ? (TYRE_SHORT[compound] || "?") : null;
 
           const displayGap = (() => {
-            if (drv.retired) return "Out";
+            if (drv.retired) return "Fora";
             if (drv.in_pit && isRace) return "PIT";
-            if (isRace && drv.position === 1) return showInterval ? "Interval" : "Leader";
-            if (drv.gap === "No time") return "No time";
+            if (isRace && drv.position === 1) return showInterval ? "Intervalo" : "Líder";
+            if (drv.gap === "No time") return "Sem tempo";
             if (isRace && intervals) {
               return intervals.get(drv.abbr) || formatGap(drv.gap);
             }
@@ -207,7 +212,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Team abbreviation - 28px */}
               {settings.showTeamAbbr && !mobileTeamAbbrHidden && (
-                <span className="w-7 text-[10px] font-bold text-f1-muted flex-shrink-0" title="Team">
+                <span className="w-7 text-[10px] font-bold text-f1-muted flex-shrink-0" title="Equipe">
                   {TEAM_ABBR[drv.team] || drv.team?.slice(0, 3).toUpperCase()}
                 </span>
               )}
@@ -230,7 +235,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Grid delta - 24px (race only) */}
               {isRace && settings.showGridChange && (
-              <span className="w-6 flex-shrink-0 text-center" title="Grid position change">
+              <span className="w-6 flex-shrink-0 text-center" title="Mudança de posição no grid">
                 {!drv.retired && currentTime >= 10 && (
                   drv.pit_start ? (
                     <span className="text-[10px] font-bold text-white">Pit</span>
@@ -271,8 +276,8 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Best lap time (practice/qualifying only) */}
               {!isRace && settings.showBestLapTime && (
-                <span className={`w-[60px] flex-shrink-0 text-xs font-bold text-right ${drv.position === 1 ? "text-purple-400" : "text-white"}`} title="Best lap time">
-                  {drv.retired ? "Out" : (drv.best_lap_time || (drv.position === 1 ? formatGap(drv.gap) : null) || "")}
+                <span className={`w-[60px] flex-shrink-0 text-xs font-bold text-right ${drv.position === 1 ? "text-purple-400" : "text-white"}`} title="Melhor volta">
+                  {drv.retired ? "Fora" : (drv.best_lap_time || (drv.position === 1 ? formatGap(drv.gap) : null) || "")}
                 </span>
               )}
 
@@ -284,19 +289,19 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
                     onClick={(e) => { e.stopPropagation(); setShowInterval(!showInterval); }}
                   >
                     <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white cursor-pointer hover:bg-white/20 transition-colors">
-                      {showInterval ? "Interval" : "Leader"}
+                      {showInterval ? "Intervalo" : "Líder"}
                     </span>
                   </span>
                 ) : isRace ? (
                   drv.in_pit && !drv.retired ? (
-                    <span className="w-14 flex-shrink-0 text-left text-yellow-400" title="In pit lane">
+                    <span className="w-14 flex-shrink-0 text-left text-yellow-400" title="No pit lane">
                       <span className="text-xs font-bold">PIT</span>
                       {drv.pit_time != null && (
                         <span className="text-[9px] font-bold ml-0.5 tabular-nums">{drv.pit_time.toFixed(1)}s</span>
                       )}
                     </span>
                   ) : (
-                    <span title={showInterval ? "Interval to car ahead" : "Gap to leader"} className={`w-14 flex-shrink-0 text-xs font-bold text-left tabular-nums ${
+                    <span title={showInterval ? "Intervalo para o carro da frente" : "Diferença para o líder"} className={`w-14 flex-shrink-0 text-xs font-bold text-left tabular-nums ${
                       showInterval && settings.highlightClose && displayGap && (() => {
                           const val = parseFloat(displayGap.replace("+", ""));
                           return !isNaN(val) && val > 0 && val < 1;
@@ -308,7 +313,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
                     </span>
                   )
                 ) : (
-                  <span className={`w-14 flex-shrink-0 text-xs font-bold text-left tabular-nums text-f1-muted ml-3 sm:ml-2`} title="Gap to leader">
+                  <span className={`w-14 flex-shrink-0 text-xs font-bold text-left tabular-nums text-f1-muted ml-3 sm:ml-2`} title="Diferença para o líder">
                     {displayGap}
                   </span>
                 )
@@ -321,7 +326,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
                   const last = drv.retired ? null : drv.last_lap;
                   const color = last?.overall ? "text-purple-400" : last?.personal ? "text-green-400" : "text-f1-muted";
                   return (
-                    <span className={`w-[50px] sm:w-[60px] flex-shrink-0 text-[11px] sm:text-xs text-right tabular-nums ${color}`} title="Last lap time">
+                    <span className={`w-[50px] sm:w-[60px] flex-shrink-0 text-[11px] sm:text-xs text-right tabular-nums ${color}`} title="Tempo da última volta">
                       {last?.time ?? ""}
                     </span>
                   );
@@ -352,7 +357,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
                 }
 
                 if (!lastLapTime || lastLapNum < 2 || drv.retired) return (
-                  <span className="w-[50px] sm:w-[60px] flex-shrink-0 text-[11px] sm:text-xs text-right tabular-nums text-f1-muted" title="Last lap time">
+                  <span className="w-[50px] sm:w-[60px] flex-shrink-0 text-[11px] sm:text-xs text-right tabular-nums text-f1-muted" title="Tempo da última volta">
                     {drv.retired ? "" : (lastLapTime || "")}
                   </span>
                 );
@@ -360,7 +365,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
                 const color = lapColorClass(lastLapTime, drv.abbr, lapData, currentTime, currentLap || 0, isRace, drv.has_fastest_lap);
 
                 return (
-                  <span className={`w-[50px] sm:w-[60px] flex-shrink-0 text-[11px] sm:text-xs text-right tabular-nums ${color}`} title="Last lap time">
+                  <span className={`w-[50px] sm:w-[60px] flex-shrink-0 text-[11px] sm:text-xs text-right tabular-nums ${color}`} title="Tempo da última volta">
                     {lastLapTime}
                   </span>
                 );
@@ -373,7 +378,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
                   <span
                     className={`${miniSectors ? "" : "w-7 "}flex-shrink-0 mx-1 text-center text-[9px] font-extrabold text-white/80`}
                     style={miniSectors ? { width: miniMarkersWidth(miniSectors.counts) } : undefined}
-                    title="Out lap"
+                    title="Volta de saída"
                   >
                     OUT
                   </span>
@@ -386,9 +391,9 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Pit stops / chequered flag - 20px (race only) */}
               {isRace && settings.showPitStops && (
-                <span className="w-5 flex-shrink-0 flex items-center justify-center ml-1" title={drv.finished ? "Finished" : "Pit stops"}>
+                <span className="w-5 flex-shrink-0 flex items-center justify-center ml-1" title={drv.finished ? "Terminou" : "Pit stops"}>
                   {drv.finished ? (
-                    <img src="/chequered-flag.png" alt="Finished" className="w-5 h-5 object-contain" />
+                    <img src="/chequered-flag.png" alt="Terminou" className="w-5 h-5 object-contain" />
                   ) : drv.pit_stops > 0 ? (
                     <span className="w-5 h-5 border border-f1-muted rounded-sm flex items-center justify-center text-[10px] font-extrabold text-white">
                       {drv.pit_stops}
@@ -399,7 +404,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Pit prediction - 36px (race only) */}
               {isRace && settings.showPitPrediction && (
-                <span className="w-9 flex-shrink-0 flex items-center justify-end gap-0.5 ml-1" title="Predicted position after pit stop">
+                <span className="w-9 flex-shrink-0 flex items-center justify-end gap-0.5 ml-1" title="Posição prevista depois do pit stop">
                   {drv.pit_prediction != null && (
                     <>
                       <span className={`flex items-center gap-0.5 text-[10px] font-bold ${
@@ -422,7 +427,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Pit gaps (ahead / behind) stacked - race only, shown with pit prediction */}
               {isRace && settings.showPitPrediction && settings.showPitFreeAir && (
-                <span className="w-9 flex-shrink-0 flex flex-col items-end leading-tight" title="Pit gaps: ↑ gap ahead, ↓ gap behind">
+                <span className="w-9 flex-shrink-0 flex flex-col items-end leading-tight" title="Diferenças no pit: ↑ para o carro da frente, ↓ para o de trás">
                   {drv.pit_prediction != null && (
                     <>
                       <span className="text-[8px] font-bold text-f1-muted">
@@ -448,7 +453,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Tyre history - 36px (race only) */}
               {isRace && settings.showTyreHistory && (
-                <span className="w-9 flex-shrink-0 flex items-center justify-end gap-0.5" title="Tyre history">
+                <span className="w-9 flex-shrink-0 flex items-center justify-end gap-0.5" title="Histórico de pneus">
                   {(drv.tyre_history || []).slice(-2).map((comp, i) => {
                     const hColor = TYRE_COLORS[comp] || "#888";
                     const hLabel = TYRE_SHORT[comp] || "?";
@@ -471,7 +476,7 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Current tyre compound - 20px */}
               {settings.showTyreType && (
-                <span className="w-5 flex-shrink-0 flex items-center justify-center ml-1" title="Current tyre">
+                <span className="w-5 flex-shrink-0 flex items-center justify-center ml-1" title="Pneu atual">
                   <span
                     className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold leading-none border-2"
                     style={{
@@ -487,10 +492,27 @@ export default function Leaderboard({ drivers, highlightedDrivers, onDriverClick
 
               {/* Tyre age - 20px */}
               {settings.showTyreAge && (
-                <span className="w-5 flex-shrink-0 text-xs font-extrabold text-white text-right" title="Tyre age (laps)">
+                <span className="w-5 flex-shrink-0 text-xs font-extrabold text-white text-right" title="Idade do pneu (voltas)">
                   {drv.tyre_life ?? ""}
                 </span>
               )}
+
+              {/* Tyre health (Bayesian model) - 28px */}
+              {settings.showTyreHealth && tyreModel && (() => {
+                const th = drv.retired ? null : tyreHealth(tyreModel, drv.compound, drv.tyre_life, currentLap, rainfall);
+                return (
+                  <span
+                    className="w-7 flex-shrink-0 flex items-center justify-end"
+                    title={th ? `Saúde do pneu ${th.health}% (modelo), cerca de +${th.expectedDelta.toFixed(2)}s por volta pelo desgaste` : "Saúde do pneu"}
+                  >
+                    {th && (
+                      <span className="w-5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <span className="block h-full rounded-full" style={{ width: `${th.health}%`, backgroundColor: healthColor(th.health) }} />
+                      </span>
+                    )}
+                  </span>
+                );
+              })()}
 
             </button>
           );

@@ -13,7 +13,7 @@ function formatDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`);
   return isNaN(d.getTime())
     ? iso
-    : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+    : d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
 function usePublicArchive(): PublicArchive | null {
@@ -24,8 +24,7 @@ function usePublicArchive(): PublicArchive | null {
 function Headline({ archive }: { archive: PublicArchive }) {
   return (
     <>
-      From {formatDate(archive.paywall_since)}, F1 requires an F1 TV subscription to access its timing data, which is
-      now behind a paywall.
+      A partir de {formatDate(archive.paywall_since)}, a F1 exige uma assinatura do F1 TV para acessar os dados de cronometragem, que agora são pagos.
     </>
   );
 }
@@ -34,8 +33,7 @@ function Details({ archive }: { archive: PublicArchive }) {
   const lastEvent = `${archive.year} ${archive.event_name || `Round ${archive.round}`}`;
   return (
     <>
-      This site has replays up to the {lastEvent}, and newer sessions can&apos;t be added. You can still run F1 Replay
-      Timing yourself with your own F1 TV account (Access or higher).
+      Este site tem replays até a {lastEvent}, e sessões mais novas não podem ser adicionadas. Você ainda pode rodar o Box Box por conta própria com a sua conta F1 TV (Access ou superior).
     </>
   );
 }
@@ -48,7 +46,7 @@ function GuideLink() {
       rel="noopener noreferrer"
       className="text-f1-red hover:underline font-semibold whitespace-nowrap"
     >
-      Self-hosting guide →
+      Guia de instalação própria →
     </a>
   );
 }
@@ -114,7 +112,7 @@ export function PaywallOverlay() {
       >
         <div className="flex items-center gap-2 mb-3">
           <Lock className="w-4 h-4 text-f1-red" />
-          <span className="text-[11px] font-bold text-f1-red uppercase tracking-wider">F1 TV now required</span>
+          <span className="text-[11px] font-bold text-f1-red uppercase tracking-wider">Agora é preciso ter F1 TV</span>
         </div>
         <h2 id="paywall-notice-title" className="text-white font-bold text-base leading-snug mb-3">
           <Headline archive={archive} />
@@ -129,7 +127,7 @@ export function PaywallOverlay() {
             autoFocus
             className="px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors"
           >
-            Got it
+            Entendi
           </button>
         </div>
       </div>

@@ -27,8 +27,8 @@ function parseGap(gap: string | null | undefined): number | null {
 export function matchFrame(frames: ReplayFrame[], extracted: ExtractedLeaderboard): MatchResult {
   const targetLap = extracted.lap || 1;
   const drivers = extracted.drivers || [];
-  if (drivers.length === 0) throw new Error("No drivers to match");
-  if (frames.length === 0) throw new Error("No replay data available");
+  if (drivers.length === 0) throw new Error("Nenhum piloto para comparar");
+  if (frames.length === 0) throw new Error("Nenhum dado de replay disponível");
 
   const targetGaps = new Map<string, number>();
   for (const d of drivers) {

@@ -18,10 +18,10 @@ async def driver_telemetry(
     validate_driver(driver)
     data = await aget_json(f"sessions/{year}/{round_num}/{type}/telemetry/{driver}.json")
     if data is None:
-        raise HTTPException(status_code=404, detail="Telemetry not available for this driver")
+        raise HTTPException(status_code=404, detail="Telemetria indisponível para este piloto")
 
     lap_data = data.get(str(lap))
     if lap_data is None:
-        raise HTTPException(status_code=404, detail="Telemetry not available for this lap")
+        raise HTTPException(status_code=404, detail="Telemetria indisponível para esta volta")
     set_cache(response, 300)
     return lap_data

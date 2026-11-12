@@ -29,7 +29,7 @@ export async function apiFetch<T>(path: string): Promise<T> {
     throw new Error("Unauthorized");
   }
   if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
+    throw new Error(`Erro da API ${res.status}: ${res.statusText}`);
   }
   return res.json();
 }

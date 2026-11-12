@@ -54,10 +54,10 @@ class F1AccountError(Exception):
 
 
 SIGN_IN_NEEDED = (
-    "F1 now requires an F1 TV subscription for timing data. "
-    "Sign in to your F1 TV account under Settings → F1 TV."
+    "A F1 agora exige uma assinatura do F1 TV para os dados de cronometragem. "
+    "Entre com a sua conta F1 TV em Configurações → F1 TV."
 )
-SERVER_STALLED = "F1's servers didn't respond. Try again later."
+SERVER_STALLED = "Os servidores da F1 não responderam. Tente de novo mais tarde."
 
 
 # --- Paths and encryption -------------------------------------------------
@@ -214,14 +214,14 @@ def refusal_message() -> str | None:
         return None
     status = _last_refusal[0]
     if status == 401:
-        return ("F1 rejected the F1 TV sign-in (HTTP 401). Check your F1 TV subscription is active "
-                "(Access or higher), then sign in again.")
+        return ("A F1 recusou o login do F1 TV (HTTP 401). Confira se a sua assinatura do F1 TV está ativa "
+                "(Access ou superior) e entre de novo.")
     if status == 403:
-        return ("F1 refused the download (HTTP 403). F1 blocks downloads from most VPNs and cloud "
-                "servers. If you're using a VPN, turn it off and try again. If this server runs in the "
-                "cloud, process the session on another computer instead. Sessions you've already "
-                "downloaded still replay normally.")
-    return f"F1's server returned an error (HTTP {status}). Try again later."
+        return ("A F1 recusou o download (HTTP 403). A F1 bloqueia downloads da maioria das VPNs e servidores "
+                "na nuvem. Se estiver usando uma VPN, desligue e tente de novo. Se este servidor roda na "
+                "nuvem, processe a sessão em outro computador. As sessões já "
+                "baixadas continuam funcionando normalmente.")
+    return f"O servidor da F1 devolveu um erro (HTTP {status}). Tente de novo mais tarde."
 
 
 def timeout_count() -> int:
@@ -300,7 +300,7 @@ def sign_in_token(value: str) -> dict[str, Any]:
     configure()
     token = SubscriptionToken.from_jwt(_extract_token(value))
     if not token.is_valid():
-        raise F1AccountError("That token has expired. Copy a fresh one after signing in to F1 TV.")
+        raise F1AccountError("Esse token expirou. Copie um novo depois de entrar no F1 TV.")
     _store(token)
     logger.info("Signed in to F1 TV with a pasted token")
     return status()
@@ -337,10 +337,10 @@ def _extract_token(value: str) -> str:
     try:
         parsed = json.loads(urllib.parse.unquote(value))
     except (json.JSONDecodeError, TypeError):
-        raise F1AccountError("That isn't a loginSession cookie value or token.")
+        raise F1AccountError("Isso não é um valor do cookie loginSession nem um token.")
     token = (parsed.get("data") or {}).get("subscriptionToken") if isinstance(parsed, dict) else None
     if not token:
-        raise F1AccountError("No subscription token found in that loginSession value.")
+        raise F1AccountError("Nenhum token de assinatura encontrado nesse valor de loginSession.")
     return token
 
 
@@ -353,6 +353,26 @@ def get_token() -> str | None:
     except F1AuthError as e:
         logger.info(f"No F1 TV token available: {e}")
         return None
+
+
+def use_openf1() -> bool:
+    """Whether downloads come from the public OpenF1 API instead of F1.
+
+    DATA_SOURCE: "auto" (default) uses OpenF1 when not signed in to F1 TV,
+    "openf1" always, "f1tv" never.
+    """
+    mode = os.environ.get("DATA_SOURCE", "auto").strip().lower()
+    if mode == "openf1":
+        return True
+    if mode == "f1tv":
+        return False
+    return not ready()
+
+
+def require_source() -> None:
+    """Raise F1AccountError if no data source can download a session."""
+    if not use_openf1():
+        require_ready()
 
 
 def require_ready() -> None:

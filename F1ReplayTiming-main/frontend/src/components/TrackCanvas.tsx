@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import { drawTrack, drawDrivers, TrackPoint, DriverMarker, SectorOverlay, SegmentOverlay, Corner, MarshalSector, SectorFlag, ELEVATION_FULL_SCALE_M } from "@/lib/trackRenderer";
+import { useRef, useEffect, useMemo } from "react";
+import { drawTrack, drawDrivers, drawSafetyCar, trackToScreen, pointAtFraction, nearestFraction, lapFractions, SafetyCarPhase, TrackPoint, DriverMarker, SectorOverlay, SegmentOverlay, Corner, MarshalSector, SectorFlag, ELEVATION_FULL_SCALE_M } from "@/lib/trackRenderer";
 
 interface Props {
   trackPoints: TrackPoint[];
@@ -25,7 +25,17 @@ interface Props {
   /** Small margins, for a small map with nothing around it */
   compact?: boolean;
   elevationRangeM?: number | null;
+  /** Draw a simulated Safety Car ahead of the leader while the SC is out */
+  showSafetyCar?: boolean;
 }
+
+// The simulated Safety Car (from f1-race-replay): F1 publishes no position for
+// it, so it runs a little ahead of the leading car, fading in as it deploys and
+// pulling away and fading out as it comes in.
+const SC_AHEAD = 0.02;        // lap fraction ahead of the leader (~100 m)
+const SC_DEPLOY_MS = 3000;
+const SC_RETURN_MS = 3000;
+const SC_RETURN_PULL = 0.04;  // extra lap fraction it gains while coming in
 
 // Longer than the 500ms frame interval so the dot is always still moving
 // when the next target arrives - the more overlap, the smoother the motion
@@ -45,7 +55,7 @@ function getCanvasWindow(canvas: HTMLCanvasElement | null): Window {
 }
 
 
-export default function TrackCanvas({ trackPoints, rotation, trackStatus = "green", drivers, highlightedDrivers, playbackSpeed = 1, showDriverNames = true, sectorOverlay = null, segmentOverlay = null, corners = null, marshalSectors = null, sectorFlags = null, showElevation = false, elevationRangeM = null, trackWidth = 12, lightTrack = false, compact = false }: Props) {
+export default function TrackCanvas({ trackPoints, rotation, trackStatus = "green", drivers, highlightedDrivers, playbackSpeed = 1, showDriverNames = true, sectorOverlay = null, segmentOverlay = null, corners = null, marshalSectors = null, sectorFlags = null, showElevation = false, elevationRangeM = null, trackWidth = 12, lightTrack = false, compact = false, showSafetyCar = true }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sizeRef = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -76,6 +86,11 @@ export default function TrackCanvas({ trackPoints, rotation, trackStatus = "gree
   trackWidthRef.current = trackWidth;
   const showElevationRef = useRef(showElevation);
   showElevationRef.current = showElevation;
+  const showSafetyCarRef = useRef(showSafetyCar);
+  showSafetyCarRef.current = showSafetyCar;
+  const fractions = useMemo(() => lapFractions(trackPoints), [trackPoints]);
+  // alpha 0–1; anchor is the lap fraction it was at when it started coming in
+  const scRef = useRef<{ alpha: number; phase: SafetyCarPhase | null; last: number; anchor: number }>({ alpha: 0, phase: null, last: 0, anchor: 0 });
 
   // Update targets when drivers prop changes
   useEffect(() => {
@@ -162,13 +177,42 @@ export default function TrackCanvas({ trackPoints, rotation, trackStatus = "gree
 
       drawDrivers(ctx, interpolated, trackPoints, w, h, rotation, highlightedDrivers, showNamesRef.current, compactRef.current);
 
+      // Simulated Safety Car
+      const sc = scRef.current;
+      const dt = sc.last ? Math.min(now - sc.last, 250) : 0;
+      sc.last = now;
+      const scOut = showSafetyCarRef.current && trackStatusRef.current === "sc";
+      let leader: DriverMarker | null = null;
+      for (const d of interpolated) {
+        if (d.position != null && (!leader || d.position < (leader.position ?? Infinity))) leader = d;
+      }
+      if (scOut && leader && trackPoints.length > 1) {
+        sc.alpha = Math.min(1, sc.alpha + dt / SC_DEPLOY_MS);
+        sc.phase = sc.alpha < 1 ? "deploying" : "on_track";
+        sc.anchor = nearestFraction(trackPoints, fractions, leader.x, leader.y) + SC_AHEAD;
+        const p = pointAtFraction(trackPoints, fractions, sc.anchor);
+        const s = trackToScreen(trackPoints, w, h, rotation, compactRef.current)(p.x, p.y);
+        drawSafetyCar(ctx, s.x, s.y, sc.alpha, sc.phase, now);
+      } else if (sc.alpha > 0 && trackPoints.length > 1) {
+        sc.alpha = Math.max(0, sc.alpha - dt / SC_RETURN_MS);
+        sc.phase = "returning";
+        if (sc.alpha > 0) {
+          const p = pointAtFraction(trackPoints, fractions, sc.anchor + SC_RETURN_PULL * (1 - sc.alpha));
+          const s = trackToScreen(trackPoints, w, h, rotation, compactRef.current)(p.x, p.y);
+          drawSafetyCar(ctx, s.x, s.y, sc.alpha, "returning", now);
+        }
+      } else {
+        sc.alpha = 0;
+        sc.phase = null;
+      }
+
       hostWindow.requestAnimationFrame(animate);
     }
 
     const hostWindow = getCanvasWindow(canvasRef.current);
     hostWindow.requestAnimationFrame(animate);
     return () => { running = false; };
-  }, [trackPoints, rotation, highlightedDrivers]);
+  }, [trackPoints, rotation, highlightedDrivers, fractions]);
 
   // Track container size via ResizeObserver
   useEffect(() => {
@@ -207,7 +251,7 @@ export default function TrackCanvas({ trackPoints, rotation, trackStatus = "gree
           </div>
           {typeof elevationRangeM === "number" && (
             <span className="text-[10px] font-bold text-f1-text leading-none mb-1">
-              Elevation Δ {elevationRangeM}m
+              Variação de altitude Δ {elevationRangeM}m
             </span>
           )}
         </div>

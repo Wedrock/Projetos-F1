@@ -78,7 +78,7 @@ async def _extract_leaderboard(image_bytes: bytes) -> dict:
     """Send image to Gemini via OpenRouter and extract leaderboard data."""
     api_key = os.environ.get("OPENROUTER_API_KEY", "")
     if not api_key:
-        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured")
+        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY não configurada")
 
     b64 = base64.b64encode(image_bytes).decode("utf-8")
 
@@ -112,7 +112,7 @@ async def _extract_leaderboard(image_bytes: bytes) -> dict:
 
     if resp.status_code != 200:
         logger.error(f"OpenRouter error {resp.status_code}: {resp.text}")
-        raise HTTPException(status_code=502, detail="Vision API request failed")
+        raise HTTPException(status_code=502, detail="Falha no pedido à API de visão")
 
     data = resp.json()
     content = data["choices"][0]["message"]["content"]
@@ -127,7 +127,7 @@ async def _extract_leaderboard(image_bytes: bytes) -> dict:
         return json.loads(content)
     except json.JSONDecodeError:
         logger.error(f"Failed to parse vision response: {content}")
-        raise HTTPException(status_code=502, detail="Could not parse leaderboard from image")
+        raise HTTPException(status_code=502, detail="Não foi possível ler a tabela na imagem")
 
 
 def _parse_gap_float(gap_str: str | None) -> float | None:
@@ -151,7 +151,7 @@ def _match_frame(frames: list[dict], extracted: dict) -> dict:
     extracted_drivers = extracted.get("drivers", [])
 
     if not extracted_drivers:
-        raise HTTPException(status_code=400, detail="No drivers extracted from image")
+        raise HTTPException(status_code=400, detail="Nenhum piloto encontrado na imagem")
 
     # Build lookup: abbr -> gap float
     target_gaps: dict[str, float] = {}
@@ -247,18 +247,18 @@ async def sync_manual(
     """Match manual leaderboard input against replay frames."""
     validate_session(year, round_num, type)
     if not body:
-        raise HTTPException(status_code=400, detail="Request body required")
+        raise HTTPException(status_code=400, detail="Corpo da requisição obrigatório")
 
     lap = body.get("lap")
     drivers = body.get("drivers", [])
     if not lap or not drivers:
-        raise HTTPException(status_code=400, detail="Lap and at least one driver required")
+        raise HTTPException(status_code=400, detail="Informe a volta e pelo menos um piloto")
 
     extracted = {"lap": int(lap), "drivers": drivers}
 
     frames = await _get_frames(year, round_num, type)
     if not frames:
-        raise HTTPException(status_code=404, detail="No replay data available")
+        raise HTTPException(status_code=404, detail="Nenhum dado de replay disponível")
 
     result = _match_frame(frames, extracted)
     logger.info(f"Manual sync matched to timestamp={result['timestamp']:.1f}s, lap={result['lap']}")
@@ -277,16 +277,16 @@ async def sync_from_photo(
     # Read image
     image_bytes = await photo.read()
     if len(image_bytes) == 0:
-        raise HTTPException(status_code=400, detail="Empty file")
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
     if len(image_bytes) > 20 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large (max 20MB)")
+        raise HTTPException(status_code=400, detail="Arquivo grande demais (máx. 20MB)")
 
     # Convert to JPEG (handles HEIC, PNG, etc.)
     try:
         image_bytes = await asyncio.to_thread(_convert_to_jpeg, image_bytes)
     except Exception as e:
         logger.error(f"Image conversion failed: {e}")
-        raise HTTPException(status_code=400, detail="Could not process image")
+        raise HTTPException(status_code=400, detail="Não foi possível processar a imagem")
 
     # Extract leaderboard data from image
     extracted = await _extract_leaderboard(image_bytes)
@@ -298,7 +298,7 @@ async def sync_from_photo(
     # Load replay frames
     frames = await _get_frames(year, round_num, type)
     if not frames:
-        raise HTTPException(status_code=404, detail="No replay data available")
+        raise HTTPException(status_code=404, detail="Nenhum dado de replay disponível")
 
     # Match against frames
     result = _match_frame(frames, extracted)

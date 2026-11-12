@@ -25,6 +25,7 @@ from services.f1_data import (
     _get_race_results_sync,
     _get_driver_positions_by_time_sync,
     _get_driver_telemetry_sync,
+    _get_driver_all_laps_telemetry_sync,
     _get_team_radio_sync,
     replay_start_utc,
     _get_minisectors_sync,
@@ -66,7 +67,7 @@ async def start_reprocess(year: int, round_num: int, session_type: str) -> str:
     key = f"{year}_{round_num}_{session_type}"
     if _reprocess_status.get(key, {}).get("state") == "running":
         return "busy"
-    _reprocess_status[key] = {"state": "running", "message": "Starting…"}
+    _reprocess_status[key] = {"state": "running", "message": "Iniciando…"}
 
     def on_status(msg: str):
         cur = _reprocess_status.get(key)
@@ -83,15 +84,15 @@ async def start_reprocess(year: int, round_num: int, session_type: str) -> str:
             )
             _reprocess_status[key] = {
                 "state": "done" if ok else "error",
-                "message": "Reprocess complete" if ok else "Reprocess failed",
+                "message": "Reprocessamento concluído" if ok else "Falha no reprocessamento",
             }
             if not ok:
                 download_problems.record(year, round_num, session_type,
-                                         "Reprocess failed. The server's logs have the details.")
+                                         "Falha no reprocessamento. Os logs do servidor têm os detalhes.")
         except Exception as e:
             logger.error(f"Reprocess failed for {key}: {e}")
             traceback.print_exc()
-            message = str(e)[:500] or "Reprocess failed"
+            message = str(e)[:500] or "Falha no reprocessamento"
             _reprocess_status[key] = {"state": "error", "message": message}
             download_problems.record(year, round_num, session_type, message)
 
@@ -140,7 +141,7 @@ def process_session_sync(
     # the FastF1 data is freed, as it needs memory of its own.
     if ok and not skip_existing:
         if on_status:
-            on_status("Syncing the F1 TV broadcast...")
+            on_status("Sincronizando a transmissão do F1 TV...")
         from services import broadcast_sync
         broadcast_sync.refresh_sync(year, round_num, session_type)
     return ok
@@ -165,10 +166,13 @@ def _process_session_sync(
         if on_status:
             on_status(msg)
 
-    # Stop before writing anything if F1 would refuse the download.
-    f1_account.require_ready()
+    # Stop before writing anything if no source can download it: F1 TV, or
+    # the public OpenF1 API when not signed in.
+    f1_account.require_source()
+    from services import f1_data as _f1_data
+    _f1_data.set_progress(status)
 
-    status("Loading session data from F1 API...")
+    status("Carregando os dados da sessão...")
 
     # Session info
     try:
@@ -180,7 +184,7 @@ def _process_session_sync(
         logger.error(f"[{prefix}] Failed to get session info: {e}")
         return False
 
-    status("Processing track data...")
+    status("Processando os dados da pista...")
 
     # Track data
     track = None
@@ -190,7 +194,7 @@ def _process_session_sync(
     except Exception as e:
         logger.warning(f"[{prefix}] No track data: {e}")
 
-    status("Processing lap data...")
+    status("Processando as voltas...")
 
     # Lap data
     laps = None
@@ -200,6 +204,15 @@ def _process_session_sync(
     except Exception as e:
         logger.warning(f"[{prefix}] No lap data: {e}")
 
+    # Tyre degradation model, fitted to the laps (rebuilt so a reprocess
+    # never leaves one from the old laps behind)
+    if laps:
+        try:
+            from services.tyre_model import build_tyre_model
+            storage.put_json(f"{base}/tyre_model.json", build_tyre_model(laps))
+        except Exception as e:
+            logger.warning(f"[{prefix}] No tyre model: {e}")
+
     # Results
     try:
         results = _get_race_results_sync(year, round_num, session_type)
@@ -207,14 +220,14 @@ def _process_session_sync(
     except Exception as e:
         logger.warning(f"[{prefix}] No results: {e}")
 
-    status("Building replay frames (this may take a minute)...")
+    status("Montando o replay (pode levar um minuto)...")
 
     # Replay frames (the big one)
     try:
         frames = _get_driver_positions_by_time_sync(year, round_num, session_type)
         storage.put_json(f"{base}/replay.json", frames)
         logger.info(f"[{prefix}] Uploaded {len(frames)} replay frames")
-        status("Writing replay files...")
+        status("Gravando os arquivos do replay...")
         replay_chunks.write_chunks(year, round_num, session_type, frames)
         try:
             ms = _get_minisectors_sync(year, round_num, session_type, frames, track)
@@ -227,13 +240,13 @@ def _process_session_sync(
     except Exception as e:
         logger.warning(f"[{prefix}] No replay data: {e}")
 
-    status("Captioning team radio...")
+    status("Legendando o rádio das equipes...")
 
     # Team radio, timed against the replay frames
     try:
         clips = _get_team_radio_sync(
             year, round_num, session_type,
-            on_progress=lambda i, n: status(f"Captioning team radio ({i}/{n})..."),
+            on_progress=lambda i, n: status(f"Legendando o rádio das equipes ({i}/{n})..."),
         )
         if clips is not None:
             storage.put_json(f"{base}/team_radio.json", {"clips": clips})
@@ -249,7 +262,7 @@ def _process_session_sync(
         info["replay_start_utc"] = start_utc
         storage.put_json(f"{base}/info.json", info)
 
-    status("Processing telemetry...")
+    status("Processando a telemetria...")
 
     # Telemetry per driver
     try:
@@ -259,10 +272,15 @@ def _process_session_sync(
             for lap in laps:
                 total_laps_set.add(lap["lap_number"])
 
-        for drv in drivers:
+        for i, drv in enumerate(drivers, start=1):
             abbr = drv["abbreviation"]
-            drv_telemetry = {}
-            for lap_num in sorted(total_laps_set):
+            status(f"Processando a telemetria ({i}/{len(drivers)})...")
+            try:
+                drv_telemetry = _get_driver_all_laps_telemetry_sync(year, round_num, session_type, abbr)
+            except Exception as e:
+                logger.warning(f"[{prefix}] Fast telemetry failed for {abbr}, falling back per lap: {e}")
+                drv_telemetry = {}
+            for lap_num in ([] if drv_telemetry else sorted(total_laps_set)):
                 try:
                     tel = _get_driver_telemetry_sync(
                         year, round_num, session_type, abbr, lap_num
@@ -300,7 +318,7 @@ def _process_session_sync(
     except Exception:
         pass
 
-    status("Processing complete")
+    status("Processamento concluído")
     logger.info(f"[{prefix}] Done")
     return True
 
@@ -379,7 +397,7 @@ async def ensure_session_data_ws(
 
     # If another request is already processing, just wait
     if _locks[key].locked():
-        await send_status("Waiting for session data (another request is processing)...")
+        await send_status("Aguardando os dados da sessão (outro pedido está processando)...")
         async with _locks[key]:
             return storage.exists(f"{base}/replay.json")
 
@@ -387,7 +405,7 @@ async def ensure_session_data_ws(
         if storage.exists(f"{base}/replay.json"):
             return True
 
-        await send_status("Session data not found — processing on demand...")
+        await send_status("Dados da sessão não encontrados — processando agora...")
 
         # Use a queue to bridge sync callbacks to async WebSocket sends
         status_queue: asyncio.Queue = asyncio.Queue()
@@ -499,7 +517,7 @@ def start_prepare(year: int, round_num: int, session_type: str) -> dict:
     current = _prepare_status.get(key)
     if current and current["state"] == "running":
         return current
-    _prepare_status[key] = {"state": "running", "message": "Loading session data..."}
+    _prepare_status[key] = {"state": "running", "message": "Carregando os dados da sessão..."}
 
     def set_message(msg: str):
         cur = _prepare_status.get(key)
@@ -513,17 +531,17 @@ def start_prepare(year: int, round_num: int, session_type: str) -> dict:
         if storage.exists(f"{base}/replay.json"):
             set_message("Preparing replay files (first view only)...")
             ok = replay_chunks.build_from_replay_json(year, round_num, session_type)
-            return {"state": "done" if ok else "error", "message": "" if ok else "No replay data"}
+            return {"state": "done" if ok else "error", "message": "" if ok else "Sem dados de replay"}
         if is_public_mode():
-            return {"state": "unavailable", "message": "This session isn't available yet."}
-        set_message("Session data not found — processing on demand...")
+            return {"state": "unavailable", "message": "Esta sessão ainda não está disponível."}
+        set_message("Dados da sessão não encontrados — processando agora...")
         try:
             ok = process_session_sync(year, round_num, session_type, False, set_message)
         except f1_account.F1AccountError as e:
             return {"state": "error", "message": str(e)}  # recorded by process_session_sync
         if ok and replay_chunks.get_manifest(year, round_num, session_type):
             return {"state": "done", "message": ""}
-        return {"state": "error", "message": "Failed to load session data. The session may not be available yet."}
+        return {"state": "error", "message": "Falha ao carregar os dados da sessão. Ela pode ainda não estar disponível."}
 
     async def run():
         if key not in _locks:
@@ -534,7 +552,7 @@ def start_prepare(year: int, round_num: int, session_type: str) -> dict:
             except Exception as e:
                 logger.error(f"Preparing replay for {key} failed: {e}")
                 traceback.print_exc()
-                _prepare_status[key] = {"state": "error", "message": "Failed to prepare replay"}
+                _prepare_status[key] = {"state": "error", "message": "Falha ao preparar o replay"}
 
     asyncio.create_task(run())
     return _prepare_status[key]

@@ -60,19 +60,19 @@ function formatWhen(iso?: string | null): string | null {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return null;
   const mins = Math.round((Date.now() - then) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return "agora mesmo";
+  if (mins < 60) return `${mins} min atrás`;
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return `${hours} hora${hours === 1 ? "" : "s"} atrás`;
   const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return `${days} dia${days === 1 ? "" : "s"} atrás`;
 }
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso.replace(" ", "T"));
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString("pt-BR", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -99,7 +99,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("6");
   const [unit, setUnit] = useState<Unit>("months");
   const amountNum = Math.max(1, parseInt(amount, 10) || 1);
-  const unitLabel = amountNum === 1 ? unit.slice(0, -1) : unit;
+  const unitLabel = unit === "weeks" ? (amountNum === 1 ? "semana" : "semanas") : (amountNum === 1 ? "mês" : "meses");
 
   const [confirm, setConfirm] = useState<SweepResult | null>(null);
   const [progress, setProgress] = useState<SweepStatus | null>(null);
@@ -118,7 +118,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
       setAmount(String(body.retention.amount));
       setUnit(body.retention.unit);
     } catch {
-      setError("Could not read storage usage.");
+      setError("Não foi possível ler o uso de armazenamento.");
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
       if (!enabled) {
         const res = await authFetch(`/api/storage/retention?${query}`, { method: "PUT" });
         if (!res.ok) throw new Error();
-        setResult("Automatic deletion turned off.");
+        setResult("Exclusão automática desligada.");
         await load();
         return;
       }
@@ -170,13 +170,13 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
         // Nothing to remove today — just save the policy.
         const apply = await authFetch(`/api/storage/retention?${query}`, { method: "PUT" });
         if (!apply.ok) throw new Error();
-        setResult("Saved. Nothing stored is that old yet.");
+        setResult("Salvo. Nada guardado é tão antigo ainda.");
         await load();
         return;
       }
       setConfirm(body);
     } catch {
-      setError("Could not save the retention setting.");
+      setError("Não foi possível salvar a configuração de retenção.");
     } finally {
       setBusy(false);
     }
@@ -186,7 +186,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     setConfirm(null);
-    setProgress({ state: "running", message: "Starting…", done: 0, total: 0, count: 0, freed_bytes: 0 });
+    setProgress({ state: "running", message: "Iniciando…", done: 0, total: 0, count: 0, freed_bytes: 0 });
     try {
       const res = await authFetch(`/api/storage/retention?${query}`, { method: "PUT" });
       if (!res.ok) throw new Error();
@@ -197,11 +197,11 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
         const s: SweepStatus = await authFetch("/api/storage/retention/status").then((r) => r.json());
         setProgress(s);
         if (s.state === "done") {
-          setResult(`Deleted ${s.count} session${s.count === 1 ? "" : "s"}, freeing ${formatSize(s.freed_bytes)}.`);
+          setResult(`Apagada(s) ${s.count} ${s.count === 1 ? "sessão" : "sessões"}, liberando ${formatSize(s.freed_bytes)}.`);
           break;
         }
         if (s.state === "error") {
-          setError(s.message || "Delete failed.");
+          setError(s.message || "Falha ao apagar.");
           break;
         }
       }
@@ -209,7 +209,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
       await load();
     } catch {
       setProgress(null);
-      setError("Failed to apply the retention setting.");
+      setError("Falha ao aplicar a configuração de retenção.");
     } finally {
       setBusy(false);
     }
@@ -221,12 +221,12 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
       <div className="bg-f1-card border border-f1-border rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
         <div className="p-6 pb-4 border-b border-f1-border">
-          <h3 className="text-white font-bold text-lg">Storage</h3>
+          <h3 className="text-white font-bold text-lg">Armazenamento</h3>
           {loading ? (
-            <p className="text-f1-muted text-sm mt-1">Reading usage…</p>
+            <p className="text-f1-muted text-sm mt-1">Lendo o uso…</p>
           ) : (
             <p className="text-f1-muted text-sm mt-1">
-              {data?.session_count || 0} session{data?.session_count === 1 ? "" : "s"} stored
+              {data?.session_count || 0} {data?.session_count === 1 ? "sessão guardada" : "sessões guardadas"}
               {" · "}
               <span className="text-white font-bold">{formatSize(data?.total_bytes)}</span>
             </p>
@@ -238,7 +238,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
         {loading ? (
           <div className="p-6 py-8 border-b border-f1-border flex items-center justify-center gap-3">
             <span className="w-5 h-5 border-2 border-f1-muted border-t-f1-red rounded-full animate-spin flex-shrink-0" />
-            <span className="text-f1-muted text-sm">Calculating current storage…</span>
+            <span className="text-f1-muted text-sm">Calculando o armazenamento atual…</span>
           </div>
         ) : (
         <div className="p-6 py-4 border-b border-f1-border overflow-y-auto min-h-0">
@@ -250,13 +250,13 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
               <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${enabled ? "translate-x-[18px]" : "translate-x-0.5"}`} />
             </div>
             <span className="text-white text-sm font-bold">
-              Automatically delete old sessions
+              Apagar sessões antigas automaticamente
             </span>
           </button>
 
           <div className={enabled ? "" : "opacity-40 pointer-events-none"}>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-f1-muted text-sm">Delete sessions older than</span>
+              <span className="text-f1-muted text-sm">Apagar sessões com mais de</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -265,7 +265,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
                 onFocus={(e) => e.target.select()}
                 onBlur={() => { if (!amount) setAmount("1"); }}
-                aria-label="Age threshold"
+                aria-label="Limite de idade"
                 className="w-14 px-2 py-1.5 bg-f1-dark border border-f1-border rounded text-white text-sm text-center"
               />
               <select
@@ -273,21 +273,21 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setUnit(e.target.value as Unit)}
                 className="px-2 py-1.5 bg-f1-dark border border-f1-border rounded text-white text-sm"
               >
-                <option value="weeks">weeks</option>
-                <option value="months">months</option>
+                <option value="weeks">semanas</option>
+                <option value="months">meses</option>
               </select>
             </div>
             <p className="text-f1-muted text-xs mt-2">
-              Checked daily. Open a session to download it again.
+              Verificado todo dia. Abra uma sessão para baixá-la de novo.
             </p>
           </div>
 
           {saved?.enabled && lastRun && !dirty && (
             <p className="text-f1-muted text-xs mt-2">
-              Last run {lastRun}
+              Última execução {lastRun}
               {saved.last_deleted
-                ? ` — removed ${saved.last_deleted} session${saved.last_deleted === 1 ? "" : "s"}, freeing ${formatSize(saved.last_freed_bytes)}.`
-                : " — nothing was old enough to remove."}
+                ? ` — removida(s) ${saved.last_deleted} ${saved.last_deleted === 1 ? "sessão" : "sessões"}, liberando ${formatSize(saved.last_freed_bytes)}.`
+                : " — nada era antigo o bastante para remover."}
             </p>
           )}
 
@@ -297,17 +297,16 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
               disabled={busy}
               className="mt-3 px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors disabled:opacity-50"
             >
-              {busy ? "Checking…" : "Save"}
+              {busy ? "Verificando…" : "Salvar"}
             </button>
           )}
 
           {confirm && (
             <div className="mt-3 p-3 bg-f1-dark border border-f1-border rounded">
               <p className="text-white text-sm mb-2">
-                Deletes <span className="font-bold">{confirm.count}</span> session
-                {confirm.count === 1 ? "" : "s"} now, freeing{" "}
-                <span className="font-bold">{formatSize(confirm.freed_bytes)}</span>. Runs
-                daily for sessions older than{" "}
+                Apaga <span className="font-bold">{confirm.count}</span>{" "}
+                {confirm.count === 1 ? "sessão" : "sessões"} agora, liberando{" "}
+                <span className="font-bold">{formatSize(confirm.freed_bytes)}</span>. Roda todo dia para sessões com mais de{" "}
                 <span className="font-bold">{amountNum} {unitLabel}</span>.
               </p>
 
@@ -334,14 +333,14 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
                   onClick={() => setConfirm(null)}
                   className="px-3 py-1.5 bg-f1-border text-white text-xs font-bold rounded hover:bg-white/10 transition-colors"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   onClick={applySave}
                   disabled={busy}
                   className="px-3 py-1.5 bg-f1-red text-white text-xs font-bold rounded hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  {busy ? "Deleting…" : "Delete and save"}
+                  {busy ? "Apagando…" : "Apagar e salvar"}
                 </button>
               </div>
             </div>
@@ -362,7 +361,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   <p className="text-f1-muted text-xs mt-1">
-                    {progress.done} of {progress.total} files
+                    {progress.done} de {progress.total} arquivos
                   </p>
                 </>
               )}
@@ -379,7 +378,7 @@ export default function StorageManager({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="px-4 py-2 bg-f1-border text-white text-sm font-bold rounded hover:bg-f1-red transition-colors"
           >
-            Close
+            Fechar
           </button>
         </div>
       </div>

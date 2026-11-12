@@ -39,6 +39,9 @@ A web app for watching Formula 1 sessions with real timing data, car positions o
 
   ![Track dominance: Antonelli and Leclerc's best laps in qualifying at the 2026 United States Grand Prix](frontend/public/track-dominance.png)
 
+- **Tyre health** - a Bayesian tyre degradation model fitted to each session's laps (each compound's wear rate, corrected for fuel and track abrasion) shows every driver's tyre health on the leaderboard. Open **Insights > Tyre model** for the fitted rates. Estimates, not F1 data
+- **Insights** (replays, desktop) - **Strategy**: every driver's stints so far, by compound, new or used. **Championship** (races and sprints): the drivers' and constructors' standings if the order stays as it is, from the standings going into the session ([Jolpica](https://github.com/jolpica/jolpica-f1))
+- **Simulated Safety Car** - F1 publishes no Safety Car position, so while the SC is out a simulated one runs just ahead of the leader on the track map, deploying and coming in with a fade. Toggle it in Settings > Track map
 - **Picture-in-Picture** mode for a compact floating window with track map, race control, leaderboard, and telemetry
 - **Sync to a recording** - match the replay to a recording you're watching elsewhere, either by uploading a screenshot of the timing tower (using AI vision) or by manually entering gap times
 - **Weather data** including air and track temperature, humidity, wind, and rainfall status
@@ -430,6 +433,8 @@ The broadcast sync feature lets you match the replay to a recording of a session
 ## Acknowledgements
 
 This project is powered by [FastF1](https://github.com/theOehrly/Fast-F1), an open-source Python library for accessing Formula 1 timing and telemetry data. FastF1 is the original inspiration and data source for this project - without it, none of this would be possible.
+
+The tyre degradation model, simulated Safety Car, tyre strategy and live championship standings are ported from [F1 Race Replay](https://github.com/IAmTomShaw/f1-race-replay) (MIT).
 
 ## License
 

@@ -56,5 +56,5 @@ async def track_geometry(
 
     raise HTTPException(
         status_code=404,
-        detail="Track data not available for this session.",
+        detail="Os dados da pista não estão disponíveis para esta sessão.",
     )

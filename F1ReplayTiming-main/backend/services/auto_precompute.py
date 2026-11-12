@@ -75,7 +75,7 @@ async def _check_and_process():
         return
 
     from services import f1_account
-    if not f1_account.ready():
+    if not f1_account.ready() and not f1_account.use_openf1():
         logger.info("[auto] Not signed in to F1 TV; skipping. Sign in under Settings → F1 TV.")
         return
 

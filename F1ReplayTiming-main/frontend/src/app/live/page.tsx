@@ -24,6 +24,7 @@ import PiPWindow from "@/components/PiPWindow";
 import BroadcastView from "@/components/BroadcastView";
 import { f1tv } from "@/lib/f1tv";
 import { Maximize, Minimize, ArrowUpRight, Volume2, VolumeX } from "lucide-react";
+import { useTyreModel } from "@/lib/tyreModel";
 
 interface TrackData {
   track_points: { x: number; y: number }[];
@@ -268,16 +269,17 @@ function LiveTiming() {
 
   const sessionTypeUpper = sessionType.toUpperCase();
   const isRace = sessionTypeUpper === "R" || sessionTypeUpper === "S";
+  const tyreModel = useTyreModel(year, round, sessionTypeUpper);
   const isQualifying = sessionTypeUpper === "Q" || sessionTypeUpper === "SQ";
   // While the timing is held back further than there's timing yet (the
   // server has only just connected): over the timing and the map
   const delayNotice = live.delayWait !== null && (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-f1-card/85 backdrop-blur-sm pointer-events-none px-4">
       <div className="text-center">
-        <p className="text-sm font-bold text-white">{broadcastOn ? "Syncing with the broadcast" : "Applying the delay"}</p>
+        <p className="text-sm font-bold text-white">{broadcastOn ? "Sincronizando com a transmissão" : "Aplicando o atraso"}</p>
         <p className="text-xs text-f1-muted mt-1 leading-relaxed">
-          Timing held back {Math.round(Math.abs(effectiveDelay))}s{broadcastOn ? " to match the video" : ""}.
-          {" "}Showing in {live.delayWait}s.
+          Cronometragem atrasada em {Math.round(Math.abs(effectiveDelay))}s{broadcastOn ? " para acompanhar o vídeo" : ""}.
+          {" "}Aparece em {live.delayWait}s.
         </p>
       </div>
     </div>
@@ -334,7 +336,7 @@ function LiveTiming() {
       <div className="min-h-screen bg-f1-dark flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block w-12 h-12 border-3 border-f1-muted border-t-f1-red rounded-full animate-spin mb-6" />
-          <p className="text-f1-muted text-lg">Connecting to live timing...</p>
+          <p className="text-f1-muted text-lg">Conectando à cronometragem ao vivo...</p>
         </div>
       </div>
     );
@@ -344,10 +346,10 @@ function LiveTiming() {
     return (
       <div className="min-h-screen bg-f1-dark flex items-center justify-center">
         <div className="text-center max-w-md">
-          <p className="text-red-400 text-lg font-bold mb-2">Live Timing Unavailable</p>
+          <p className="text-red-400 text-lg font-bold mb-2">Cronometragem ao vivo indisponível</p>
           <p className="text-f1-muted mb-6 text-sm">{live.error}</p>
           <a href="/" className="inline-block px-4 py-2 bg-f1-red text-white font-bold text-sm rounded hover:bg-red-700 transition-colors">
-            Back to session picker
+            Voltar à escolha de sessão
           </a>
         </div>
       </div>
@@ -432,6 +434,7 @@ function LiveTiming() {
     if (isRace && settings.showTyreHistory) w += 36;
     if (settings.showTyreType) w += 24;
     if (settings.showTyreAge) w += 20;
+    if (settings.showTyreHealth) w += 28;
     if (isRace && settings.showPitPrediction) w += 40;
     if (isRace && settings.showPitPrediction && settings.showPitFreeAir) w += 36;
     return w;
@@ -456,7 +459,7 @@ function LiveTiming() {
               href="/"
               className="px-2 py-1 sm:px-3 rounded text-[10px] sm:text-xs font-bold text-f1-muted hover:text-white hover:bg-white/10 transition-colors"
             >
-              Exit
+              Sair
             </a>
           }
         />
@@ -472,7 +475,7 @@ function LiveTiming() {
               onClick={() => setMobileTrackOpen(!mobileTrackOpen)}
               className="w-full flex items-center justify-between px-3 py-2 bg-f1-card border-b border-f1-border"
             >
-              <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Track Map</span>
+              <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Mapa da pista</span>
               <svg className={`w-4 h-4 text-f1-muted transition-transform ${mobileTrackOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -490,11 +493,11 @@ function LiveTiming() {
                   <div className="bg-f1-card/95 border border-f1-border rounded-lg px-8 py-6 backdrop-blur-sm text-center">
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-                      <span className="text-sm font-bold text-red-400 uppercase">Live</span>
+                      <span className="text-sm font-bold text-red-400 uppercase">Ao vivo</span>
                     </div>
-                    <p className="text-white text-lg font-bold mb-2">Waiting for session to start</p>
+                    <p className="text-white text-lg font-bold mb-2">Aguardando o início da sessão</p>
                     <p className="text-f1-muted text-sm">
-                      Live timing data will appear automatically when the session begins.
+                      Os dados ao vivo aparecem automaticamente quando a sessão começar.
                     </p>
                   </div>
                 </div>
@@ -506,14 +509,14 @@ function LiveTiming() {
                 drivers.length === 0 ? (
                   <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
                     <div className="bg-f1-card/95 border border-f1-border rounded-lg px-8 py-6 backdrop-blur-sm text-center max-w-md">
-                      <p className="text-white text-lg font-bold mb-2">Can&apos;t get live timing from F1</p>
+                      <p className="text-white text-lg font-bold mb-2">Não foi possível obter a cronometragem ao vivo da F1</p>
                       <p className="text-f1-muted text-sm mb-3">{live.feedError}</p>
-                      <p className="text-f1-muted text-xs">Retrying automatically.</p>
+                      <p className="text-f1-muted text-xs">Tentando de novo automaticamente.</p>
                     </div>
                   </div>
                 ) : (
                   <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-1.5rem)] bg-f1-card/95 border border-red-500/40 rounded-lg px-3 py-2 backdrop-blur-sm text-center">
-                    <p className="text-xs text-white"><span className="font-bold">Live timing interrupted.</span> {live.feedError} Retrying.</p>
+                    <p className="text-xs text-white"><span className="font-bold">Cronometragem ao vivo interrompida.</span> {live.feedError} Tentando de novo.</p>
                   </div>
                 )
               )}
@@ -533,12 +536,12 @@ function LiveTiming() {
                     }`}
                   >
                     {trackStatus === "red"
-                      ? "Red Flag"
+                      ? "Bandeira vermelha"
                       : trackStatus === "sc"
                       ? "Safety Car"
                       : trackStatus === "vsc"
                       ? "Virtual Safety Car"
-                      : "Yellow Flag"}
+                      : "Bandeira amarela"}
                   </div>
                 </div>
               )}
@@ -557,9 +560,9 @@ function LiveTiming() {
                         className={`px-2 py-1 text-xs font-bold transition-colors ${
                           broadcastOn === on ? "bg-f1-red text-white" : "text-f1-muted hover:text-white"
                         }`}
-                        title={on ? "Show F1 TV's live broadcast, with the timing delayed to match" : "Show the track map"}
+                        title={on ? "Mostrar a transmissão ao vivo do F1 TV, com a cronometragem atrasada para acompanhar" : "Mostrar o mapa da pista"}
                       >
-                        {on ? "Broadcast" : "Track map"}
+                        {on ? "Transmissão" : "Mapa da pista"}
                       </button>
                     ))}
                   </div>
@@ -572,7 +575,7 @@ function LiveTiming() {
                       ? "bg-orange-500 text-white"
                       : "bg-f1-card/90 border border-f1-border text-f1-muted hover:text-white backdrop-blur-sm"
                   }`}
-                  title="Race Control Messages"
+                  title="Mensagens da direção de prova"
                 >
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" />
@@ -582,7 +585,7 @@ function LiveTiming() {
                 )}
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-red-600 rounded text-xs font-extrabold text-white uppercase">
                   <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  LIVE
+                  AO VIVO
                 </div>
               </div>
 
@@ -604,7 +607,7 @@ function LiveTiming() {
                     onMouseDown={onRcDragStart}
                     onTouchStart={onRcDragStart}
                   >
-                    <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Race Control</span>
+                    <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Direção de prova</span>
                     <div className="flex items-center gap-1">
                       {(["sm", "md", "lg"] as const).map((size) => (
                         <button
@@ -613,7 +616,7 @@ function LiveTiming() {
                           className={`w-5 h-4 flex items-center justify-center rounded text-[8px] font-bold transition-colors ${
                             rcPanelSize === size ? "bg-f1-muted/30 text-white" : "text-f1-muted hover:text-white"
                           }`}
-                          title={size === "sm" ? "Compact" : size === "md" ? "Medium" : "Expanded"}
+                          title={size === "sm" ? "Compacto" : size === "md" ? "Médio" : "Expandido"}
                         >
                           {size === "sm" ? (
                             <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="1" y="6" width="10" height="5" rx="1" /></svg>
@@ -625,7 +628,7 @@ function LiveTiming() {
                         </button>
                       ))}
                       {rcPosition && (
-                        <button onClick={() => setRcPosition(null)} className="text-f1-muted hover:text-white ml-1" title="Reset position">
+                        <button onClick={() => setRcPosition(null)} className="text-f1-muted hover:text-white ml-1" title="Restaurar posição">
                           <ArrowUpRight className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -638,7 +641,7 @@ function LiveTiming() {
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-f1-border/50">
                     {(live.rcMessages || []).length === 0 ? (
-                      <p className="text-f1-muted text-xs p-3 text-center">No race control messages yet</p>
+                      <p className="text-f1-muted text-xs p-3 text-center">Nenhuma mensagem da direção de prova ainda</p>
                     ) : (
                       (rcPanelSize === "sm" ? (live.rcMessages || []).slice(0, 1) : (live.rcMessages || [])).map((rc, i) => {
                         const isInvestigation = rc.message.toUpperCase().includes("INVESTIGATION") || rc.message.toUpperCase().includes("NOTED");
@@ -653,7 +656,7 @@ function LiveTiming() {
                               <div className="min-w-0">
                                 <p className="text-[11px] text-white leading-tight">{rc.message}</p>
                                 {rc.lap && (
-                                  <span className="text-[9px] text-f1-muted">Lap {rc.lap}</span>
+                                  <span className="text-[9px] text-f1-muted">Volta {rc.lap}</span>
                                 )}
                               </div>
                             </div>
@@ -668,7 +671,7 @@ function LiveTiming() {
               {/* Track dominance legend (from Lap Analysis → Compare) */}
               {dominance && !broadcastOn && (
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 px-3 py-1.5 rounded bg-f1-card/90 border border-f1-border backdrop-blur-sm text-[10px]">
-                  <span className="font-bold text-f1-muted uppercase tracking-wider">Track dominance</span>
+                  <span className="font-bold text-f1-muted uppercase tracking-wider">Domínio na pista</span>
                   {dominance.legend.map((l) => (
                     <span key={l.abbr} className="flex items-center gap-1 font-bold text-white">
                       <span className="w-3 h-1.5 rounded-sm" style={{ backgroundColor: l.color }} />
@@ -704,7 +707,7 @@ function LiveTiming() {
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  Laps
+                  Voltas
                 </button>
               )}
 
@@ -723,7 +726,7 @@ function LiveTiming() {
                     onClick={() => setShowTelemetry(false)}
                     className="self-start px-2 py-0.5 bg-f1-card/90 border border-f1-border rounded text-[9px] font-bold text-f1-muted hover:text-white transition-colors backdrop-blur-sm mb-0.5"
                   >
-                    Hide Telemetry
+                    Ocultar telemetria
                   </button>
                   {selectedDrivers.length > 0 ? (
                     selectedDrivers.map((abbr) => {
@@ -742,7 +745,7 @@ function LiveTiming() {
                   onClick={() => setShowTelemetry(true)}
                   className="absolute bottom-2 left-3 z-20 px-2 py-1 bg-f1-card/90 border border-f1-border rounded text-[10px] font-bold text-f1-muted hover:text-white transition-colors backdrop-blur-sm"
                 >
-                  Show Telemetry
+                  Mostrar telemetria
                 </button>
               )}
 
@@ -765,6 +768,7 @@ function LiveTiming() {
                         trackPoints={trackPoints}
                         rotation={rotation}
                         trackStatus={trackStatus}
+                        showSafetyCar={settings.showSafetyCar}
                         drivers={trackDrivers}
                         highlightedDrivers={selectedDrivers}
                         playbackSpeed={1}
@@ -801,6 +805,7 @@ function LiveTiming() {
                     trackPoints={trackPoints}
                     rotation={rotation}
                     trackStatus={trackStatus}
+                    showSafetyCar={settings.showSafetyCar}
                     drivers={trackDrivers}
                     highlightedDrivers={selectedDrivers}
                     playbackSpeed={1}
@@ -812,7 +817,7 @@ function LiveTiming() {
                 </>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-f1-muted text-sm">Track data not available</p>
+                  <p className="text-f1-muted text-sm">Dados da pista indisponíveis</p>
                 </div>
               )}
 
@@ -825,7 +830,7 @@ function LiveTiming() {
                   {showSectorOverlay && !isMobile && (
                     <div
                       className="flex items-center rounded border border-f1-border bg-f1-card overflow-hidden"
-                      title={settings.showMiniSectors && !miniEnds ? "Mini-sectors show on the map once each has been passed a few times, usually within a lap or two" : undefined}
+                      title={settings.showMiniSectors && !miniEnds ? "Os minissetores aparecem no mapa depois que cada um foi percorrido algumas vezes, geralmente em uma ou duas voltas" : undefined}
                     >
                       {([false, true] as const).map((mini) => (
                         <button
@@ -835,7 +840,7 @@ function LiveTiming() {
                             settings.showMiniSectors === mini ? "bg-purple-500/20 text-purple-300" : "text-f1-muted hover:text-white"
                           }`}
                         >
-                          {mini ? "Mini-sectors" : "Sectors"}
+                          {mini ? "Minissetores" : "Setores"}
                         </button>
                       ))}
                     </div>
@@ -848,7 +853,7 @@ function LiveTiming() {
                         : "bg-f1-card/90 border-f1-border text-f1-muted hover:text-white backdrop-blur-sm"
                     }`}
                   >
-                    {isMobile ? "Sectors" : `${showSectorOverlay ? "Hide" : "Show"} Sectors`}
+                    {isMobile ? "Setores" : `${showSectorOverlay ? "Ocultar" : "Mostrar"} setores`}
                   </button>
                 </div>
               )}
@@ -863,14 +868,14 @@ function LiveTiming() {
             onClick={() => setMobileRcOpen(!mobileRcOpen)}
             className="w-full flex items-center justify-between px-3 py-2 bg-f1-card border-b border-f1-border"
           >
-            <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Race Control</span>
+            <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Direção de prova</span>
             <svg className={`w-4 h-4 text-f1-muted transition-transform ${mobileRcOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
           {mobileRcOpen && (() => {
             const latest = (live.rcMessages || [])[0];
-            if (!latest) return <p className="text-f1-muted text-xs px-3 py-2">No messages yet</p>;
+            if (!latest) return <p className="text-f1-muted text-xs px-3 py-2">Nenhuma mensagem ainda</p>;
             const upper = latest.message.toUpperCase();
             const isPenalty = upper.includes("PENALTY") && !upper.includes("NO FURTHER");
             const isInvestigation = upper.includes("INVESTIGATION") || upper.includes("NOTED");
@@ -883,7 +888,7 @@ function LiveTiming() {
                   }`} />
                   <div className="min-w-0">
                     <p className="text-[11px] text-white leading-tight">{latest.message}</p>
-                    {latest.lap && <span className="text-[9px] text-f1-muted">Lap {latest.lap}</span>}
+                    {latest.lap && <span className="text-[9px] text-f1-muted">Volta {latest.lap}</span>}
                   </div>
                 </div>
               </div>
@@ -927,7 +932,7 @@ function LiveTiming() {
                 onClick={() => setMobileLeaderboardOpen(!mobileLeaderboardOpen)}
                 className="w-full flex items-center justify-between px-3 py-2 bg-f1-card border-b border-f1-border"
               >
-                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Leaderboard</span>
+                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Tabela</span>
                 <svg className={`w-4 h-4 text-f1-muted transition-transform ${mobileLeaderboardOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -947,6 +952,8 @@ function LiveTiming() {
                 isQualifying={isQualifying}
                 onScaleChange={setLeaderboardScale}
                 miniSectors={miniSectors}
+                tyreModel={tyreModel}
+                rainfall={live.frame?.weather?.rainfall}
               />
               </div>
             )}
@@ -961,7 +968,7 @@ function LiveTiming() {
               onClick={() => setMobileLapAnalysisOpen(!mobileLapAnalysisOpen)}
               className="w-full flex items-center justify-between px-3 py-3 bg-f1-card border-b border-f1-border min-h-[44px]"
             >
-              <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Lap Analysis</span>
+              <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Análise de voltas</span>
               <svg className={`w-4 h-4 text-f1-muted transition-transform ${mobileLapAnalysisOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -1001,7 +1008,7 @@ function LiveTiming() {
               <button
                 onClick={toggleBroadcastMute}
                 className={`w-8 h-8 flex items-center justify-center rounded transition-colors ${broadcastMuted ? "text-f1-red hover:bg-f1-red/10" : "text-f1-muted hover:text-white hover:bg-white/10"}`}
-                title={broadcastMuted ? "Unmute the broadcast" : "Mute the broadcast"}
+                title={broadcastMuted ? "Ativar o som da transmissão" : "Silenciar a transmissão"}
               >
                 {broadcastMuted || broadcastVolume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
@@ -1012,7 +1019,7 @@ function LiveTiming() {
                 value={broadcastMuted ? 0 : Math.round(broadcastVolume * 100)}
                 onChange={(e) => setBroadcastVolume(Number(e.target.value) / 100)}
                 className="w-0 opacity-0 group-hover/volume:w-20 group-hover/volume:opacity-100 focus:w-20 focus:opacity-100 ml-1 transition-all duration-200 accent-white cursor-pointer"
-                aria-label="Broadcast volume"
+                aria-label="Volume da transmissão"
                 title={`Volume ${broadcastMuted ? 0 : Math.round(broadcastVolume * 100)}%`}
               />
             </div>
@@ -1070,8 +1077,8 @@ function LiveTiming() {
               }`}
             >
               {broadcastOn && broadcastDelay !== null
-                ? `Delay: ${formatDelayShort(broadcastDelay)} (broadcast)`
-                : `Delay: ${formatDelayShort(delayOffset)}`}
+                ? `Atraso: ${formatDelayShort(broadcastDelay)} (transmissão)`
+                : `Atraso: ${formatDelayShort(delayOffset)}`}
             </button>
             {showDelaySlider && (<>
               {/* Modal backdrop */}
@@ -1080,7 +1087,7 @@ function LiveTiming() {
               {/* Delay modal */}
               <div className="fixed inset-x-6 top-1/2 -translate-y-1/2 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 sm:w-[360px] bg-[#1A1A26] border border-f1-border rounded-xl shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-f1-border">
-                  <span className="text-sm font-bold text-white">Broadcast Delay</span>
+                  <span className="text-sm font-bold text-white">Atraso da transmissão</span>
                   <button onClick={() => setShowDelaySlider(false)} className="text-f1-muted hover:text-white">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1144,7 +1151,7 @@ function LiveTiming() {
 
                   {/* Manual input */}
                   <div className="flex items-center justify-center gap-2">
-                    <label className="text-xs text-f1-muted">Exact:</label>
+                    <label className="text-xs text-f1-muted">Exato:</label>
                     <div className="flex items-center bg-f1-dark border border-f1-border rounded overflow-hidden focus-within:border-blue-500">
                       <button
                         id="delay-sign-btn"
@@ -1188,12 +1195,12 @@ function LiveTiming() {
                       }}
                       className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded transition-colors"
                     >
-                      Set
+                      Definir
                     </button>
                   </div>
 
                   <p className="text-[10px] text-f1-muted leading-relaxed text-center">
-                    Pauses the live data feed until it aligns with your broadcast. Set this to match the delay of your streaming service.
+                    Segura os dados ao vivo até ficarem alinhados com a sua transmissão. Ajuste para o atraso do seu serviço de streaming.
                   </p>
 
                   {/* Actions */}
@@ -1202,13 +1209,13 @@ function LiveTiming() {
                       onClick={() => { setDelayOffset(0); }}
                       className="flex-1 px-3 py-2 bg-f1-dark border border-f1-border text-f1-muted hover:text-white text-xs font-bold rounded transition-colors"
                     >
-                      Reset to 0
+                      Zerar
                     </button>
                     <button
                       onClick={() => setShowDelaySlider(false)}
                       className="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded transition-colors"
                     >
-                      Confirm
+                      Confirmar
                     </button>
                   </div>
                 </div>
@@ -1220,12 +1227,12 @@ function LiveTiming() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-xs font-bold text-red-400 uppercase">Live</span>
+              <span className="text-xs font-bold text-red-400 uppercase">Ao vivo</span>
             </div>
             {/* Lap counter, where replays have it */}
             {isRace && live.frame && live.frame.lap > 0 && (
               <span className="text-sm font-extrabold text-white tabular-nums">
-                Lap {live.frame.lap}{live.frame.total_laps > 0 && `/${live.frame.total_laps}`}
+                Volta {live.frame.lap}{live.frame.total_laps > 0 && `/${live.frame.total_laps}`}
               </span>
             )}
             {!isMobile && !isIOS && (
@@ -1258,7 +1265,7 @@ function LiveTiming() {
                   }
                 }}
                 className="px-3 py-1.5 rounded border border-f1-border text-f1-muted hover:text-white hover:bg-white/10 transition-colors text-xs font-bold"
-                title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+                title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
               >
                 {fullscreen ? <Minimize className="w-4 h-4 inline-block -mt-0.5" /> : <Maximize className="w-4 h-4 inline-block -mt-0.5" />}
               </button>
@@ -1277,7 +1284,7 @@ function LiveTiming() {
                 onClick={() => setPipTrackOpen(!pipTrackOpen)}
                 className="w-full flex items-center justify-between px-3 py-2 bg-f1-card border-b border-f1-border"
               >
-                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Track Map</span>
+                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Mapa da pista</span>
                 <svg className={`w-4 h-4 text-f1-muted transition-transform ${pipTrackOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -1298,12 +1305,12 @@ function LiveTiming() {
                         }`}
                       >
                         {trackStatus === "red"
-                          ? "Red Flag"
+                          ? "Bandeira vermelha"
                           : trackStatus === "sc"
                           ? "Safety Car"
                           : trackStatus === "vsc"
                           ? "Virtual Safety Car"
-                          : "Yellow Flag"}
+                          : "Bandeira amarela"}
                       </div>
                     </div>
                   )}
@@ -1311,6 +1318,7 @@ function LiveTiming() {
                     trackPoints={trackPoints}
                     rotation={rotation}
                     trackStatus={trackStatus}
+                    showSafetyCar={settings.showSafetyCar}
                     drivers={trackDrivers}
                     highlightedDrivers={selectedDrivers}
                     showDriverNames={settings.showDriverNames}
@@ -1327,14 +1335,14 @@ function LiveTiming() {
                 onClick={() => setPipRcOpen(!pipRcOpen)}
                 className="w-full flex items-center justify-between px-3 py-2 bg-f1-card border-b border-f1-border"
               >
-                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Race Control</span>
+                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Direção de prova</span>
                 <svg className={`w-4 h-4 text-f1-muted transition-transform ${pipRcOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               {pipRcOpen && (() => {
                 const latest = (live.rcMessages || [])[0];
-                if (!latest) return <p className="text-f1-muted text-xs px-3 py-2">No messages yet</p>;
+                if (!latest) return <p className="text-f1-muted text-xs px-3 py-2">Nenhuma mensagem ainda</p>;
                 const upper = latest.message.toUpperCase();
                 const isPenalty = upper.includes("PENALTY") && !upper.includes("NO FURTHER");
                 const isInvestigation = upper.includes("INVESTIGATION") || upper.includes("NOTED");
@@ -1347,7 +1355,7 @@ function LiveTiming() {
                       }`} />
                       <div className="min-w-0">
                         <p className="text-[11px] text-white leading-tight">{latest.message}</p>
-                        {latest.lap && <span className="text-[9px] text-f1-muted">Lap {latest.lap}</span>}
+                        {latest.lap && <span className="text-[9px] text-f1-muted">Volta {latest.lap}</span>}
                       </div>
                     </div>
                   </div>
@@ -1361,7 +1369,7 @@ function LiveTiming() {
                 onClick={() => setPipLeaderboardOpen(!pipLeaderboardOpen)}
                 className="w-full flex items-center justify-between px-3 py-2 bg-f1-card border-b border-f1-border flex-shrink-0"
               >
-                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Leaderboard</span>
+                <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Tabela</span>
                 <svg className={`w-4 h-4 text-f1-muted transition-transform ${pipLeaderboardOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
