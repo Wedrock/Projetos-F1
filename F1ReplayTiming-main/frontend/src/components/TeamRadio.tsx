@@ -196,7 +196,7 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-base font-extrabold text-white tracking-wide">{current.driver || `#${current.racing_number}`}</span>
-            <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Team radio</span>
+            <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Rádio da equipe</span>
             <AudioLines className={`w-4 h-4 ml-auto flex-shrink-0 ${audioPlaying ? "text-white animate-pulse" : "text-f1-muted"}`} />
           </div>
           {current.transcript && (

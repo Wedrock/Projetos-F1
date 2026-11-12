@@ -36,7 +36,7 @@ function Tabs({ active }: { active: "Sectors" | "Compare" }) {
             t === active ? "text-white border-f1-red" : "text-f1-muted border-transparent"
           }`}
         >
-          {t}
+          {t === "Sectors" ? "Setores" : "Comparar"}
         </span>
       ))}
     </div>
@@ -81,7 +81,7 @@ function SectorsTab() {
       <Part n={1}><Tabs active="Sectors" /></Part>
 
       <Part n={2} className="px-3 pt-2 pb-2">
-        <div className={`${label} mb-1`}>Best sectors &amp; ideal laps</div>
+        <div className={`${label} mb-1`}>Melhores setores e voltas ideais</div>
         <div className="grid grid-cols-4 gap-1 text-[10px] tabular-nums">
           {[["S1", "28.412", "NOR"], ["S2", "35.106", "VER"], ["S3", "27.950", "PIA"]].map(([s, t, d]) => (
             <div key={s} className="rounded bg-f1-dark px-1.5 py-1">
@@ -91,9 +91,9 @@ function SectorsTab() {
             </div>
           ))}
           <div className="rounded bg-f1-dark px-1.5 py-1">
-            <div className="text-[8px] font-bold text-f1-muted">THEORETICAL</div>
+            <div className="text-[8px] font-bold text-f1-muted">TEÓRICA</div>
             <div className="font-bold text-white">1:31.468</div>
-            <div className="text-[9px] text-f1-muted">-0.162 to best</div>
+            <div className="text-[9px] text-f1-muted">-0,162 para a melhor</div>
           </div>
         </div>
       </Part>
@@ -101,7 +101,7 @@ function SectorsTab() {
       <Part n={3} className="px-3 pb-2 border-b border-f1-border">
         <div className="text-[10px] tabular-nums">
           <div className="grid grid-cols-[1fr_56px_56px_40px] gap-x-1 text-[8px] font-bold text-f1-muted pb-0.5 border-b border-f1-border">
-            <span>DRIVER</span><span className="text-right">IDEAL</span><span className="text-right">BEST LAP</span><span className="text-right">GAP</span>
+            <span>PILOTO</span><span className="text-right">IDEAL</span><span className="text-right">MELHOR VOLTA</span><span className="text-right">DIF.</span>
           </div>
           {[["NOR", NOR, "1:31.584", "1:31.630", "+0.046", true], ["VER", VER, "1:31.577", "1:31.645", "+0.068", false], ["PIA", PIA, "1:31.702", "1:31.788", "+0.086", false]].map(([a, c, i, b, g, sel]) => (
             <div key={a as string} className={`grid grid-cols-[1fr_56px_56px_40px] gap-x-1 py-0.5 ${sel ? "bg-white/10" : ""}`}>
@@ -125,10 +125,10 @@ function SectorsTab() {
 
       <Part n={5} className="mx-3 mb-2">
         <div className="rounded border border-f1-border bg-f1-dark px-2 py-1.5">
-          <div className={`${label} mb-1`}>NOR · Lap 18</div>
+          <div className={`${label} mb-1`}>NOR · Volta 18</div>
           <div className="grid grid-cols-[24px_1fr_1fr_1fr] gap-x-2 text-[10px] tabular-nums">
-            <span /><span className="text-f1-muted text-[8px]">TIME</span><span className="text-f1-muted text-[8px]">TO BEST</span><span className="text-f1-muted text-[8px]">TO OWN BEST</span>
-            {[["S1", "28.412", "purple", "0.000 NOR", "0.000"], ["S2", "35.226", "", "+0.120 VER", "+0.046"], ["S3", "27.992", "green", "+0.042 PIA", "0.000"], ["Lap", "1:31.630", "", "0.000 NOR", "0.000"]].map(([l, t, c, b, o]) => (
+            <span /><span className="text-f1-muted text-[8px]">TEMPO</span><span className="text-f1-muted text-[8px]">P/ MELHOR</span><span className="text-f1-muted text-[8px]">P/ MELHOR PRÓPRIA</span>
+            {[["S1", "28.412", "purple", "0.000 NOR", "0.000"], ["S2", "35.226", "", "+0.120 VER", "+0.046"], ["S3", "27.992", "green", "+0.042 PIA", "0.000"], ["Volta", "1:31.630", "", "0.000 NOR", "0.000"]].map(([l, t, c, b, o]) => (
               <div key={l} className="contents">
                 <span className="text-f1-muted font-bold">{l}</span>
                 <span className={`font-bold ${c ? SECTOR_CLASS[c] : "text-white"}`}>{t}</span>
@@ -185,14 +185,14 @@ function CompareTab() {
       </Part>
 
       <Part n={9} className="pt-2">
-        <div className={`px-3 pb-1 ${label}`}>Best laps</div>
+        <div className={`px-3 pb-1 ${label}`}>Melhores voltas</div>
         <div className="mx-3 mb-2 rounded border border-f1-border bg-f1-dark px-2 py-1.5">
           <div className="grid grid-cols-[24px_1fr_1fr_48px] gap-x-2 text-[10px] tabular-nums">
             <span />
-            <span className="flex items-center gap-1 text-[9px] font-bold text-white">{dot(NOR)}NOR <span className="font-normal text-f1-muted">lap 18</span></span>
-            <span className="flex items-center gap-1 text-[9px] font-bold text-white">{dot(VER)}VER <span className="font-normal text-f1-muted">lap 21</span></span>
+            <span className="flex items-center gap-1 text-[9px] font-bold text-white">{dot(NOR)}NOR <span className="font-normal text-f1-muted">volta 18</span></span>
+            <span className="flex items-center gap-1 text-[9px] font-bold text-white">{dot(VER)}VER <span className="font-normal text-f1-muted">volta 21</span></span>
             <span className="text-[9px] text-f1-muted text-right">DELTA</span>
-            {[["S1", "28.412", "28.530", "-0.118"], ["S2", "35.226", "35.106", "+0.120"], ["S3", "27.992", "28.009", "-0.017"], ["Lap", "1:31.630", "1:31.645", "-0.015"]].map(([l, a, b, d]) => (
+            {[["S1", "28.412", "28.530", "-0.118"], ["S2", "35.226", "35.106", "+0.120"], ["S3", "27.992", "28.009", "-0.017"], ["Volta", "1:31.630", "1:31.645", "-0.015"]].map(([l, a, b, d]) => (
               <div key={l} className="contents">
                 <span className="font-bold text-f1-muted">{l}</span>
                 <span className={d.startsWith("-") ? "text-white font-bold" : "text-white/70"}>{a}</span>
@@ -206,26 +206,26 @@ function CompareTab() {
 
       <div className="border-t border-f1-border pt-2 px-3 pb-3 space-y-1.5">
         <Part n={10} className="flex items-center justify-between">
-          <span className={label}>Best laps compared</span>
-          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-f1-red text-white">Track dominance</span>
+          <span className={label}>Melhores voltas comparadas</span>
+          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-f1-red text-white">Domínio na pista</span>
         </Part>
 
         <Part n={11} className="space-y-1">
           <div className="flex gap-1">
-            {["Gap", "Speed", "Throttle", "Brake", "Gear"].map((t, i) => (
+            {["Diferença", "Velocidade", "Acelerador", "Freio", "Marcha"].map((t, i) => (
               <span key={t} className={`px-2 py-0.5 rounded text-[9px] font-bold ${i < 3 ? "bg-white/15 text-white" : "bg-f1-dark border border-f1-border text-f1-muted"}`}>{t}</span>
             ))}
           </div>
           <div className="rounded border border-f1-border bg-f1-dark px-2 py-1 text-[9px] tabular-nums">
             <div className="grid grid-cols-[1fr_52px_28px_44px] gap-x-1">
-              <span className="text-[8px] font-bold text-f1-muted uppercase">At 2.41 km</span>
-              <span className="text-[8px] font-bold text-f1-muted text-right">SPEED</span>
-              <span className="text-[8px] font-bold text-f1-muted text-right">GEAR</span>
-              <span className="text-[8px] font-bold text-f1-muted text-right">THROTTLE</span>
+              <span className="text-[8px] font-bold text-f1-muted uppercase">Em 2,41 km</span>
+              <span className="text-[8px] font-bold text-f1-muted text-right">VELOCIDADE</span>
+              <span className="text-[8px] font-bold text-f1-muted text-right">MARCHA</span>
+              <span className="text-[8px] font-bold text-f1-muted text-right">ACELERADOR</span>
               <span className="flex items-center gap-1 font-bold text-white">{dot(NOR)}NOR</span><span className="text-right text-white">287 km/h</span><span className="text-right text-white">7</span><span className="text-right text-white">100%</span>
               <span className="flex items-center gap-1 font-bold text-white">{dot(VER)}VER</span><span className="text-right text-white">281 km/h</span><span className="text-right text-white">7</span><span className="text-right text-white">100%</span>
             </div>
-            <div className="mt-0.5 text-green-400">NOR ahead by 0.096s at this point</div>
+            <div className="mt-0.5 text-green-400">NOR à frente por 0,096s neste ponto</div>
           </div>
         </Part>
 
@@ -248,21 +248,21 @@ function CompareTab() {
 }
 
 const SECTORS_KEY: { name: string; description: string }[] = [
-  { name: "Sectors tab", description: "Sector times and laps, one driver at a time." },
-  { name: "Best sectors", description: "The fastest S1, S2 and S3 so far and who set them. Theoretical is the three added together, against the best lap." },
-  { name: "Ideal laps", description: "Each driver's best three sectors added up, against their best lap. Click a driver to see their laps." },
-  { name: "Driver and range", description: "Pick a driver. In qualifying, filter by Q1, Q2 or Q3. Practice shows the last 10 laps or all of them, and a chart of their flying laps." },
-  { name: "Lap card", description: "The selected lap's sectors against the session's best and the driver's own best." },
-  { name: "Lap list", description: "Every lap with its sectors and tyre. Purple is a session best, green a personal best. Out and in laps are dimmed. Laps deleted by the stewards are struck through, with the reason on hover." },
+  { name: "Aba Setores", description: "Tempos de setor e voltas, um piloto de cada vez." },
+  { name: "Melhores setores", description: "Os S1, S2 e S3 mais rápidos até agora e quem os fez. A teórica é a soma dos três, comparada com a melhor volta." },
+  { name: "Voltas ideais", description: "Os três melhores setores de cada piloto somados, comparados com a melhor volta dele. Clique num piloto para ver as voltas." },
+  { name: "Piloto e intervalo", description: "Escolha um piloto. Na classificação, filtre por Q1, Q2 ou Q3. Nos treinos aparecem as últimas 10 voltas ou todas, e um gráfico das voltas lançadas." },
+  { name: "Cartão da volta", description: "Os setores da volta selecionada comparados com o melhor da sessão e o melhor do próprio piloto." },
+  { name: "Lista de voltas", description: "Todas as voltas com setores e pneu. Roxo é o melhor da sessão, verde o melhor pessoal. Voltas de saída e de entrada ficam esmaecidas. Voltas anuladas pelos comissários aparecem riscadas, com o motivo ao passar o mouse." },
 ];
 
 const COMPARE_KEY: { name: string; description: string }[] = [
-  { name: "Compare tab", description: "Two drivers' best laps side by side." },
-  { name: "Two drivers", description: "Pick who to compare. Click a name in the comparison to open their laps in the Sectors tab." },
-  { name: "Best laps", description: "Both best laps sector by sector. The delta is green where the first driver was faster." },
-  { name: "Track dominance", description: "Colours the track map by who was faster through each part of the lap. Desktop only." },
-  { name: "Traces and readout", description: "Choose which traces to show: gap, speed, throttle, brake and gear. Hover, tap or drag along them to see both cars' values at that point." },
-  { name: "Charts", description: "The running gap, then each trace along the lap, with corner numbers along the bottom. Desktop only." },
+  { name: "Compare tab", description: "As melhores voltas de dois pilotos lado a lado." },
+  { name: "Two drivers", description: "Escolha quem comparar. Clique num nome na comparação para abrir as voltas dele na aba Setores." },
+  { name: "Melhores voltas", description: "As duas melhores voltas setor a setor. O delta fica verde onde o primeiro piloto foi mais rápido." },
+  { name: "Domínio na pista", description: "Colore o mapa da pista por quem foi mais rápido em cada trecho da volta. Só no computador." },
+  { name: "Linhas e leitura", description: "Escolha quais linhas mostrar: diferença, velocidade, acelerador, freio e marcha. Passe o mouse, toque ou arraste sobre elas para ver os valores dos dois carros naquele ponto." },
+  { name: "Charts", description: "A diferença ao longo da volta e depois cada linha, com o número das curvas embaixo. Só no computador." },
 ];
 
 function Key({ items, start }: { items: { name: string; description: string }[]; start: number }) {
@@ -296,7 +296,7 @@ export default function LapAnalysisGuide() {
         </div>
       </div>
       <p className="mt-4 text-xs text-f1-muted">
-        Qualifying shown. Everything counts only what has happened by the current replay time, so bests and colours change as the session plays.
+        Mostrando uma classificação. Tudo considera só o que aconteceu até o momento atual do replay, então os melhores tempos e as cores mudam conforme a sessão avança.
       </p>
     </div>
   );

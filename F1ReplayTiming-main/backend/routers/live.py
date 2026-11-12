@@ -358,7 +358,7 @@ async def live_lap_telemetry(year: int, round_num: int, type: str = Query("Q"), 
     session = _live_sessions.get(f"{year}_{round_num}_{type}")
     trace = session._state_manager.lap_trace(driver, lap) if session and session._state_manager else None
     if trace is None:
-        raise HTTPException(status_code=404, detail="Not recorded yet")
+        raise HTTPException(status_code=404, detail="Ainda não gravado")
     return trace
 
 
@@ -396,7 +396,7 @@ async def live_websocket(
         if session is None:
             await websocket.send_json({
                 "type": "error",
-                "message": f"No live timing data available for {year}/{round_num}/{type}. "
+                "message": f"Nenhum dado ao vivo disponível para {year}/{round_num}/{type}. "
                            "Download test data with: python backend/scripts/download_test_session.py "
                            f"--year {year} --round {round_num} --session {type}",
             })
@@ -467,7 +467,7 @@ async def live_websocket(
                         and session._state_manager.session_status in ("Finalised", "Finished")):
                         await websocket.send_json({
                             "type": "finished",
-                            "message": "Session ended. Full replay with track positions and telemetry will be available shortly.",
+                            "message": "A sessão terminou. O replay completo, com a posição dos carros e a telemetria, fica disponível em breve.",
                         })
                         break
 

@@ -26,19 +26,19 @@ const ROWS: MockDriver[] = [
 ];
 
 const COLUMNS: { width: string; name: string; description: string }[] = [
-  { width: "1.75rem", name: "Position", description: "Current position. The leader has a red badge." },
-  { width: "0.75rem", name: "Team colour", description: "Bar in the constructor's colour." },
-  { width: "2.25rem", name: "Driver", description: "Three-letter driver code. Click a row to show their telemetry." },
-  { width: "1.75rem", name: "Grid change", description: "Places gained (green) or lost (red) since the start." },
-  { width: "1.25rem", name: "Fastest lap", description: "Purple clock on the driver with the fastest lap." },
-  { width: "3.75rem", name: "Gap", description: "Gap to the leader, or interval to the car ahead (tap the leader's pill to switch). Shows PIT in the pit lane." },
-  { width: "4rem", name: "Last lap", description: "Most recent lap time. Purple is the fastest overall, green a personal best." },
-  { width: "1.5rem", name: "Pit stops", description: "Stops made so far. A chequered flag once finished." },
-  { width: "2.5rem", name: "Pit prediction", description: "Where the driver would rejoin if they pitted now." },
-  { width: "2.5rem", name: "Pit gaps", description: "Gap to the car ahead (↑) and behind (↓) after that stop. Yellow or red means it's close." },
-  { width: "2.25rem", name: "Tyre history", description: "The previous compounds used." },
-  { width: "1.5rem", name: "Tyre", description: "Current tyre compound." },
-  { width: "1.5rem", name: "Tyre age", description: "Laps on the current set." },
+  { width: "1.75rem", name: "Posição", description: "Posição atual. O líder tem um selo vermelho." },
+  { width: "0.75rem", name: "Cor da equipe", description: "Barra com a cor da equipe." },
+  { width: "2.25rem", name: "Piloto", description: "Sigla de três letras do piloto. Clique numa linha para mostrar a telemetria dele." },
+  { width: "1.75rem", name: "Mudança no grid", description: "Posições ganhas (verde) ou perdidas (vermelho) desde a largada." },
+  { width: "1.25rem", name: "Volta mais rápida", description: "Relógio roxo no piloto com a volta mais rápida." },
+  { width: "3.75rem", name: "Diferença", description: "Diferença para o líder, ou intervalo para o carro da frente (toque no selo do líder para alternar). Mostra PIT no pit lane." },
+  { width: "4rem", name: "Última volta", description: "Tempo da volta mais recente. Roxo é a mais rápida de todas, verde o melhor pessoal." },
+  { width: "1.5rem", name: "Pit stops", description: "Paradas feitas até agora. Uma bandeira quadriculada quando termina." },
+  { width: "2.5rem", name: "Previsão de pit", description: "Onde o piloto voltaria se parasse agora." },
+  { width: "2.5rem", name: "Diferenças no pit", description: "Diferença para o carro da frente (↑) e de trás (↓) depois dessa parada. Amarelo ou vermelho indica que está apertado." },
+  { width: "2.25rem", name: "Histórico de pneus", description: "Os compostos usados antes." },
+  { width: "1.5rem", name: "Pneu", description: "Composto atual do pneu." },
+  { width: "1.5rem", name: "Idade do pneu", description: "Voltas com o jogo atual." },
 ];
 
 const GRID = COLUMNS.map((c) => c.width).join(" ");
@@ -99,7 +99,7 @@ export default function LeaderboardGuide() {
                   )}
                 </span>
                 {d.gap === "Leader" ? (
-                  <span className="justify-self-start px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white">Leader</span>
+                  <span className="justify-self-start px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white">Líder</span>
                 ) : (
                   <span className="text-xs font-bold tabular-nums text-f1-muted">{d.gap}</span>
                 )}
@@ -159,8 +159,7 @@ export default function LeaderboardGuide() {
         })}
       </div>
       <p className="mt-4 text-xs text-f1-muted">
-        Race replay shown. Qualifying and practice show best lap times and live sectors instead of the race-only
-        columns. Every column can be turned on or off in Settings → Leaderboard.
+        Mostrando um replay de corrida. Classificação e treinos mostram os melhores tempos e os setores ao vivo no lugar das colunas exclusivas de corrida. Cada coluna pode ser ligada ou desligada em Configurações → Tabela.
       </p>
     </div>
   );

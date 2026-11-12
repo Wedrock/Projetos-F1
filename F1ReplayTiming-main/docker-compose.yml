@@ -2,7 +2,10 @@ services:
   f1timing:
     build: .  # Uses root Dockerfile (unified FE+BE)
     ports:
-      - "${PORT:-8000}:8000"
+      # Only this computer can open the app. To reach it from other devices,
+      # set BIND_ADDRESS=0.0.0.0 and add the address to ALLOWED_HOSTS in .env
+      # (and turn on AUTH_ENABLED: anyone who can open it can use your F1 TV sign-in).
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8000}:8000"
     env_file: .env
     environment:
       # The container always listens on 8000 so reverse proxies have a stable

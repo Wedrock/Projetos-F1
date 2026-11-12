@@ -56,7 +56,7 @@ export default function TelemetryChart({ visible, driver, year, isQualifying, us
     return (
       <div className="w-full py-2">
         <p className="text-[10px] text-f1-muted text-center">
-          Select drivers to view telemetry
+          Selecione pilotos para ver a telemetria
         </p>
       </div>
     );
@@ -102,7 +102,7 @@ export default function TelemetryChart({ visible, driver, year, isQualifying, us
 
         {/* Speed */}
         <div className="w-[50px] sm:w-[85px] flex items-center shrink-0">
-          <span className="text-[9px] font-bold text-f1-muted uppercase w-[20px] sm:w-auto">Spd</span>
+          <span className="text-[9px] font-bold text-f1-muted uppercase w-[20px] sm:w-auto">Vel</span>
           <span className="text-[11px] sm:text-xs font-extrabold text-white tabular-nums text-right w-[26px] sm:w-[26px]">
             {speed}
           </span>
@@ -111,20 +111,20 @@ export default function TelemetryChart({ visible, driver, year, isQualifying, us
 
         {/* Throttle */}
         <div className="w-[52px] sm:w-[50px] flex items-center gap-[3px] shrink-0">
-          <span className="text-[9px] font-bold text-f1-muted uppercase w-[20px] sm:w-auto">Thr</span>
+          <span className="text-[9px] font-bold text-f1-muted uppercase w-[20px] sm:w-auto">Acel</span>
           <BarPips value={throttle} max={100} color="#22C55E" />
         </div>
 
         {/* Brake */}
         <div className="w-[52px] sm:w-[48px] flex items-center gap-[3px] shrink-0">
-          <span className="text-[9px] font-bold text-f1-muted uppercase w-[20px] sm:w-auto">Brk</span>
+          <span className="text-[9px] font-bold text-f1-muted uppercase w-[20px] sm:w-auto">Fre</span>
           <BarPips value={brake} max={100} color="#EF4444" />
         </div>
 
         {/* Gear */}
         <div className="w-[26px] sm:w-[38px] flex items-center gap-[2px] shrink-0">
-          <span className="text-[9px] font-bold text-f1-muted uppercase w-[10px] sm:hidden">G</span>
-          <span className="text-[9px] font-bold text-f1-muted uppercase hidden sm:inline">Gear</span>
+          <span className="text-[9px] font-bold text-f1-muted uppercase w-[10px] sm:hidden">M</span>
+          <span className="text-[9px] font-bold text-f1-muted uppercase hidden sm:inline">Marcha</span>
           <span className="text-[11px] sm:text-xs font-extrabold text-white tabular-nums w-[10px] sm:w-[10px] text-center">
             {gear === 0 ? "N" : gear}
           </span>

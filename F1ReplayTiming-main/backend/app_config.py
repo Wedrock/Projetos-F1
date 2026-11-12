@@ -27,6 +27,18 @@ def _flag(name: str, default: bool) -> bool:
     return value.strip().lower() in ("true", "1", "yes", "on")
 
 
+def allowed_hosts() -> list[str]:
+    """Host names the server answers to (ALLOWED_HOSTS, comma separated).
+
+    Defaults to this computer only, so a web page can't reach the server
+    through DNS rebinding. Add your domain or LAN address to serve it beyond
+    this computer, or "*" to allow any.
+    """
+    raw = os.environ.get("ALLOWED_HOSTS", "").strip()
+    hosts = [h.strip() for h in raw.split(",") if h.strip()]
+    return hosts or ["localhost", "127.0.0.1", "*.localhost"]
+
+
 def is_public_mode() -> bool:
     """Public mode turns off admin and processing features for a shared site."""
     return _flag("PUBLIC_MODE", False)
@@ -98,15 +110,15 @@ def set_cache(response, seconds: int, immutable: bool = False) -> None:
 def validate_session(year: int, round_num: int, session_type: str) -> None:
     """Reject out-of-range sessions before they reach storage paths or FastF1."""
     if not MIN_YEAR <= year <= MAX_YEAR:
-        raise HTTPException(status_code=400, detail=f"Unsupported year: {year}")
+        raise HTTPException(status_code=400, detail=f"Ano sem suporte: {year}")
     if not 1 <= round_num <= MAX_ROUND:
-        raise HTTPException(status_code=400, detail=f"Unsupported round: {round_num}")
+        raise HTTPException(status_code=400, detail=f"Etapa sem suporte: {round_num}")
     if session_type not in SESSION_TYPES:
-        raise HTTPException(status_code=400, detail=f"Unknown session type: {session_type}")
+        raise HTTPException(status_code=400, detail=f"Tipo de sessão desconhecido: {session_type}")
     if is_after_public_cutoff(year, round_num):
         raise HTTPException(
             status_code=404,
-            detail="This session isn't available on this site. F1 now requires an F1 TV subscription for timing data.",
+            detail="Esta sessão não está disponível neste site. A F1 agora exige uma assinatura do F1 TV para os dados de cronometragem.",
         )
 
 
@@ -120,4 +132,4 @@ def is_valid_session(year: int, round_num: int, session_type: str) -> bool:
 
 def validate_driver(driver: str) -> None:
     if not _DRIVER_RE.match(driver or ""):
-        raise HTTPException(status_code=400, detail=f"Invalid driver code: {driver}")
+        raise HTTPException(status_code=400, detail=f"Código de piloto inválido: {driver}")

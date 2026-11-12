@@ -42,6 +42,37 @@ def _cache_key(year: int, round_num: int, session_type: str) -> str:
     return f"{year}_{round_num}_{session_type}"
 
 
+# Progress messages for the session being loaded in this thread (set by
+# processing so OpenF1 downloads can report progress)
+_progress = threading.local()
+
+
+def set_progress(callback) -> None:
+    _progress.callback = callback
+
+
+def _report(msg: str) -> None:
+    cb = getattr(_progress, "callback", None)
+    if cb:
+        try:
+            cb(msg)
+        except Exception:
+            pass
+
+
+def _get_session(year: int, round_num: int, session_type: str):
+    """A FastF1 session, served from OpenF1 when that's the data source."""
+    s = fastf1.get_session(year, round_num, session_type)
+    if f1_account.use_openf1():
+        from services import openf1_source
+        if not openf1_source.is_registered(s.api_path):
+            try:
+                openf1_source.register(s, session_type, on_status=_report)
+            except openf1_source.SessionNotOnOpenF1 as e:
+                raise f1_account.F1AccountError(str(e)) from e
+    return s
+
+
 def release_sessions(year: int, round_num: int) -> None:
     """Drop a weekend's loaded FastF1 sessions from memory.
 
@@ -53,7 +84,12 @@ def release_sessions(year: int, round_num: int) -> None:
     with _session_lock:
         keys = [k for k in _session_cache if k.startswith(prefix)]
         for k in keys:
-            del _session_cache[k]
+            s = _session_cache.pop(k)
+            try:
+                from services import openf1_source
+                openf1_source.unregister(s.api_path)
+            except Exception:
+                pass
     if keys:
         import gc
         gc.collect()
@@ -244,12 +280,12 @@ def _load_session(year: int, round_num: int, session_type: str) -> fastf1.core.S
             return _session_cache[key]
 
         logger.info(f"Loading session {year}/{round_num}/{session_type} from FastF1...")
-        f1_account.require_ready()
+        f1_account.require_source()
 
         def load() -> tuple[fastf1.core.Session, bool]:
             before = f1_account.timeout_count()
             f1_account.clear_refusal()
-            s = fastf1.get_session(year, round_num, session_type)
+            s = _get_session(year, round_num, session_type)
             s.load(telemetry=True, laps=True, weather=True, messages=True)
             return s, f1_account.timeout_count() > before
 
@@ -653,6 +689,68 @@ def _get_driver_telemetry_sync(
         result["relative_distance"] = tel_sampled["RelativeDistance"].astype(float).tolist()
 
     return result
+
+
+def _get_driver_all_laps_telemetry_sync(
+    year: int, round_num: int, session_type: str, driver: str
+) -> dict[str, dict]:
+    """Every lap's telemetry trace for one driver, keyed by lap number.
+
+    Same output as _get_driver_telemetry_sync per lap, but cuts each lap out of
+    the driver's car data once, instead of asking FastF1 to slice and
+    interpolate the whole session again for every lap (minutes per session).
+    """
+    session = _load_session(year, round_num, session_type)
+    drv_laps = session.laps.pick_drivers(driver)
+    if len(drv_laps) == 0:
+        return {}
+    num = str(drv_laps["DriverNumber"].iloc[0])
+    car = session.car_data.get(num)
+    if car is None or len(car) == 0:
+        return {}
+    car = car.sort_values("SessionTime")
+    t = car["SessionTime"].dt.total_seconds().to_numpy()
+    speed = car["Speed"].to_numpy(dtype=float)
+    throttle = car["Throttle"].to_numpy(dtype=float)
+    brake = car["Brake"].to_numpy(dtype=bool)
+    gear = car["nGear"].to_numpy(dtype=float)
+    rpm = car["RPM"].to_numpy(dtype=float)
+    drs = car["DRS"].to_numpy(dtype=float) if "DRS" in car.columns else None
+
+    out: dict[str, dict] = {}
+    for _, lap in drv_laps.iterrows():
+        start, end = lap.get("LapStartTime"), lap.get("Time")
+        if pd.isna(start) or pd.isna(end) or pd.isna(lap.get("LapNumber")):
+            continue
+        i0 = int(np.searchsorted(t, start.total_seconds(), side="left"))
+        i1 = int(np.searchsorted(t, end.total_seconds(), side="right"))
+        if i1 - i0 < 2:
+            continue
+        sl = slice(i0, i1)
+        lt = t[sl]
+        sp = speed[sl]
+        # Distance by integrating speed over time (as FastF1's add_distance)
+        dt = np.diff(lt, prepend=lt[0])
+        dist = np.cumsum(sp / 3.6 * dt)
+        total = dist[-1] if dist[-1] > 0 else 1.0
+        step = max(1, len(lt) // 500)
+        idx = np.arange(0, len(lt), step)
+        lap_num = int(lap["LapNumber"])
+        entry = {
+            "driver": driver,
+            "lap": lap_num,
+            "distance": dist[idx].round(2).tolist(),
+            "speed": sp[idx].tolist(),
+            "throttle": throttle[sl][idx].tolist(),
+            "brake": [100 if b else 0 for b in brake[sl][idx]],
+            "gear": gear[sl][idx].astype(int).tolist(),
+            "rpm": rpm[sl][idx].tolist(),
+            "relative_distance": (dist[idx] / total).round(5).tolist(),
+        }
+        if drs is not None:
+            entry["drs"] = drs[sl][idx].astype(int).tolist()
+        out[str(lap_num)] = entry
+    return out
 
 
 async def get_driver_telemetry(
@@ -2002,8 +2100,8 @@ def rebuild_lap_extras_sync(year: int, round_num: int, session_type: str, write:
         logger.info(f"[extras] {base}: not processed (needs laps, track and replay files)")
         return None
 
-    f1_account.require_ready()
-    session = fastf1.get_session(year, round_num, session_type)
+    f1_account.require_source()
+    session = _get_session(year, round_num, session_type)
     session.load(laps=True, telemetry=False, weather=False, messages=True)
 
     # Session time -> replay time, from the stored lap end times

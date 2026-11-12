@@ -54,7 +54,7 @@ async function request(method: "GET" | "PUT", body?: object): Promise<CaptionSet
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.detail || `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(data?.detail || `Falha na requisição (${res.status})`);
   return data;
 }
 
@@ -73,7 +73,7 @@ function mb(bytes: number): string {
 }
 
 function Locked({ name }: { name: string }) {
-  return <p className="mt-1 text-[10px] text-f1-muted">Set by {name} in .env</p>;
+  return <p className="mt-1 text-[10px] text-f1-muted">Definido por {name} no .env</p>;
 }
 
 /** Whether the saved model is on the server, or how far its download has got. */
@@ -81,14 +81,14 @@ function Status({ status, saved }: { status?: ModelStatus; saved: boolean }) {
   if (!status || !saved) return null;
   switch (status.state) {
     case "ready":
-      return <p className="mt-1 text-[10px] text-green-400">Downloaded</p>;
+      return <p className="mt-1 text-[10px] text-green-400">Baixado</p>;
     case "downloading": {
       const got = status.downloaded_bytes ?? 0;
       const pct = status.total_bytes ? Math.min(99, Math.round((got / status.total_bytes) * 100)) : null;
       return (
         <div className="mt-1">
           <p className="text-[10px] text-yellow-400">
-            Downloading… {mb(got)}{status.total_bytes ? ` of ${mb(status.total_bytes)}` : ""}. Captions use the current model until it&apos;s ready.
+            Baixando… {mb(got)}{status.total_bytes ? ` de ${mb(status.total_bytes)}` : ""}. As legendas usam o modelo atual até ele ficar pronto.
           </p>
           {pct !== null && (
             <div className="mt-1 h-1 rounded bg-f1-border overflow-hidden">
@@ -99,9 +99,9 @@ function Status({ status, saved }: { status?: ModelStatus; saved: boolean }) {
       );
     }
     case "error":
-      return <p className="mt-1 text-[10px] text-red-400">{status.error ?? "Download failed"}. Captions use the current model.</p>;
+      return <p className="mt-1 text-[10px] text-red-400">{status.error ?? "Falha no download"}. As legendas usam o modelo atual.</p>;
     case "missing":
-      return <p className="mt-1 text-[10px] text-f1-muted">Not downloaded yet</p>;
+      return <p className="mt-1 text-[10px] text-f1-muted">Ainda não baixado</p>;
     default:
       return null;
   }
@@ -164,13 +164,13 @@ export default function CaptionSettings() {
   return (
     <div className="px-2 sm:px-6 pt-4 mt-3 border-t border-f1-border space-y-3">
       <div>
-        <p className="text-xs font-bold text-f1-muted uppercase tracking-wider">Captions on this server</p>
-        <p className="text-[10px] text-f1-muted mt-0.5">For everyone using this server. Larger models are more accurate but slower and download more.</p>
+        <p className="text-xs font-bold text-f1-muted uppercase tracking-wider">Legendas neste servidor</p>
+        <p className="text-[10px] text-f1-muted mt-0.5">Para todos que usam este servidor. Modelos maiores são mais precisos, mas mais lentos e baixam mais dados.</p>
       </div>
 
       {/* Whisper model for replays */}
       <label className="block">
-        <span className="block text-sm text-white mb-1">Caption model for replays</span>
+        <span className="block text-sm text-white mb-1">Modelo de legenda para replays</span>
         <select
           className={selectClass}
           value={draft.whisper_model}
@@ -187,18 +187,18 @@ export default function CaptionSettings() {
 
       {/* Whisper model for live timing */}
       <label className="block">
-        <span className="block text-sm text-white mb-1">Caption model for live timing</span>
+        <span className="block text-sm text-white mb-1">Modelo de legenda para o ao vivo</span>
         <select
           className={selectClass}
           value={liveId}
           disabled={busy || data.live_whisper_model_locked}
           onChange={(e) => set({ live_whisper_model: e.target.value || null })}
         >
-          <option value={SAME_AS_REPLAYS}>Same as replays</option>
+          <option value={SAME_AS_REPLAYS}>Igual aos replays</option>
           {data.whisper_models.map((m) => <option key={m.id} value={m.id}>{modelLabel(m)}</option>)}
         </select>
         <p className="mt-1 text-[10px] text-f1-muted">
-          Live captions have to be ready within your broadcast delay, so a faster model than replays can help on slower machines.
+          As legendas ao vivo precisam ficar prontas dentro do atraso da sua transmissão, então um modelo mais rápido que o dos replays pode ajudar em máquinas mais lentas.
         </p>
         {liveId && <Status status={data.model_status[liveId]} saved={draft.live_whisper_model === saved.live_whisper_model} />}
         {data.live_whisper_model_locked && <Locked name="TEAM_RADIO_LIVE_MODEL" />}
@@ -211,22 +211,22 @@ export default function CaptionSettings() {
           disabled={busy || !data.ai_available || data.ai_enabled_locked}
           className="w-full flex items-center justify-between py-1 disabled:opacity-50"
         >
-          <span className="text-sm text-white">Improve captions with AI</span>
+          <span className="text-sm text-white">Melhorar as legendas com IA</span>
           <div className={`relative w-9 h-5 rounded-full transition-colors ${draft.ai_enabled ? "bg-f1-red" : "bg-f1-border"}`}>
             <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${draft.ai_enabled ? "translate-x-[18px]" : "translate-x-0.5"}`} />
           </div>
         </button>
         <p className="text-[10px] text-f1-muted">
           {data.ai_available
-            ? "Sends each clip's audio and caption, with the session's drivers and F1 terms, to an AI model through OpenRouter, which listens and corrects it."
-            : "Needs OPENROUTER_API_KEY in .env. Sends each clip's audio and caption to an AI model through OpenRouter, which listens and corrects it."}
+            ? "Envia o áudio e a legenda de cada mensagem, com os pilotos da sessão e termos da F1, para um modelo de IA pelo OpenRouter, que escuta e corrige."
+            : "Exige OPENROUTER_API_KEY no .env. Envia o áudio e a legenda de cada mensagem para um modelo de IA pelo OpenRouter, que escuta e corrige."}
         </p>
         {data.ai_enabled_locked && <Locked name="TEAM_RADIO_AI" />}
       </div>
 
       {data.ai_available && draft.ai_enabled && (
         <label className="block">
-          <span className="block text-sm text-white mb-1">AI model</span>
+          <span className="block text-sm text-white mb-1">Modelo de IA</span>
           <select
             className={selectClass}
             value={draft.ai_model}
@@ -247,16 +247,16 @@ export default function CaptionSettings() {
           disabled={!dirty || busy}
           className="px-3 py-1.5 rounded bg-f1-red text-white text-xs font-bold disabled:opacity-40 hover:bg-red-700 transition-colors"
         >
-          {busy ? "Saving…" : "Save"}
+          {busy ? "Salvando…" : "Salvar"}
         </button>
         {dirty ? (
-          <span className="text-[10px] text-yellow-400">Unsaved changes</span>
+          <span className="text-[10px] text-yellow-400">Alterações não salvas</span>
         ) : savedAt ? (
-          <span className="text-[10px] text-green-400">Saved</span>
+          <span className="text-[10px] text-green-400">Salvo</span>
         ) : null}
       </div>
       <p className="text-[10px] text-f1-muted">
-        Saving downloads a new caption model in the background. Changes apply to live timing and to sessions processed from now on. Reprocess a session to update its existing captions.
+        Salvar baixa um novo modelo de legenda em segundo plano. As mudanças valem para o ao vivo e para as sessões processadas daqui em diante. Reprocesse uma sessão para atualizar as legendas que ela já tem.
       </p>
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>

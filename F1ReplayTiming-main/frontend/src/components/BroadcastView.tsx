@@ -79,11 +79,11 @@ function writeJson(key: string, value: unknown) {
 // F1 TV's names for its other feeds (which ones there are depends on the
 // account and the session)
 const FEED_NAMES: Record<string, string> = {
-  "F1 LIVE": "F1 Live",
-  "INTERNATIONAL": "International",
-  "TRACKER": "Driver Tracker",
-  "DATA": "Data Channel",
-  "PIT LANE": "Pit Lane Channel",
+  "F1 LIVE": "F1 Ao Vivo",
+  "INTERNATIONAL": "Internacional",
+  "TRACKER": "Rastreador de pilotos",
+  "DATA": "Canal de dados",
+  "PIT LANE": "Canal do pit lane",
 };
 
 function feedName(c: F1TVChannel): string {
@@ -402,40 +402,40 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
     ? liveDelay !== null
       ? liveSound
         ? {
-            label: `Synced by engine sound (${liveSound.drivers.join(", ")}): timing delayed ${liveDelay.toFixed(1)}s`,
-            hint: "The timing is held back to show the same moment as F1 TV's live video, measured by matching onboard engine sound to the drivers' revs. Accurate to a fraction of a second.",
+            label: `Sincronizado pelo som do motor (${liveSound.drivers.join(", ")}): cronometragem atrasada em ${liveDelay.toFixed(1)}s`,
+            hint: "A cronometragem é atrasada para mostrar o mesmo momento do vídeo ao vivo do F1 TV, medido comparando o som do motor das onboards com a rotação dos pilotos. Preciso em frações de segundo.",
             tone: "good",
           }
         : {
-            label: `Synced by video time stamp (approximate): timing delayed ${liveDelay.toFixed(1)}s`,
+            label: `Sincronizado pela marca de tempo do vídeo (aproximado): cronometragem atrasada em ${liveDelay.toFixed(1)}s`,
             hint: liveSoundProtected
-              ? "The timing is held back to show the same moment as F1 TV's live video, from the time stamps in the video, usually within a second or two. F1 TV encrypts this stream's onboard sound, so the engine sound can't be matched for a more exact sync. Adjust with the buttons if needed."
-              : "The timing is held back to show the same moment as F1 TV's live video, from the time stamps in the video. Matching the engine sound for a more exact sync once there's a couple of minutes of driving.",
+              ? "A cronometragem é atrasada para mostrar o mesmo momento do vídeo ao vivo do F1 TV, pelas marcas de tempo do vídeo, geralmente com erro de um ou dois segundos. O F1 TV criptografa o som das onboards desta transmissão, então o som do motor não pode ser comparado para uma sincronização mais exata. Ajuste com os botões se precisar."
+              : "A cronometragem é atrasada para mostrar o mesmo momento do vídeo ao vivo do F1 TV, pelas marcas de tempo do vídeo. A comparação com o som do motor, mais exata, começa depois de alguns minutos de pista.",
             tone: "rough",
           }
       : main.state === "ready"
-        ? { label: "Matching the timing to the live broadcast…", hint: "Waiting for the live timing and the video's clock.", tone: "busy" }
+        ? { label: "Alinhando a cronometragem com a transmissão ao vivo…", hint: "Aguardando a cronometragem ao vivo e o relógio do vídeo.", tone: "busy" }
         : null
     : aligning
-    ? { label: "Syncing manually…", hint: "Find the moment in the broadcast that matches the timing, then press Set sync here.", tone: "busy" }
+    ? { label: "Sincronizando manualmente…", hint: "Encontre o momento da transmissão que bate com a cronometragem e aperte Sincronizar aqui.", tone: "busy" }
     : manualOffset !== null
-    ? { label: "Synced manually", hint: "Lined up with Sync manually. Clear it to go back to the automatic sync.", tone: "rough" }
+    ? { label: "Sincronizado manualmente", hint: "Alinhado com Sincronizar manualmente. Apague para voltar à sincronização automática.", tone: "rough" }
     : soundSynced
     ? {
-        label: `Synced by engine sound${soundSync!.drivers?.length ? ` (${soundSync!.drivers.join(", ")})` : ""}`,
-        hint: "Lined up by matching onboard engine sound to the drivers' revs in the timing. Accurate to a fraction of a second.",
+        label: `Sincronizado pelo som do motor${soundSync!.drivers?.length ? ` (${soundSync!.drivers.join(", ")})` : ""}`,
+        hint: "Alinhado comparando o som do motor das onboards com a rotação dos pilotos na cronometragem. Preciso em frações de segundo.",
         tone: "good",
       }
     : syncing
       ? {
-          label: "Lining up with the timing…",
-          hint: "Matching onboard engine sound to the timing. The first time for a session takes about a minute.",
+          label: "Alinhando com a cronometragem…",
+          hint: "Comparando o som do motor das onboards com a cronometragem. Na primeira vez de cada sessão, leva cerca de um minuto.",
           tone: "busy",
         }
       : autoOffset !== null
         ? {
-            label: "Synced by video time stamp (approximate)",
-            hint: "F1 TV's audio for this session is protected, so the engine sound couldn't be matched. Lined up from the time stamp in F1 TV's video instead, usually within a second or two. Adjust with the buttons if needed.",
+            label: "Sincronizado pela marca de tempo do vídeo (aproximado)",
+            hint: "O áudio do F1 TV desta sessão é protegido, então o som do motor não pôde ser comparado. Alinhado pela marca de tempo do vídeo do F1 TV, geralmente com erro de um ou dois segundos. Ajuste com os botões se precisar.",
             tone: "rough",
           }
         : null;
@@ -486,7 +486,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
       // F1 TV only has a live stream's details once it's live: look the
       // session up again in 30 seconds
       if (live) {
-        setContentError("F1 TV hasn't started streaming this session yet. Checking every 30 seconds.");
+        setContentError("O F1 TV ainda não começou a transmitir esta sessão. Verificando a cada 30 segundos.");
         retryTimer = setTimeout(() => setLink(""), 30_000);
       } else {
         setContentError(e.message);
@@ -624,11 +624,11 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
     const nearest = leaderCrossings.reduce((a, b) => (Math.abs(b - seen) < Math.abs(a - seen) ? b : a));
     const by = seen - nearest;
     if (Math.abs(by) > CROSSING_RANGE_S) {
-      setCrossingNote(`The timing is more than ${CROSSING_RANGE_S}s from a lap change. Use the buttons to get closer first.`);
+      setCrossingNote(`A cronometragem está a mais de ${CROSSING_RANGE_S}s de uma troca de volta. Use os botões para chegar mais perto primeiro.`);
       return;
     }
     nudge("main", by);
-    setCrossingNote(`Moved the video ${by >= 0 ? "+" : ""}${by.toFixed(1)}s against the timing`);
+    setCrossingNote(`Vídeo movido ${by >= 0 ? "+" : ""}${by.toFixed(1)}s em relação à cronometragem`);
   };
 
   const resetSync = (which: "main" | "onboard") => {
@@ -658,7 +658,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
   if (!link && finding === "searching") {
     return (
       <div className="w-full h-full flex items-center justify-center bg-black">
-        <p className="text-xs text-f1-muted">{live ? "Loading the live broadcast…" : "Finding this session on F1 TV…"}</p>
+        <p className="text-xs text-f1-muted">{live ? "Carregando a transmissão ao vivo…" : "Procurando esta sessão no F1 TV…"}</p>
       </div>
     );
   }
@@ -667,7 +667,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
     return (
       <div className="w-full h-full flex items-center justify-center bg-black px-6 text-center">
         <p className="text-xs text-f1-muted leading-relaxed max-w-sm">
-          {findError ?? "F1 TV isn't streaming this session yet."} Checking again every 30 seconds.
+          {findError ?? "O F1 TV ainda não está transmitindo esta sessão."} Verificando de novo a cada 30 segundos.
         </p>
       </div>
     );
@@ -677,12 +677,12 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
     return (
       <div className="w-full h-full flex items-center justify-center bg-black">
         <div className="max-w-md w-full px-6 space-y-3">
-          <p className="text-sm text-white font-bold">Watch the F1 TV broadcast</p>
+          <p className="text-sm text-white font-bold">Assista à transmissão do F1 TV</p>
           {finding === "not_found" && (
             <p className="text-xs text-yellow-400 leading-relaxed">{findError}</p>
           )}
           <p className="text-xs text-f1-muted leading-relaxed">
-            Open this session on f1tv.formula1.com and paste the link from the address bar.
+            Abra esta sessão em f1tv.formula1.com e cole o link da barra de endereços.
           </p>
           <div className="flex gap-2">
             <input
@@ -699,7 +699,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
               disabled={!linkDraft.trim()}
               className="px-3 py-1.5 bg-f1-red text-white text-xs font-bold rounded disabled:opacity-50"
             >
-              Load
+              Carregar
             </button>
           </div>
         </div>
@@ -714,8 +714,8 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
   const viewButtons = (slot: number, source: Source): ViewButtonProps => ({
     audible: audible === source,
     audioTitle: audible === source
-      ? audioPick === source && slot > 0 ? "Playing this view's sound. Click to follow the main view again" : "Playing this view's sound"
-      : "Play this view's sound instead",
+      ? audioPick === source && slot > 0 ? "Tocando o som desta visão. Clique para voltar a seguir a visão principal" : "Tocando o som desta visão"
+      : "Tocar o som desta visão",
     // Only a choice when more than one view is showing
     onAudio: shownCount > 1 ? () => setAudioPick(slot === 0 || audioPick === source ? null : source) : undefined,
     onSwap: slot > 0 ? () => assign(0, source) : undefined,
@@ -754,14 +754,14 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
       {main.state !== "ready" && statusRect && (
         <div className="absolute z-10 flex flex-col items-center justify-center gap-3 px-6" style={place(statusRect)}>
           <p className={`text-xs text-center max-w-md leading-relaxed ${contentError || main.state === "error" ? "text-white/80" : "text-f1-muted"}`}>
-            {contentError || (main.state === "error" ? main.debug.error?.message : "Loading broadcast…")}
+            {contentError || (main.state === "error" ? main.debug.error?.message : "Carregando a transmissão…")}
           </p>
           {main.state === "error" && link && (
             <button
               onClick={() => void main.load(link, mainChannel, opts, !!live)}
               className="px-3 py-1 rounded bg-f1-border text-white text-xs font-bold hover:bg-f1-red transition-colors"
             >
-              Retry
+              Tentar de novo
             </button>
           )}
         </div>
@@ -773,7 +773,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
         <div className="absolute z-20 pointer-events-none has-[[data-open]]:z-40" style={place(broadcastRect)}>
           {broadcastSlot > 0 && (
             <div className={`absolute top-1.5 left-1.5 z-30 pointer-events-auto transition-opacity ${reveal}`}>
-              {pickerFor(broadcastSlot, "Choose a view")}
+              {pickerFor(broadcastSlot, "Escolha uma visão")}
             </div>
           )}
           <ViewButtons {...viewButtons(broadcastSlot, BROADCAST)} hover="view" />
@@ -808,7 +808,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
           onToggleSectors={() => toggleSectors(slot)}
           showTelemetry={telemetryOn[slot]}
           onToggleTelemetry={() => toggleTelemetry(slot)}
-          picker={slot > 0 ? pickerFor(slot, "Choose a view") : null}
+          picker={slot > 0 ? pickerFor(slot, "Escolha uma visão") : null}
           buttons={viewButtons(slot, number)}
           audible={audible === number}
           muted={muted}
@@ -820,11 +820,11 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
       {mode !== "single" && views.empty.map(({ slot, rect, compact }) => (
         <div key={`empty-${slot}`} className="absolute z-20 has-[[data-open]]:z-40" style={place(rect)}>
           {compact ? (
-            pickerFor(slot, "Add another view")
+            pickerFor(slot, "Adicionar outra visão")
           ) : (
             <div className="w-full h-full rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-2">
-              <span className="text-[10px] text-white/50">{onboards.length ? "Onboard camera" : "No onboards for this session"}</span>
-              {pickerFor(slot, slot === 1 ? "Choose an onboard" : "Add another view")}
+              <span className="text-[10px] text-white/50">{onboards.length ? "Câmera onboard" : "Nenhuma onboard nesta sessão"}</span>
+              {pickerFor(slot, slot === 1 ? "Escolha uma onboard" : "Adicionar outra visão")}
             </div>
           )}
         </div>
@@ -851,7 +851,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
             resizing || controlsShown ? "opacity-100" : "opacity-0 group-hover:opacity-100 [@media(hover:none)]:pointer-events-none"
           }`}
           style={{ left: mainWidth }}
-          title="Drag to make the side panel narrower"
+          title="Arraste para estreitar o painel lateral"
           role="separator"
           aria-orientation="vertical"
         >
@@ -880,7 +880,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
         <div className="flex items-center gap-1.5">
           {/* Flips the view for now; Settings > Broadcast sets the default */}
           <div className="flex rounded border border-f1-border overflow-hidden">
-            {([[true, "Multi-view"], [false, "Single view"]] as const).map(([value, label]) => (
+            {([[true, "Multivisão"], [false, "Visão única"]] as const).map(([value, label]) => (
               <button
                 key={label}
                 onClick={() => onMultiViewChange(value)}
@@ -895,11 +895,11 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
           {multiView && (
             <div className="flex rounded border border-f1-border overflow-hidden">
               {([
-                ["focus", "Main view, with two smaller views and the track map beside it"],
-                ["strip", "Main view, with four smaller views and the track map along the bottom"],
-                ["pair", "Two views side by side, with the track map below"],
-                ["quad", "Four views in a square, with the track map in the middle"],
-                ["grid", "Grid: five views and the track map, all the same size"],
+                ["focus", "Visão principal, com duas visões menores e o mapa da pista ao lado"],
+                ["strip", "Visão principal, com quatro visões menores e o mapa da pista embaixo"],
+                ["pair", "Duas visões lado a lado, com o mapa da pista embaixo"],
+                ["quad", "Quatro visões em quadrado, com o mapa da pista no meio"],
+                ["grid", "Grade: cinco visões e o mapa da pista, todos do mesmo tamanho"],
               ] as const).map(([value, title]) => (
                 <button
                   key={value}
@@ -918,11 +918,11 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
         </div>
         {/* What the main view shows, and which broadcast feed */}
         <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/85 border border-f1-border">
-          <span className="text-[9px] font-bold text-f1-muted uppercase tracking-wider mr-0.5">{multiView ? "Main view" : "Showing"}</span>
-          {pickerFor(0, "Choose a view")}
+          <span className="text-[9px] font-bold text-f1-muted uppercase tracking-wider mr-0.5">{multiView ? "Visão principal" : "Mostrando"}</span>
+          {pickerFor(0, "Escolha uma visão")}
           {broadcastSlot >= 0 && mainFeeds.length > 0 && (
             <select value={mainChannel ?? ""} onChange={(e) => setMainChannel(e.target.value || null)} className={selectClass}>
-              <option value="">Main feed</option>
+              <option value="">Transmissão principal</option>
               {mainFeeds.map((c) => (
                 <option key={c.channel_id!} value={c.channel_id!}>{feedName(c)}</option>
               ))}
@@ -942,32 +942,32 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
           )}
           {manualControls ? (
             <>
-              <button onClick={syncHere} className={`${btnClass} !text-white !bg-f1-red border-f1-red`} title="Line the video up with the timing, then press">
-                Set sync here
+              <button onClick={syncHere} className={`${btnClass} !text-white !bg-f1-red border-f1-red`} title="Alinhe o vídeo com a cronometragem e aperte">
+                Sincronizar aqui
               </button>
-              {aligning && <button onClick={() => setAligning(false)} className={btnClass}>Cancel</button>}
+              {aligning && <button onClick={() => setAligning(false)} className={btnClass}>Cancelar</button>}
             </>
           ) : mainOffset !== null && (
-            <button onClick={startManualSync} className={btnClass} title="Line the broadcast up with the timing yourself">
-              Sync manually
+            <button onClick={startManualSync} className={btnClass} title="Alinhe você mesmo a transmissão com a cronometragem">
+              Sincronizar manualmente
             </button>
           )}
         </div>
         {/* Fine-tune: nudge the video against the timing */}
         {!manualControls && (mainOffset !== null || (live && main.state === "ready")) && (
           <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/85 border border-f1-border">
-            <span className="text-[9px] font-bold text-f1-muted uppercase tracking-wider mr-0.5">Fine-tune video sync</span>
-            <button onClick={() => nudge("main", -5)} className={btnClass} title="Video earlier against the timing">−5s</button>
-            <button onClick={() => nudge("main", -0.5)} className={btnClass} title="Video earlier against the timing">−0.5s</button>
-            <button onClick={() => nudge("main", 0.5)} className={btnClass} title="Video later against the timing">+0.5s</button>
-            <button onClick={() => nudge("main", 5)} className={btnClass} title="Video later against the timing">+5s</button>
+            <span className="text-[9px] font-bold text-f1-muted uppercase tracking-wider mr-0.5">Ajuste fino da sincronização</span>
+            <button onClick={() => nudge("main", -5)} className={btnClass} title="Vídeo antes em relação à cronometragem">−5s</button>
+            <button onClick={() => nudge("main", -0.5)} className={btnClass} title="Vídeo antes em relação à cronometragem">−0.5s</button>
+            <button onClick={() => nudge("main", 0.5)} className={btnClass} title="Vídeo depois em relação à cronometragem">+0.5s</button>
+            <button onClick={() => nudge("main", 5)} className={btnClass} title="Vídeo depois em relação à cronometragem">+5s</button>
             {/* The adjustment made, or the manual sync; × goes back to the automatic sync */}
             {manualOffset !== null ? (
-              <button onClick={() => resetSync("main")} className={`${btnClass} !text-white`} title="Clear the manual sync">
+              <button onClick={() => resetSync("main")} className={`${btnClass} !text-white`} title="Apagar a sincronização manual">
                 Manual ×
               </button>
             ) : mainNudge !== 0 && (
-              <button onClick={() => resetSync("main")} className={`${btnClass} !text-white tabular-nums`} title="Back to the automatic sync">
+              <button onClick={() => resetSync("main")} className={`${btnClass} !text-white tabular-nums`} title="Voltar à sincronização automática">
                 {mainNudge > 0 ? "+" : ""}{mainNudge}s ×
               </button>
             )}
@@ -975,9 +975,9 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
               <button
                 onClick={syncToCrossing}
                 className={`${btnClass} !text-white`}
-                title="Press as the leader crosses the line on screen (when the lap count changes) to line the timing up with it"
+                title="Aperte quando o líder cruzar a linha na tela (quando a contagem de voltas muda) para alinhar a cronometragem com ele"
               >
-                Leader crossed the line
+                O líder cruzou a linha
               </button>
             )}
           </div>
@@ -987,11 +987,11 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
         )}
         <div className="flex items-center gap-1.5">
           {([
-            ["Track map", showMap, toggleMap, "Shortcut: M"],
-            ["Race control", raceControlOn, onToggleRaceControl, "The latest message, along the bottom"],
-            ["Team radio", teamRadioOn, onToggleTeamRadio, "Radio messages with captions, at the top"],
+            ["Mapa da pista", showMap, toggleMap, "Atalho: M"],
+            ["Direção de prova", raceControlOn, onToggleRaceControl, "A mensagem mais recente, na parte de baixo"],
+            ["Rádio das equipes", teamRadioOn, onToggleTeamRadio, "Mensagens de rádio com legendas, no topo"],
             ...(teamRadioOn
-              ? ([["Radio audio", radioAudioOn, onToggleRadioAudio, "Play each radio message's audio. The broadcast often plays it too, so you may hear it twice"]] as const)
+              ? ([["Áudio do rádio", radioAudioOn, onToggleRadioAudio, "Tocar o áudio de cada mensagem de rádio. A transmissão muitas vezes também toca, então você pode ouvir duas vezes"]] as const)
               : []),
           ] as const).map(([label, on, toggle, title]) => (
             <button
@@ -1009,7 +1009,7 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
         </div>
         {manualControls && (
           <p className="text-[10px] text-white/80 bg-black/60 rounded px-2 py-1 max-w-[280px]">
-            {aligning ? "" : "This session couldn't be synced automatically. "}Use the video controls to find the moment that matches the timing (lights out or a car crossing the line works well), then press Set sync here.
+            {aligning ? "" : "Esta sessão não pôde ser sincronizada automaticamente. "}Use os controles do vídeo para encontrar o momento que bate com a cronometragem (o apagar das luzes ou um carro cruzando a linha funcionam bem) e aperte Sincronizar aqui.
           </p>
         )}
       </div>
@@ -1064,7 +1064,7 @@ function RaceControlTicker({ message }: { message: RCMessage }) {
       }`}
     >
       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot}`} />
-      <span className="text-[9px] font-bold text-orange-300 uppercase tracking-wider flex-shrink-0">Race control</span>
+      <span className="text-[9px] font-bold text-orange-300 uppercase tracking-wider flex-shrink-0">Direção de prova</span>
       <span className="text-[11px] text-white truncate">{message.message}</span>
     </div>
   );
@@ -1147,7 +1147,7 @@ function OnboardPane({ rect, link, channel, opts, mainRef, mainUtc, mainReady, p
               onClick={() => void stream.load(link, channel, opts, !!mainUtc)}
               className="px-2 py-0.5 rounded bg-f1-border text-white text-[10px] font-bold hover:bg-f1-red transition-colors"
             >
-              Retry
+              Tentar de novo
             </button>
           </div>
         )}
@@ -1156,14 +1156,14 @@ function OnboardPane({ rect, link, channel, opts, mainRef, mainUtc, mainReady, p
         {...buttons}
         hover="pane"
         extra={driver && ([
-          ["Telemetry", showTelemetry, onToggleTelemetry, "telemetry on this onboard"],
-          ...(sectors ? ([["Sectors", showSectors, onToggleSectors, "this onboard's mini-sectors along the bottom"]] as const) : []),
+          ["Telemetria", showTelemetry, onToggleTelemetry, "telemetry on this onboard"],
+          ...(sectors ? ([["Setores", showSectors, onToggleSectors, "this onboard's mini-sectors along the bottom"]] as const) : []),
         ] as const).map(([label, on, toggle, what]) => (
           <button
             key={label}
             onClick={toggle}
             className={`h-6 px-2 rounded-full bg-black/70 text-[10px] font-bold flex items-center gap-1 ${on ? "text-white" : "text-white/60 hover:text-white"}`}
-            title={`${on ? "Hide" : "Show"} ${what}`}
+            title={`${on ? "Ocultar" : "Mostrar"} ${what}`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${on ? "bg-green-400" : "bg-white/30"}`} />
             {label}
@@ -1209,12 +1209,12 @@ function ViewButtons({ audible, audioTitle, onAudio, onSwap, onClose, controlsSh
         </button>
       )}
       {onSwap && (
-        <button onClick={onSwap} className={`${round} text-white/80 hover:text-white text-xs`} title="Swap with the main view" aria-label="Swap with the main view">
+        <button onClick={onSwap} className={`${round} text-white/80 hover:text-white text-xs`} title="Trocar com a visão principal" aria-label="Trocar com a visão principal">
           ⇄
         </button>
       )}
       {onClose && (
-        <button onClick={onClose} className={`${round} text-white/80 hover:text-white text-sm leading-none`} title="Close this view" aria-label="Close this view">
+        <button onClick={onClose} className={`${round} text-white/80 hover:text-white text-sm leading-none`} title="Fechar esta visão" aria-label="Fechar esta visão">
           ×
         </button>
       )}
@@ -1333,7 +1333,7 @@ function SourcePicker({ onboards, driversByNumber, value, placeholder, clearable
         {value === BROADCAST ? (
           <>
             <span className="w-2 h-2 rounded-sm bg-f1-red flex-shrink-0" />
-            <span className="text-xs font-bold text-white">Broadcast</span>
+            <span className="text-xs font-bold text-white">Transmissão</span>
           </>
         ) : selectedDriver ? (
           <>
@@ -1351,12 +1351,12 @@ function SourcePicker({ onboards, driversByNumber, value, placeholder, clearable
       {open && (
         <div className={`absolute ${up ? "bottom-full mb-1" : "top-full mt-1"} left-0 right-0 bg-f1-dark border border-f1-border rounded shadow-xl z-50 max-h-[260px] overflow-y-auto`}>
           {value && clearable && (
-            <button onClick={() => pick(null)} className={`${row} text-xs text-f1-muted`}>Clear</button>
+            <button onClick={() => pick(null)} className={`${row} text-xs text-f1-muted`}>Limpar</button>
           )}
           <button onClick={() => pick(BROADCAST)} className={`${row} ${value === BROADCAST ? "bg-white/10" : ""}`}>
             <span className="w-2 h-2 rounded-sm bg-f1-red flex-shrink-0" />
             <span className="w-4" />
-            <span className="text-xs font-bold text-white">Broadcast</span>
+            <span className="text-xs font-bold text-white">Transmissão</span>
           </button>
           {drivers.map((d) => (
             <button key={d.value} onClick={() => pick(d.value)} className={`${row} ${d.value === value ? "bg-white/10" : ""}`}>
@@ -1415,7 +1415,7 @@ function OnboardTelemetry({ driver, speed, raised = false }: { driver?: ReplayDr
       <span className="w-4 h-4 flex-shrink-0 rounded-[4px] bg-white text-black text-[10px] font-extrabold flex items-center justify-center leading-none">
         {driver.gear || "N"}
       </span>
-      <span className="relative w-14 min-w-6 h-1.5 rounded-full bg-white/10 overflow-hidden" title="Throttle">
+      <span className="relative w-14 min-w-6 h-1.5 rounded-full bg-white/10 overflow-hidden" title="Acelerador">
         {/* Washed-out green on a light throttle, bright green flat out */}
         <span
           className="absolute inset-y-0 left-0 rounded-full transition-[width,background-color] ease-linear"
@@ -1431,7 +1431,7 @@ function OnboardTelemetry({ driver, speed, raised = false }: { driver?: ReplayDr
           driver.brake ? "bg-red-600 text-white" : "bg-white/10 text-white/30"
         }`}
       >
-        BRAKE
+        FREIO
       </span>
       {drsOpen && <span className="px-1 rounded-[3px] bg-green-500 text-black text-[8px] font-extrabold leading-4">DRS</span>}
     </div>
@@ -1451,22 +1451,22 @@ function NativeControls({ videoRef }: { videoRef: React.RefObject<HTMLVideoEleme
 }
 
 function fmtDrift(d: number | null) {
-  return d === null ? "not synced" : `${d >= 0 ? "+" : ""}${d.toFixed(2)}s`;
+  return d === null ? "não sincronizado" : `${d >= 0 ? "+" : ""}${d.toFixed(2)}s`;
 }
 
 function StreamInfo({ label, d, drift }: { label: string; d: StreamDebug; drift: number | null }) {
   return (
     <div className="space-y-0.5">
       <p className="font-bold text-white">{label}</p>
-      <p>Stream: {d.playback?.stream_type ?? "?"} · DRM: {d.playback?.drm_type ?? "?"} · entitlement token: {d.playback ? String(d.playback.entitlement_token_used) : "?"}</p>
-      <p>Licence ({d.licence.via}): {d.licence.ok}/{d.licence.attempts} ok · last status {d.licence.lastStatus ?? "-"}</p>
-      <p>Key system: {d.keySystem ?? "-"} {d.videoRobustness ? `(${d.videoRobustness})` : ""}</p>
+      <p>Fluxo: {d.playback?.stream_type ?? "?"} · DRM: {d.playback?.drm_type ?? "?"} · token de acesso: {d.playback ? String(d.playback.entitlement_token_used) : "?"}</p>
+      <p>Licença ({d.licence.via}): {d.licence.ok}/{d.licence.attempts} ok · último status {d.licence.lastStatus ?? "-"}</p>
+      <p>Sistema de chaves: {d.keySystem ?? "-"} {d.videoRobustness ? `(${d.videoRobustness})` : ""}</p>
       <p>
-        Playing: {d.active ? `${d.active.width}×${d.active.height}${d.active.frameRate ? ` @ ${d.active.frameRate}fps` : ""} · ${(d.active.bandwidth / 1e6).toFixed(1)} Mbps` : "-"}
+        Tocando: {d.active ? `${d.active.width}×${d.active.height}${d.active.frameRate ? ` @ ${d.active.frameRate}fps` : ""} · ${(d.active.bandwidth / 1e6).toFixed(1)} Mbps` : "-"}
       </p>
-      <p>Available heights: {d.availableHeights.length ? d.availableHeights.join(", ") : "-"}</p>
-      <p>Dropped frames: {d.droppedFrames}/{d.decodedFrames} · est. bandwidth {(d.estimatedBandwidth / 1e6).toFixed(1)} Mbps</p>
-      <p>Drift: {fmtDrift(drift)}</p>
+      <p>Alturas disponíveis: {d.availableHeights.length ? d.availableHeights.join(", ") : "-"}</p>
+      <p>Quadros perdidos: {d.droppedFrames}/{d.decodedFrames} · banda estimada {(d.estimatedBandwidth / 1e6).toFixed(1)} Mbps</p>
+      <p>Desvio: {fmtDrift(drift)}</p>
       {d.error && (
         <pre className="whitespace-pre-wrap break-all text-red-300 max-h-32 overflow-y-auto">
           {d.error.message}
@@ -1500,16 +1500,16 @@ function DebugPanel({
       <div className="space-y-1">
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={opts.licenceViaServer} onChange={(e) => setOpts({ ...opts, licenceViaServer: e.target.checked })} />
-          Licence via this server
+          Licença por este servidor
         </label>
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={opts.relay} onChange={(e) => setOpts({ ...opts, relay: e.target.checked })} />
-          Relay manifest and segments through this server
+          Repassar manifesto e segmentos por este servidor
         </label>
       </div>
-      <StreamInfo label="Broadcast" d={main} drift={mainDrift} />
+      <StreamInfo label="Transmissão" d={main} drift={mainDrift} />
       {onboard && <StreamInfo label="Onboard" d={onboard} drift={onboardDrift} />}
-      <button onClick={() => setShowRaw((v) => !v)} className="underline">{showRaw ? "Hide" : "Show"} raw responses</button>
+      <button onClick={() => setShowRaw((v) => !v)} className="underline">{showRaw ? "Ocultar" : "Mostrar"} respostas brutas</button>
       {showRaw && (
         <pre className="whitespace-pre-wrap break-all max-h-64 overflow-y-auto">
           {JSON.stringify({ content, play: main.playbackRaw }, null, 1)}

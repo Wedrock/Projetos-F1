@@ -40,10 +40,10 @@ function formatSeconds(secs: number): string {
 }
 
 const LAP_RANGES = [
-  { label: "All", value: 0 },
-  { label: "Last 5", value: 5 },
-  { label: "Last 10", value: 10 },
-  { label: "Last 20", value: 20 },
+  { label: "Todas", value: 0 },
+  { label: "Últimas 5", value: 5 },
+  { label: "Últimas 10", value: 10 },
+  { label: "Últimas 20", value: 20 },
 ] as const;
 
 export default function LapAnalysisPanel({ laps, drivers, currentLap, onClose }: Props) {
@@ -268,9 +268,9 @@ export default function LapAnalysisPanel({ laps, drivers, currentLap, onClose }:
       {/* Header - only shown on desktop (mobile has its own collapsible header) */}
       {onClose && (
         <div className="px-3 py-2 border-b border-f1-border flex-shrink-0 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Lap Analysis</span>
+          <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Análise de voltas</span>
           <button onClick={onClose} className="px-2 py-0.5 bg-f1-card/90 border border-f1-border rounded text-[9px] font-bold text-f1-muted hover:text-white transition-colors">
-            Hide
+            Ocultar
           </button>
         </div>
       )}
@@ -281,14 +281,14 @@ export default function LapAnalysisPanel({ laps, drivers, currentLap, onClose }:
           value={selectedDrivers[0]}
           onChange={(abbr) => setSelectedDrivers((prev) => [abbr, prev[1]])}
           drivers={sortedDrivers}
-          placeholder="Select driver..."
+          placeholder="Escolha o piloto..."
           getColor={getDriverColor}
         />
         <DriverDropdown
           value={selectedDrivers[1]}
           onChange={(abbr) => setSelectedDrivers((prev) => [prev[0], abbr])}
           drivers={sortedDrivers}
-          placeholder="Compare with..."
+          placeholder="Comparar com..."
           getColor={getDriverColor}
         />
       </div>
@@ -297,7 +297,7 @@ export default function LapAnalysisPanel({ laps, drivers, currentLap, onClose }:
       <div className="flex-1 overflow-y-auto min-h-0">
         {activeDrivers.length === 0 ? (
           <div className="px-3 py-6 text-center text-xs text-f1-muted">
-            Select a driver to view lap times
+            Escolha um piloto para ver os tempos de volta
           </div>
         ) : (
           <>
@@ -346,10 +346,10 @@ export default function LapAnalysisPanel({ laps, drivers, currentLap, onClose }:
                         const point = payload[0]?.payload as Record<string, any> | undefined;
                         if (!point) return null;
                         const bandType = point._bandType as string | null;
-                        const bandLabel = bandType === "pit" ? "Pit Stop" : bandType === "slow" ? "Yellow Flag / Slow Lap" : bandType === "lap1" ? "Formation / Lap 1" : null;
+                        const bandLabel = bandType === "pit" ? "Pit stop" : bandType === "slow" ? "Bandeira amarela / volta lenta" : bandType === "lap1" ? "Volta de apresentação / volta 1" : null;
                         return (
                           <div className="bg-[#1A1A26] border border-f1-border rounded-md px-2.5 py-1.5 text-[11px] shadow-xl">
-                            <div className="font-bold text-white mb-0.5">Lap {label}</div>
+                            <div className="font-bold text-white mb-0.5">Volta {label}</div>
                             {bandLabel && (
                               <div className={`font-bold mb-0.5 ${bandType === "slow" ? "text-yellow-400" : "text-f1-muted"}`}>
                                 {bandLabel}
@@ -443,9 +443,9 @@ export default function LapAnalysisPanel({ laps, drivers, currentLap, onClose }:
                     try { localStorage.setItem("f1replay_lap_order", next); } catch {}
                   }}
                   className="w-8 text-[9px] font-bold text-f1-muted hover:text-white transition-colors flex items-center gap-0.5"
-                  title={lapOrder === "asc" ? "Show latest first" : "Show earliest first"}
+                  title={lapOrder === "asc" ? "Mostrar as mais recentes primeiro" : "Mostrar as mais antigas primeiro"}
                 >
-                  LAP
+                  VOLTA
                   <svg className={`w-2.5 h-2.5 transition-transform ${lapOrder === "desc" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>

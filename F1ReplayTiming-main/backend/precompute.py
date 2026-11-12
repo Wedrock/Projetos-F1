@@ -245,7 +245,7 @@ def main():
         parser.error("give at least one year, or --sign-in")
 
     if not args.chunks_only and not f1_account.ready():
-        logger.error(f1_account.SIGN_IN_NEEDED.replace("under Settings → F1 TV", "with: python precompute.py --sign-in"))
+        logger.error(f1_account.SIGN_IN_NEEDED.replace("em Configurações → F1 TV", "com: python precompute.py --sign-in"))
         sys.exit(1)
 
     for year in args.years:

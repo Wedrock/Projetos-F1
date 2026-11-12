@@ -149,7 +149,7 @@ async def list_seasons():
 @router.get("/seasons/{year}/events")
 async def list_events(year: int, response: Response):
     if not MIN_YEAR <= year <= MAX_YEAR:
-        raise HTTPException(status_code=400, detail=f"Unsupported year: {year}")
+        raise HTTPException(status_code=400, detail=f"Ano sem suporte: {year}")
     set_cache(response, 60)
     now = time.time()
     cached = _events_cache.get(year)
@@ -170,7 +170,7 @@ async def list_events(year: int, response: Response):
 
     data = await asyncio.to_thread(_build_events, year, stored) if stored else None
     if data is None:
-        raise HTTPException(status_code=404, detail=f"No schedule data for {year}")
+        raise HTTPException(status_code=404, detail=f"Sem calendário para {year}")
 
     _events_cache[year] = (data, now)
     return data
@@ -221,7 +221,7 @@ async def get_session(
 
     raise HTTPException(
         status_code=404,
-        detail=f"Session data not available for {year} Round {round_num} ({type}).",
+        detail=f"Dados da sessão indisponíveis para {year}, etapa {round_num} ({type}).",
     )
 
 

@@ -1,6 +1,6 @@
 import SiteFooter from "@/components/SiteFooter";
 import PaywallNotice from "@/components/PaywallNotice";
-import { REPO_URL, KOFI_URL } from "@/lib/config";
+import { REPO_URL, KOFI_URL, UPSTREAM_URL } from "@/lib/config";
 
 export default function AboutPage() {
   return (
@@ -12,7 +12,7 @@ export default function AboutPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </a>
-          <h1 className="text-2xl font-bold text-white">About</h1>
+          <h1 className="text-2xl font-bold text-white">Sobre</h1>
         </div>
       </div>
 
@@ -20,30 +20,26 @@ export default function AboutPage() {
         <PaywallNotice />
 
         <div className="bg-f1-card border border-f1-red/40 rounded-xl p-6">
-          <h2 className="text-lg font-bold text-f1-red mb-3">Disclaimer</h2>
+          <h2 className="text-lg font-bold text-f1-red mb-3">Aviso legal</h2>
           <p className="text-f1-text leading-relaxed">
-            F1 Replay Timing and this website are unofficial and are not associated in any way with the
-            Formula 1 companies. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX and
-            related marks are trade marks of Formula One Licensing B.V.
+            O Box Box e este site não são oficiais e não têm nenhuma ligação com as empresas da Fórmula 1. F1, FORMULA ONE, FORMULA 1, FIA FORMULA ONE WORLD CHAMPIONSHIP, GRAND PRIX e marcas relacionadas são marcas registradas da Formula One Licensing B.V.
           </p>
         </div>
 
         <div className="bg-f1-card border border-f1-border rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-3">What is this?</h2>
+          <h2 className="text-lg font-bold text-white mb-3">O que é isto?</h2>
           <p className="text-f1-text leading-relaxed">
-            F1 Replay Timing is an independent project that lets you replay past Formula 1 sessions
-            with track visualisation, driver positions, and timing data. It is built purely for educational and
-            entertainment purposes.
+            O Box Box é um projeto independente para rever sessões passadas da Fórmula 1 com o traçado da pista, a posição dos pilotos e os dados de cronometragem. Foi feito só para fins educativos e de entretenimento.
           </p>
         </div>
 
         <div className="bg-f1-card border border-f1-border rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-3">Data Sources</h2>
+          <h2 className="text-lg font-bold text-white mb-3">Fontes de dados</h2>
           <p className="text-f1-text leading-relaxed mb-4">
-            All data is sourced from publicly available APIs. No proprietary or restricted data is used.
+            Todos os dados vêm de APIs disponíveis publicamente. Nenhum dado proprietário ou restrito é usado.
           </p>
           <p className="text-f1-text leading-relaxed">
-            This project relies on underlying data provided by{" "}
+            Este projeto usa os dados fornecidos pelo{" "}
             <a
               href="https://github.com/theOehrly/Fast-F1"
               target="_blank"
@@ -52,16 +48,16 @@ export default function AboutPage() {
             >
               FastF1
             </a>
-            , an open-source Python library for accessing Formula 1 timing and telemetry data.
-            Thanks to the FastF1 maintainers and contributors for making this possible.
+            , uma biblioteca Python de código aberto para acessar os dados de cronometragem e telemetria da Fórmula 1. Agradecemos aos mantenedores e colaboradores do FastF1 por tornarem isso possível.
           </p>
         </div>
 
         <div className="bg-f1-card border border-f1-border rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-3">Open Source</h2>
+          <h2 className="text-lg font-bold text-white mb-3">Código aberto</h2>
           <p className="text-f1-text leading-relaxed">
-            F1 Replay Timing is open source under the MIT licence. The code, setup guide for running your own
-            copy, and issue tracker are on{" "}
+            O Box Box é baseado no{" "}
+            <a href={UPSTREAM_URL} target="_blank" rel="noopener noreferrer" className="text-f1-red hover:underline font-semibold">F1 Replay Timing</a>
+            , código aberto sob a licença MIT. O código, o guia para rodar a sua própria cópia e o registro de problemas estão no{" "}
             <a
               href={REPO_URL}
               target="_blank"
@@ -70,14 +66,14 @@ export default function AboutPage() {
             >
               GitHub
             </a>
-            . Bug reports go in Issues; ideas and questions in Discussions.
+            . Relatos de bugs vão em Issues; ideias e perguntas em Discussions.
           </p>
         </div>
 
         <div className="bg-f1-card border border-f1-border rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-3">Support the Project</h2>
+          <h2 className="text-lg font-bold text-white mb-3">Apoie o projeto</h2>
           <p className="text-f1-text leading-relaxed">
-            F1 Replay Timing is free and built in spare time. If you enjoy it, you can support its development on{" "}
+            O F1 Replay Timing, em que o Box Box se baseia, é gratuito e feito nas horas vagas pelo autor original. Se você gosta, pode apoiar o desenvolvimento dele no{" "}
             <a
               href={KOFI_URL}
               target="_blank"
@@ -92,7 +88,7 @@ export default function AboutPage() {
 
         <div className="text-center pt-4">
           <a href="/" className="text-f1-muted hover:text-white transition-colors text-sm">
-            Back to session picker
+            Voltar à escolha de sessão
           </a>
         </div>
       </div>

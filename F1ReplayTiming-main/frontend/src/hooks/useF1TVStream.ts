@@ -18,29 +18,29 @@ function playerErrorMessage(code: number | undefined, data: unknown): string {
   switch (code) {
     case 1001: // bad HTTP status
       if (status === 403)
-        return "F1 TV's video server refused this video. This usually means F1 TV doesn't stream it where your connection appears to be, for example through a VPN set to another country." + ref;
-      if (status === 404) return "F1 TV no longer has this video." + ref;
-      return `F1 TV's video server returned an error.` + ref;
+        return "O servidor de vídeo do F1 TV recusou este vídeo. Isso costuma significar que o F1 TV não o transmite no lugar onde a sua conexão parece estar, por exemplo por uma VPN em outro país." + ref;
+      if (status === 404) return "O F1 TV não tem mais este vídeo." + ref;
+      return `O servidor de vídeo do F1 TV devolveu um erro.` + ref;
     case 1002: // no response the browser can read: unreachable, or refused without CORS headers
-      return "F1 TV's video server didn't answer, or refused the video without saying why (the browser hides the reason). This often happens when your internet address changed after the video started, for example turning a VPN on or off. Retry, or reload the page." + ref;
+      return "O servidor de vídeo do F1 TV não respondeu, ou recusou o vídeo sem dizer o motivo (o navegador esconde o motivo). Isso costuma acontecer quando o seu endereço de internet mudou depois de o vídeo começar, por exemplo ao ligar ou desligar uma VPN. Tente de novo ou recarregue a página." + ref;
     case 1003:
-      return "F1 TV's video server took too long to respond." + ref;
+      return "O servidor de vídeo do F1 TV demorou demais para responder." + ref;
     case 6007: // licence request failed
       return (
-        "F1 TV refused to unlock this video" +
+        "O F1 TV se recusou a liberar este vídeo" +
         (licenceStatus ? ` (HTTP ${licenceStatus})` : "") +
-        ". F1 TV limits how many videos one account plays at once: close F1 TV on other devices, or show fewer onboards, then retry." +
+        ". O F1 TV limita quantos vídeos uma conta toca ao mesmo tempo: feche o F1 TV em outros aparelhos ou mostre menos onboards e tente de novo." +
         ref
       );
     case 6000:
     case 6001:
     case 6002:
     case 6012:
-      return "This browser can't play F1 TV's protected video. Use an up-to-date Chrome, Edge, Firefox or Safari, and check protected content is allowed in its settings." + ref;
+      return "Este navegador não consegue tocar o vídeo protegido do F1 TV. Use uma versão atual do Chrome, Edge, Firefox ou Safari e confira se o conteúdo protegido está permitido nas configurações." + ref;
     default:
-      if (code && code >= 4000 && code < 5000) return "F1 TV's description of this video couldn't be read." + ref;
-      if (code && code >= 3000 && code < 4000) return "The browser couldn't play this video." + ref;
-      return "The video couldn't play." + ref;
+      if (code && code >= 4000 && code < 5000) return "Não foi possível ler a descrição deste vídeo no F1 TV." + ref;
+      if (code && code >= 3000 && code < 4000) return "O navegador não conseguiu tocar este vídeo." + ref;
+      return "O vídeo não pôde ser tocado." + ref;
   }
 }
 
@@ -141,7 +141,7 @@ export function useF1TVStream(videoRef: React.RefObject<HTMLVideoElement | null>
       setDebug((d) => ({ ...d, playback, playbackRaw: raw }));
 
       const shaka = await loadShaka();
-      if (!shaka.Player.isBrowserSupported()) return fail("This browser can't play protected video");
+      if (!shaka.Player.isBrowserSupported()) return fail("Este navegador não consegue tocar vídeo protegido");
 
       const player = new shaka.Player();
       playerRef.current = player;

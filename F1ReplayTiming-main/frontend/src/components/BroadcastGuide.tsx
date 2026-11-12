@@ -47,7 +47,7 @@ function TelemetryPill() {
       <span className="text-[7px] font-extrabold text-white tabular-nums">287</span>
       <span className="w-2.5 h-2.5 rounded-[2px] bg-white text-black text-[6px] font-extrabold flex items-center justify-center">7</span>
       <span className="w-5 h-1 rounded-full bg-white/10 overflow-hidden"><span className="block h-full w-4/5 bg-green-400 rounded-full" /></span>
-      <span className="px-0.5 rounded-[2px] bg-white/10 text-white/30 text-[5px] font-extrabold leading-[8px]">BRAKE</span>
+      <span className="px-0.5 rounded-[2px] bg-white/10 text-white/30 text-[5px] font-extrabold leading-[8px]">FREIO</span>
     </div>
   );
 }
@@ -73,32 +73,32 @@ function MultiView() {
   return (
     <div className="relative w-full aspect-[16/9] rounded-lg border border-f1-border overflow-hidden bg-black">
       <div className="absolute inset-y-0 left-0 w-[70%]">
-        <VideoPlaceholder label="F1 TV broadcast" />
+        <VideoPlaceholder label="Transmissão do F1 TV" />
         <div className="absolute top-2 left-2 space-y-1">
           <div className="relative flex items-center gap-1">
             <Callout n={1} className="-left-2.5 -top-1.5" />
             <span className="flex rounded border border-f1-border overflow-hidden">
-              <span className="px-1.5 py-0.5 text-[7px] font-bold bg-white text-black">Multi-view</span>
-              <span className="px-1.5 py-0.5 text-[7px] font-bold bg-black/70 text-f1-muted">Single view</span>
+              <span className="px-1.5 py-0.5 text-[7px] font-bold bg-white text-black">Multivisão</span>
+              <span className="px-1.5 py-0.5 text-[7px] font-bold bg-black/70 text-f1-muted">Visão única</span>
             </span>
           </div>
           <div className="relative flex items-center gap-1">
             <Callout n={2} className="-left-2.5 -top-1.5" />
             <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/80 border border-f1-border">
               <span className="w-1 h-1 rounded-full bg-green-400" />
-              <span className="text-[7px] text-white/80">Synced by engine sound (VER, STR)</span>
+              <span className="text-[7px] text-white/80">Sincronizado pelo som do motor (VER, STR)</span>
             </span>
-            <span className={`${pill} bg-black/70 border-f1-border text-f1-muted`}>Sync manually</span>
+            <span className={`${pill} bg-black/70 border-f1-border text-f1-muted`}>Sincronizar manualmente</span>
           </div>
           <div className="flex items-center gap-1 px-1 py-0.5 rounded bg-black/60 border border-f1-border w-fit">
-            <span className="text-[6px] font-bold text-f1-muted uppercase tracking-wider">Fine-tune video sync</span>
+            <span className="text-[6px] font-bold text-f1-muted uppercase tracking-wider">Ajuste fino da sincronização</span>
             {["−5s", "−0.5s", "+0.5s", "+5s"].map((t) => (
               <span key={t} className={`${pill} bg-black/70 border-f1-border text-f1-muted`}>{t}</span>
             ))}
           </div>
           <div className="relative flex items-center gap-1">
             <Callout n={3} className="-left-2.5 -top-1.5" />
-            {([["Track map", true], ["Race control", true], ["Team radio", true], ["Radio audio", false]] as const).map(([t, on]) => (
+            {([["Mapa da pista", true], ["Direção de prova", true], ["Rádio das equipes", true], ["Áudio do rádio", false]] as const).map(([t, on]) => (
               <span key={t} className={`${pill} flex items-center gap-0.5 bg-black/80 ${on ? "border-white/40 text-white" : "border-f1-border text-white/60"}`}>
                 <span className={`w-1 h-1 rounded-full ${on ? "bg-green-400" : "bg-white/25"}`} />{t}
               </span>
@@ -109,8 +109,8 @@ function MultiView() {
           <div className="relative flex items-center gap-1 px-2 py-0.5 rounded bg-black/70 border border-white/10">
             <Callout n={8} className="-left-2.5 -top-2" />
             <span className="w-1 h-1 rounded-full bg-orange-400" />
-            <span className="text-[6px] font-bold text-orange-300 uppercase tracking-wider">Race control</span>
-            <span className="text-[7px] text-white">Car 10 (GAS) time deleted – track limits at turn 9</span>
+            <span className="text-[6px] font-bold text-orange-300 uppercase tracking-wider">Direção de prova</span>
+            <span className="text-[7px] text-white">Carro 10 (GAS) tempo anulado – limite de pista na curva 9</span>
           </div>
         </div>
       </div>
@@ -128,7 +128,7 @@ function MultiView() {
             <span className="w-1 h-1 rounded-full" style={{ backgroundColor: NOR }} />NOR <span className="text-f1-muted">▾</span>
           </span>
           <span className="absolute top-1 right-4 flex flex-col items-end gap-0.5">
-            {["Telemetry", "Sectors"].map((t) => (
+            {["Telemetria", "Setores"].map((t) => (
               <span key={t} className="flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-black/70 text-[6px] font-bold text-white">
                 <span className="w-1 h-1 rounded-full bg-green-400" />{t}
               </span>
@@ -142,7 +142,7 @@ function MultiView() {
         <Callout n={5} className="-left-2 top-[18%]" />
         <Callout n={9} className="left-[45%] top-[27%]" />
         <span className="flex items-center justify-between px-1 py-0.5 rounded bg-f1-dark border border-f1-border text-[6px] text-f1-muted">
-          Add a second onboard <span>▾</span>
+          Adicionar uma segunda onboard <span>▾</span>
         </span>
         <div className="relative flex-1 min-h-0">
           <Callout n={6} className="-left-2 top-0" />
@@ -156,7 +156,7 @@ function MultiView() {
 function SingleView() {
   return (
     <div className="relative w-full aspect-[16/9] rounded-lg border border-f1-border overflow-hidden bg-black">
-      <VideoPlaceholder label="F1 TV broadcast" />
+      <VideoPlaceholder label="Transmissão do F1 TV" />
       <div className="absolute right-[3%] top-1/2 -translate-y-1/2 w-[30%] aspect-square">
         <Callout n={10} className="-left-2 top-0" />
         <MiniTrack className="w-full h-full" />
@@ -191,33 +191,33 @@ export function SyncDiagram() {
     vals.map((v, i) => `${i ? "L" : "M"}${(i * 12 + dx).toFixed(1)} ${(y0 - v * 0.42).toFixed(1)}`).join(" ");
   return (
     <svg viewBox="0 0 300 124" className="w-full max-w-md h-auto">
-      <text x="0" y="10" fontSize="8" fontWeight="700" fill="#8A8A9A">ENGINE SOUND FROM AN ONBOARD (VIDEO)</text>
+      <text x="0" y="10" fontSize="8" fontWeight="700" fill="#8A8A9A">SOM DO MOTOR DE UMA ONBOARD (VÍDEO)</text>
       <path d={toPath(revs, 30, 58)} fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinejoin="round" />
-      <text x="0" y="74" fontSize="8" fontWeight="700" fill="#8A8A9A">THE DRIVER&apos;S REVS (TIMING DATA)</text>
+      <text x="0" y="74" fontSize="8" fontWeight="700" fill="#8A8A9A">ROTAÇÃO DO MOTOR DO PILOTO (DADOS DE CRONOMETRAGEM)</text>
       <path d={toPath(revs, 6, 120)} fill="none" stroke={NOR} strokeWidth="2" strokeLinejoin="round" />
       {[78, 162, 258].map((x) => (
         <line key={x} x1={x} y1={22} x2={x - 24} y2={84} stroke="#E10600" strokeWidth="1" strokeDasharray="2 2" />
       ))}
-      <text x="296" y="100" fontSize="8" fontWeight="700" fill="#E10600" textAnchor="end">same moment</text>
+      <text x="296" y="100" fontSize="8" fontWeight="700" fill="#E10600" textAnchor="end">mesmo momento</text>
     </svg>
   );
 }
 
 const MULTI_KEY: { name: string; description: string }[] = [
-  { name: "View", description: "Switch between Multi-view and Single view. Your choice is remembered." },
-  { name: "Sync", description: "How the session is synced, with Sync manually beside it to line it up yourself. Underneath, Fine-tune video sync nudges the video ±0.5s or ±5s against the timing." },
-  { name: "Overlays", description: "Turn the track map, race control and team radio on or off. Radio audio is separate, as the broadcast often plays the same message. Your choices are remembered." },
-  { name: "Onboards", description: "Pick up to two drivers' onboard cameras from the menu. Each has Sectors and Telemetry switches and × to close it." },
-  { name: "Onboard telemetry", description: "Speed, gear, a throttle gauge and a brake light for that driver, from the timing." },
-  { name: "Track map", description: "Under the onboards. Drivers selected on the leaderboard are highlighted, with their names." },
-  { name: "Panel width", description: "Drag the edge between the broadcast and the panel to make the panel narrower." },
-  { name: "Race control", description: "The latest message along the bottom of the broadcast. It fades after a few seconds." },
-  { name: "Sector strip", description: "Qualifying and practice: the driver's mini-sectors as one line along the onboard's bottom edge, filling in purple, green or yellow as they complete each one, with gaps between the three sectors." },
+  { name: "Visualização", description: "Alterne entre Multivisão e Visão única. Sua escolha fica salva." },
+  { name: "Sincronização", description: "Como a sessão foi sincronizada, com Sincronizar manualmente ao lado para você alinhar. Embaixo, o Ajuste fino da sincronização move o vídeo ±0,5s ou ±5s em relação à cronometragem." },
+  { name: "Sobreposições", description: "Ligue ou desligue o mapa da pista, a direção de prova e o rádio das equipes. O áudio do rádio é separado, porque a transmissão muitas vezes toca a mesma mensagem. Suas escolhas ficam salvas." },
+  { name: "Onboards", description: "Escolha no menu as câmeras onboard de até dois pilotos. Cada uma tem os botões Setores e Telemetria e um × para fechar." },
+  { name: "Telemetria onboard", description: "Velocidade, marcha, um medidor de acelerador e uma luz de freio do piloto, tirados da cronometragem." },
+  { name: "Mapa da pista", description: "Abaixo das onboards. Os pilotos selecionados na tabela ficam destacados, com os nomes." },
+  { name: "Largura do painel", description: "Arraste a borda entre a transmissão e o painel para estreitar o painel." },
+  { name: "Direção de prova", description: "A mensagem mais recente na parte de baixo da transmissão. Some depois de alguns segundos." },
+  { name: "Faixa de setores", description: "Classificação e treinos: os minissetores do piloto numa linha ao longo da borda inferior da onboard, preenchidos de roxo, verde ou amarelo conforme ele completa cada um, com espaços entre os três setores." },
 ];
 
 const OTHER_KEY: { name: string; description: string }[] = [
-  { name: "Single view", description: "The broadcast full width, with the track map's lines over it." },
-  { name: "Volume", description: "Mute, and a volume slider that opens on hover, at the left of the playback controls while the broadcast shows." },
+  { name: "Visão única", description: "A transmissão na largura toda, com as linhas do mapa da pista por cima." },
+  { name: "Volume", description: "Silenciar e um controle de volume que abre ao passar o mouse, à esquerda dos controles de reprodução enquanto a transmissão aparece." },
 ];
 
 function Key({ items, start }: { items: { name: string; description: string }[]; start: number }) {
@@ -252,7 +252,7 @@ export default function BroadcastGuide() {
         <Key items={OTHER_KEY} start={10} />
       </div>
       <p className="text-xs text-f1-muted">
-        Shown with mock video. Controls on the video appear on hover, or for a few seconds after a tap on touch screens.
+        Mostrado com um vídeo de exemplo. Os controles do vídeo aparecem ao passar o mouse, ou por alguns segundos depois de um toque em telas de toque.
       </p>
     </div>
   );

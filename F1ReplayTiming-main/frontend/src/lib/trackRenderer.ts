@@ -533,3 +533,112 @@ export function drawDrivers(
     ctx.fillText(l.abbr, l.x, l.y);
   }
 }
+
+/** Maps track coordinates (0–1, Y up) to canvas pixels, the way drawTrack and
+ *  drawDrivers lay the track out. */
+export function trackToScreen(
+  trackPoints: TrackPoint[],
+  width: number,
+  height: number,
+  rotation: number,
+  compact: boolean = false,
+): (x: number, y: number) => { x: number; y: number } {
+  const { padX, padTop, padBottom } = margins(width, height, compact);
+  const w = width - padX * 2;
+  const h = height - padTop - padBottom;
+  const rad = (rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const rotate = (x: number, y: number) => {
+    const dx = x - 0.5;
+    const dy = y - 0.5;
+    return { x: dx * cos - dy * sin + 0.5, y: dx * sin + dy * cos + 0.5 };
+  };
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of trackPoints) {
+    const r = rotate(p.x, p.y);
+    minX = Math.min(minX, r.x);
+    maxX = Math.max(maxX, r.x);
+    minY = Math.min(minY, r.y);
+    maxY = Math.max(maxY, r.y);
+  }
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const scale = Math.min(w / rangeX, h / rangeY);
+  const offsetX = padX + (w - rangeX * scale) / 2;
+  const offsetY = padTop + (h - rangeY * scale) / 2;
+  return (x, y) => {
+    const r = rotate(x, y);
+    return { x: offsetX + (r.x - minX) * scale, y: offsetY + (maxY - r.y) * scale };
+  };
+}
+
+/** The point a given fraction of the lap along the outline (wrapping round). */
+export function pointAtFraction(points: TrackPoint[], fractions: number[], f: number): { x: number; y: number } {
+  const n = points.length;
+  if (n === 0) return { x: 0, y: 0 };
+  const t = ((f % 1) + 1) % 1;
+  let lo = 0;
+  let hi = n - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (fractions[mid] <= t) lo = mid; else hi = mid;
+  }
+  const span = fractions[hi] - fractions[lo] || 1;
+  const k = Math.max(0, Math.min(1, (t - fractions[lo]) / span));
+  return {
+    x: points[lo].x + (points[hi].x - points[lo].x) * k,
+    y: points[lo].y + (points[hi].y - points[lo].y) * k,
+  };
+}
+
+/** How far round the lap (0–1) the outline point nearest (x, y) is. */
+export function nearestFraction(points: TrackPoint[], fractions: number[], x: number, y: number): number {
+  let best = 0;
+  let bestD = Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const d = (points[i].x - x) ** 2 + (points[i].y - y) ** 2;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return fractions[best] ?? 0;
+}
+
+export type SafetyCarPhase = "deploying" | "on_track" | "returning";
+
+/** The simulated Safety Car: an amber dot with a pulsing glow and its label.
+ *  Ported from f1-race-replay, which simulates it because F1's data has no
+ *  Safety Car position. */
+export function drawSafetyCar(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  alpha: number,
+  phase: SafetyCarPhase,
+  now: number,
+) {
+  if (alpha <= 0) return;
+  const pulse = phase === "on_track" ? 0.5 : 0.5 + 0.5 * Math.sin(now / 180);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 14 + 4 * pulse, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(255, 152, 0, ${0.18 + 0.2 * pulse})`;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(sx, sy, 8, 0, Math.PI * 2);
+  ctx.fillStyle = "#FF9800";
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#FFE0B2";
+  ctx.stroke();
+  const label = phase === "deploying" ? "SC ENTRANDO" : phase === "returning" ? "SC SAINDO" : "SC";
+  ctx.font = "800 11px system-ui, -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
+  ctx.strokeText(label, sx, sy - 13);
+  ctx.fillStyle = "#FFB74D";
+  ctx.fillText(label, sx, sy - 13);
+  ctx.restore();
+}

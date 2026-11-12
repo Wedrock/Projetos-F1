@@ -268,17 +268,17 @@ export function useReplayPlayer(year: number, round: number, sessionType: string
 
         if (res.status === 202) {
           failures = 0;
-          setState((s) => ({ ...s, loading: true, statusMessage: body.message || "Preparing replay..." }));
+          setState((s) => ({ ...s, loading: true, statusMessage: body.message || "Preparando o replay..." }));
           pollTimer = setTimeout(poll, POLL_MS);
           return;
         }
         if (res.status === 404 && body.state === "unavailable") {
-          setState((s) => ({ ...s, loading: false, error: body.message || "Session unavailable" }));
+          setState((s) => ({ ...s, loading: false, error: body.message || "Sessão indisponível" }));
           return;
         }
         if (!res.ok || !body.manifest) {
           // Static files can't be served here; let the page use the WebSocket player.
-          setState((s) => ({ ...s, loading: false, fatal: true, error: body.message || `Error ${res.status}` }));
+          setState((s) => ({ ...s, loading: false, fatal: true, error: body.message || `Erro ${res.status}` }));
           return;
         }
 
@@ -287,7 +287,7 @@ export function useReplayPlayer(year: number, round: number, sessionType: string
         const first = await firstFrameFrom(0);
         if (stale()) return;
         if (!first) {
-          setState((s) => ({ ...s, loading: false, error: "No position data available" }));
+          setState((s) => ({ ...s, loading: false, error: "Nenhum dado de posição disponível" }));
           return;
         }
         anchorAt(first.timestamp);
@@ -309,7 +309,7 @@ export function useReplayPlayer(year: number, round: number, sessionType: string
         if (stale()) return;
         failures += 1;
         if (failures >= 5) {
-          setState((s) => ({ ...s, loading: false, fatal: true, error: "Could not load replay files" }));
+          setState((s) => ({ ...s, loading: false, fatal: true, error: "Não foi possível carregar os arquivos do replay" }));
           return;
         }
         pollTimer = setTimeout(poll, Math.min(1000 * 2 ** failures, 10000));
@@ -406,7 +406,7 @@ export function useReplayPlayer(year: number, round: number, sessionType: string
         // Fetched directly so it doesn't disturb the playback buffer.
         const res = await fetch(chunkUrl(m.chunks[pos].index), { headers: authHeaders() });
         handleUnauthorized(res);
-        if (!res.ok) throw new Error(`Could not load replay data (${res.status})`);
+        if (!res.ok) throw new Error(`Não foi possível carregar os dados do replay (${res.status})`);
         frames.push(...((await res.json()) as ReplayFrame[]));
       }
       return frames;

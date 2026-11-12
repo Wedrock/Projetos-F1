@@ -33,7 +33,9 @@ const FALLBACK: AppConfig = {
   f1tv: false,
 };
 
-export const REPO_URL = "https://github.com/adn8naiagent/F1ReplayTiming";
+export const REPO_URL = "https://github.com/Wedrock/Projetos-F1";
+/** The project Box Box is based on (MIT), credited on the About page */
+export const UPSTREAM_URL = "https://github.com/adn8naiagent/F1ReplayTiming";
 export const KOFI_URL = "https://ko-fi.com/addevaccount";
 
 let configPromise: Promise<AppConfig> | null = null;
@@ -71,7 +73,7 @@ export function reportProblemUrl(details?: Record<string, string | number | unde
     .filter(([, v]) => v !== undefined && v !== "")
     .map(([k, v]) => `- ${k}: ${v}`);
   if (typeof navigator !== "undefined") lines.push(`- Browser: ${navigator.userAgent}`);
-  const params = new URLSearchParams({ template: "bug_report.yml" });
-  if (lines.length) params.set("context", lines.join("\n"));
+  const body = ["**O que aconteceu?**", "", "", "**Detalhes**", ...lines].join("\n");
+  const params = new URLSearchParams({ title: "Bug: ", body });
   return `${REPO_URL}/issues/new?${params.toString()}`;
 }

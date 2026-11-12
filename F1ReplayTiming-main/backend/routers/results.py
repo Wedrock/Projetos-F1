@@ -20,7 +20,7 @@ async def race_results(
     if data is None:
         raise HTTPException(
             status_code=404,
-            detail="Results not available for this session.",
+            detail="O resultado não está disponível para esta sessão.",
         )
     set_cache(response, 300)
     return {"results": data}

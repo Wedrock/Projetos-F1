@@ -45,10 +45,10 @@ async def team_radio_audio(
     """A team radio clip's audio, stored when the session was processed."""
     validate_session(year, round_num, type)
     if not AUDIO_NAME.fullmatch(name):
-        raise HTTPException(status_code=404, detail="No such clip")
+        raise HTTPException(status_code=404, detail="Mensagem de rádio não encontrada")
     found = await asyncio.to_thread(get_bytes, f"sessions/{year}/{round_num}/{type}/team_radio/{name}")
     if found is None:
-        raise HTTPException(status_code=404, detail="No such clip")
+        raise HTTPException(status_code=404, detail="Mensagem de rádio não encontrada")
     return Response(content=found[0], media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=86400"})
 
 

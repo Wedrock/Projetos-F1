@@ -20,7 +20,7 @@ async def lap_data(
     if data is None:
         raise HTTPException(
             status_code=404,
-            detail="Lap data not available for this session.",
+            detail="Os dados de voltas não estão disponíveis para esta sessão.",
         )
     set_cache(response, 300)
     return {"laps": data}
@@ -36,6 +36,6 @@ async def minisector_data(
     validate_session(year, round_num, type)
     data = await aget_json(f"sessions/{year}/{round_num}/{type}/minisectors.json")
     if data is None:
-        raise HTTPException(status_code=404, detail="Mini-sectors not available for this session.")
+        raise HTTPException(status_code=404, detail="Os minissetores não estão disponíveis para esta sessão.")
     set_cache(response, 300)
     return data

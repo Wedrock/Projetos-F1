@@ -84,7 +84,7 @@ async def replay_start(year: int, round: int, type: str):
         if utc is not None and c.get("t") is not None:
             starts.append(utc.replace(tzinfo=timezone.utc).timestamp() - float(c["t"]))
     if not starts:
-        raise HTTPException(status_code=404, detail="Reprocess this session to sync Broadcast automatically")
+        raise HTTPException(status_code=404, detail="Reprocesse esta sessão para sincronizar a Transmissão automaticamente")
     return {"replay_start_utc": statistics.median(starts)}
 
 
@@ -99,7 +99,7 @@ async def find(year: int, round: int, type: str, live: bool = False):
     if not found:
         raise HTTPException(
             status_code=404,
-            detail="F1 TV isn't streaming this session yet" if live else "No F1 TV replay found for this session yet",
+            detail="O F1 TV ainda não está transmitindo esta sessão" if live else "Nenhum replay do F1 TV encontrado para esta sessão ainda",
         )
     return found
 

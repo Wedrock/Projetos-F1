@@ -22,11 +22,11 @@ const AXIS = { fill: "#6B7280", fontSize: 8 };
 
 type TraceKey = "gap" | "speed" | "throttle" | "brake" | "gear";
 const TRACES: { key: TraceKey; label: string; height: number }[] = [
-  { key: "gap", label: "Gap", height: 60 },
-  { key: "speed", label: "Speed", height: 85 },
-  { key: "throttle", label: "Throttle", height: 40 },
-  { key: "brake", label: "Brake", height: 26 },
-  { key: "gear", label: "Gear", height: 40 },
+  { key: "gap", label: "Diferença", height: 60 },
+  { key: "speed", label: "Velocidade", height: 85 },
+  { key: "throttle", label: "Acelerador", height: 40 },
+  { key: "brake", label: "Freio", height: 26 },
+  { key: "gear", label: "Marcha", height: 40 },
 ];
 const DEFAULT_TRACES: TraceKey[] = ["gap", "speed", "throttle"];
 const SYNC = "lap-trace";
@@ -48,24 +48,24 @@ function Readout({ p, nameA, nameB, colorA, colorB }: {
       <span className="text-right text-white">{p ? `${Math.round(speed)} km/h` : "—"}</span>
       <span className="text-right text-white">{p ? gear : "—"}</span>
       <span className="text-right text-white">{p ? `${Math.round(throttle)}%` : "—"}</span>
-      <span className={`text-right ${p && brake ? "text-red-400 font-bold" : "text-f1-muted"}`}>{p ? (brake ? "On" : "Off") : "—"}</span>
+      <span className={`text-right ${p && brake ? "text-red-400 font-bold" : "text-f1-muted"}`}>{p ? (brake ? "Sim" : "Não") : "—"}</span>
     </div>
   );
   return (
     <div className="rounded border border-f1-border bg-f1-dark px-2 py-1.5 text-[10px] tabular-nums">
       <div className="grid grid-cols-[1fr_64px_36px_56px_36px] gap-x-1 gap-y-0.5 items-center">
-        <span className={head}>{p ? `At ${(p.d / 1000).toFixed(2)} km` : "Point on lap"}</span>
-        <span className={`${head} text-right`}>Speed</span>
-        <span className={`${head} text-right`}>Gear</span>
-        <span className={`${head} text-right`}>Throttle</span>
-        <span className={`${head} text-right`}>Brake</span>
+        <span className={head}>{p ? `Em ${(p.d / 1000).toFixed(2)} km` : "Ponto na volta"}</span>
+        <span className={`${head} text-right`}>Velocidade</span>
+        <span className={`${head} text-right`}>Marcha</span>
+        <span className={`${head} text-right`}>Acelerador</span>
+        <span className={`${head} text-right`}>Freio</span>
         {row(nameA, colorA, p?.speedA ?? 0, p?.gearA ?? 0, p?.throttleA ?? 0, p?.brakeA ?? 0)}
         {row(nameB, colorB, p?.speedB ?? 0, p?.gearB ?? 0, p?.throttleB ?? 0, p?.brakeB ?? 0)}
       </div>
       <div className={`mt-1 ${p ? (p.delta < 0 ? "text-green-400" : p.delta > 0 ? "text-red-400" : "text-f1-muted") : "text-f1-muted"}`}>
         {p
-          ? `${nameA} ${p.delta <= 0 ? "ahead" : "behind"} by ${Math.abs(p.delta).toFixed(3)}s at this point`
-          : "Hover, tap or drag along the charts to see both laps at that point"}
+          ? `${nameA} ${p.delta <= 0 ? "à frente" : "atrás"} por ${Math.abs(p.delta).toFixed(3)}s neste ponto`
+          : "Passe o mouse, toque ou arraste sobre os gráficos para ver as duas voltas naquele ponto"}
       </div>
     </div>
   );
@@ -221,7 +221,7 @@ export default function LapTraceChart({ comparison, nameA, nameB, colorA, colorB
         const withAxis = i === visible.length - 1;
         return (
           <div key={t.key}>
-            {label(t.key === "gap" ? "Gap (approx.)" : t.label)}
+            {label(t.key === "gap" ? "Diferença (aprox.)" : t.label)}
             <ResponsiveContainer width="100%" height={t.height + (withAxis ? 16 : 0)}>
               {chart(t.key, withAxis)}
             </ResponsiveContainer>

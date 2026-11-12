@@ -1,5 +1,6 @@
 "use client";
 
+import BrandMark from "./BrandMark";
 import { useState, useEffect, useCallback, FormEvent } from "react";
 import { apiUrl, API_URL } from "@/lib/api";
 import { getToken, setToken, clearToken } from "@/lib/auth";
@@ -25,7 +26,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       .then((res) => {
         if (!res.ok) {
           console.error(`[AuthGate] Auth status returned ${res.status}`);
-          throw new Error(`Backend returned ${res.status}`);
+          throw new Error(`O backend respondeu ${res.status}`);
         }
         return res.json();
       })
@@ -94,13 +95,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         setToken(data.token);
         setAuthenticated(true);
       } else if (res.status === 401) {
-        setError("Incorrect passphrase");
+        setError("Frase de acesso incorreta");
       } else {
         const detail = await res.text().catch(() => "");
-        setError(`Server error (${res.status})${detail ? `: ${detail}` : ""}`);
+        setError(`Erro no servidor (${res.status})${detail ? `: ${detail}` : ""}`);
       }
     } catch {
-      setError("Could not connect to server");
+      setError("Não foi possível conectar ao servidor");
     } finally {
       setSubmitting(false);
     }
@@ -119,30 +120,27 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-f1-dark flex items-center justify-center px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <img src="/logo.png" alt="F1 Replay" className="w-16 h-16 rounded-lg mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-white">F1 Replay Timing</h1>
+            <BrandMark className="w-16 h-16 mx-auto mb-4" />
+            <h1 className="text-xl font-bold text-white">Box Box</h1>
           </div>
 
           <div className="bg-f1-card border border-f1-border rounded-xl p-6">
-            <h2 className="text-sm font-bold text-red-400 mb-3">Cannot connect to backend</h2>
+            <h2 className="text-sm font-bold text-red-400 mb-3">Não foi possível conectar ao backend</h2>
             <p className="text-sm text-f1-muted mb-3">
-              The frontend failed to reach the API server at:
+              O frontend não conseguiu acessar o servidor da API em:
             </p>
             <code className="block text-xs text-white bg-f1-dark border border-f1-border rounded px-3 py-2 mb-4 break-all">
-              {API_URL || (typeof window !== "undefined" ? window.location.origin : "(same origin)")}
+              {API_URL || (typeof window !== "undefined" ? window.location.origin : "(mesma origem)")}
             </code>
             <div className="text-xs text-f1-muted space-y-2">
-              <p>Common causes:</p>
+              <p>Causas comuns:</p>
               <ul className="list-disc list-inside space-y-1 ml-1">
-                <li>The backend container is still starting up</li>
+                <li>O contêiner do backend ainda está iniciando</li>
                 <li>
-                  <code className="text-white">NEXT_PUBLIC_API_URL</code> in your
-                  docker-compose.yml is set to a URL that isn&apos;t reachable from
-                  your browser
+                  <code className="text-white">NEXT_PUBLIC_API_URL</code> no seu docker-compose.yml aponta para um endereço que o seu navegador não alcança
                 </li>
                 <li>
-                  If behind a reverse proxy, this URL must be the address your browser
-                  uses to reach the backend, not an internal Docker address
+                  Se houver um proxy reverso, este endereço deve ser o que o seu navegador usa para chegar ao backend, e não um endereço interno do Docker
                 </li>
               </ul>
             </div>
@@ -150,7 +148,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
               onClick={checkAuth}
               className="w-full mt-5 px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors"
             >
-              Retry
+              Tentar de novo
             </button>
           </div>
         </div>
@@ -166,13 +164,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-f1-dark flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="F1 Replay" className="w-16 h-16 rounded-lg mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-white">F1 Replay Timing</h1>
+          <BrandMark className="w-16 h-16 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-white">Box Box</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-f1-card border border-f1-border rounded-xl p-6">
           <label htmlFor="passphrase" className="block text-sm font-bold text-f1-muted mb-2">
-            Enter passphrase to continue
+            Digite a frase de acesso para continuar
           </label>
           <div className="relative">
             <input
@@ -182,7 +180,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
               onChange={(e) => setPassphrase(e.target.value)}
               autoFocus
               className="w-full px-3 py-2 pr-10 bg-f1-dark border border-f1-border rounded text-white text-sm focus:outline-none focus:border-f1-red transition-colors"
-              placeholder="Passphrase"
+              placeholder="Frase de acesso"
             />
             <button
               type="button"
@@ -210,7 +208,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
             disabled={submitting || !passphrase}
             className="w-full mt-4 px-4 py-2 bg-f1-red text-white text-sm font-bold rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? "Checking..." : "Continue"}
+            {submitting ? "Verificando..." : "Continuar"}
           </button>
         </form>
       </div>

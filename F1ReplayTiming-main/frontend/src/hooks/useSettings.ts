@@ -6,6 +6,8 @@ export interface ReplaySettings {
   showLeaderboard: boolean;
   showTeamAbbr: boolean;
   showTyreAge: boolean;
+  /** Tyre health from the Bayesian degradation model */
+  showTyreHealth: boolean;
   showTyreType: boolean;
   showPitStops: boolean;
   showTyreHistory: boolean;
@@ -14,6 +16,8 @@ export interface ReplaySettings {
   showGapToLeader: boolean;
   showSessionTime: boolean;
   showDriverNames: boolean;
+  /** Simulated Safety Car on the track map */
+  showSafetyCar: boolean;
   showWeather: boolean;
   showAirTemp: boolean;
   showTrackTemp: boolean;
@@ -51,6 +55,7 @@ export const DEFAULTS: ReplaySettings = {
   showLeaderboard: true,
   showTeamAbbr: false,
   showTyreAge: true,
+  showTyreHealth: true,
   showTyreType: true,
   showPitStops: true,
   showTyreHistory: true,
@@ -59,6 +64,7 @@ export const DEFAULTS: ReplaySettings = {
   showGapToLeader: true,
   showSessionTime: false,
   showDriverNames: true,
+  showSafetyCar: true,
   showWeather: true,
   showAirTemp: true,
   showTrackTemp: true,
