@@ -24,7 +24,8 @@ backend/data/fastf1-cache/
 .DS_Store
 
 # Planning & internal docs
-/docs/
+/docs/*
+!/docs/media/
 .next/
 
 # Local feature videos and captures
