@@ -23,7 +23,7 @@ OPENF1 = "https://api.openf1.org/v1"
 MULTIVIEWER = "https://api.multiviewer.app/api/v1/circuits"
 HEADERS = {"User-Agent": "F1ReplayTiming (self-hosted)"}
 TIMEOUT = 30.0
-VERSION = 1
+VERSION = 2  # 2: rounds remember their race date (calendar changes renumber rounds)
 MAX_POINTS = 220
 
 # OpenF1 circuit short name -> official circuit name
@@ -112,11 +112,25 @@ def _shape(circuit_key: int, year: int) -> dict | None:
     return None
 
 
+def _race_date(evt: dict) -> str:
+    return str(evt.get("event_date") or "")[:10]
+
+
+def _matches(cached: dict, events: list[dict]) -> bool:
+    """Whether every cached round is still the race the calendar has there."""
+    rounds = cached.get("rounds", {})
+    for evt in events:
+        entry = rounds.get(str(evt.get("round_number")))
+        if entry is not None and entry.get("event_date") != _race_date(evt):
+            return False
+    return True
+
+
 def season_circuits(year: int, events: list[dict], force: bool = False) -> dict:
     """{round: {name, short_name, location, points, corners}} for a season."""
     path = f"circuits/{year}.json"
     cached = None if force else storage.get_json(path)
-    if cached and cached.get("version") == VERSION and (
+    if cached and cached.get("version") == VERSION and _matches(cached, events) and (
         len(cached.get("rounds", {})) >= len(events)
         or time.time() - cached.get("built", 0) < 24 * 3600  # new rounds appear on OpenF1 later
     ):
@@ -129,10 +143,15 @@ def season_circuits(year: int, events: list[dict], force: bool = False) -> dict:
         logger.warning(f"OpenF1 meetings for {year} unavailable: {e}")
     meetings = [m for m in meetings if "test" not in str(m.get("meeting_name", "")).lower()]
 
-    rounds: dict[str, dict] = dict((cached or {}).get("rounds", {}))
+    rounds: dict[str, dict] = dict((cached or {}).get("rounds", {})) if (cached or {}).get("version") == VERSION else {}
+    # Drop rounds no longer in the calendar
+    current = {str(e.get("round_number")) for e in events}
+    rounds = {k: v for k, v in rounds.items() if k in current}
     for evt in events:
         rnd = str(evt.get("round_number"))
-        if rnd in rounds and rounds[rnd].get("points"):
+        # Reuse a round only if it's still the same race: when the calendar
+        # changes (a race cancelled or moved), rounds get new numbers
+        if rnd in rounds and rounds[rnd].get("points") and rounds[rnd].get("event_date") == _race_date(evt):
             continue
         try:
             race_day = date.fromisoformat(str(evt.get("event_date"))[:10])
@@ -152,6 +171,7 @@ def season_circuits(year: int, events: list[dict], force: bool = False) -> dict:
             continue
         short = match.get("circuit_short_name") or ""
         entry = {
+            "event_date": _race_date(evt),
             "short_name": short,
             "name": CIRCUIT_NAMES.get(short, short),
             "location": match.get("location"),

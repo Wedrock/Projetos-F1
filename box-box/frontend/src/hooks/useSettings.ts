@@ -40,6 +40,8 @@ export interface ReplaySettings {
   teamRadioSquelch: boolean;
   /** Turn the broadcast down while a radio clip talks */
   teamRadioDuck: boolean;
+  /** With F1 TV on, play each clip when the broadcast airs it */
+  teamRadioFollowBroadcast: boolean;
   highlightClose: boolean;
   useImperial: boolean;
   rcSound: boolean;
@@ -90,6 +92,7 @@ export const DEFAULTS: ReplaySettings = {
   teamRadioEnglish: false,
   teamRadioSquelch: true,
   teamRadioDuck: true,
+  teamRadioFollowBroadcast: true,
   highlightClose: true,
   useImperial: false,
   rcSound: false,
