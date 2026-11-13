@@ -31,3 +31,8 @@ backend/data/fastf1-cache/
 # Local feature videos and captures
 Artifacts/
 artefacts/
+
+# Desktop app build
+desktop/.venv/
+desktop/build/
+desktop/dist/
