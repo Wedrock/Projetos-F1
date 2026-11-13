@@ -225,24 +225,33 @@ def caption(
     return text
 
 
-def caption_both(
+def caption_full(
     audio: bytes, first_name: str | None, year: int | None, context: dict | None = None, live: bool = False,
-) -> tuple[str | None, str | None]:
-    """(English, Portuguese) captions for one clip. With GEMINI_API_KEY,
-    Gemini writes both from the audio (with Whisper's caption as a hint when
-    Whisper is installed); otherwise, or if Gemini fails, English only."""
+) -> tuple[str | None, str | None, list[dict]]:
+    """(English, Portuguese, lines) for one clip. With a Gemini key, Gemini
+    writes both from the audio, split into lines by who speaks (driver or
+    team), with Whisper's caption as a hint when Whisper is installed;
+    otherwise, or if Gemini fails, English only and no lines."""
     if not captions_enabled():
-        return None, None
+        return None, None, []
     if gemini_captions.enabled():
         draft = transcribe(audio, first_name, year, live) if whisper_available() else None
         result = gemini_captions.caption(audio, {**(context or {}), "year": year}, draft)
         if result is not None:
-            return result.en, result.pt
+            return result.en, result.pt, result.lines
         if draft:
-            return draft, None
+            return draft, None, []
         if not caption_settings.ai_enabled():
-            return None, None
-    return caption(audio, first_name, year, context, live), None
+            return None, None, []
+    return caption(audio, first_name, year, context, live), None, []
+
+
+def caption_both(
+    audio: bytes, first_name: str | None, year: int | None, context: dict | None = None, live: bool = False,
+) -> tuple[str | None, str | None]:
+    """(English, Portuguese) captions for one clip (caption_full without the lines)."""
+    en, pt, _lines = caption_full(audio, first_name, year, context, live)
+    return en, pt
 
 
 def parse_utc(value: str) -> datetime | None:
@@ -314,6 +323,7 @@ def build_clips(
         drv = drivers.get(number, {})
         url = cap.get("Url") or audio_url(session_path, path)
         transcript = transcript_pt = None
+        lines: list[dict] = []
         stored = None
         if want_captions or store_prefix:
             if on_progress:
@@ -322,7 +332,7 @@ def build_clips(
             if audio and store_prefix:
                 stored = store_audio(store_prefix, path, audio)
             if audio and want_captions:
-                transcript, transcript_pt = caption_both(audio, drv.get("first_name"), year, {
+                transcript, transcript_pt, lines = caption_full(audio, drv.get("first_name"), year, {
                     "speaker": _driver_label(drv) if drv else None,
                     "drivers": roster,
                     "session": session,
@@ -337,6 +347,7 @@ def build_clips(
             **({"audio": stored} if stored else {}),
             "transcript": transcript,
             "transcript_pt": transcript_pt,
+            **({"lines": lines} if lines else {}),
         })
     return clips
 

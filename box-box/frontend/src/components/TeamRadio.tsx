@@ -22,6 +22,14 @@ export interface RadioClip {
   transcript: string | null;
   /** Portuguese caption (Gemini), when the server makes them */
   transcript_pt?: string | null;
+  /** The caption split by who speaks (Gemini), in order */
+  lines?: RadioLine[];
+}
+
+export interface RadioLine {
+  who: "driver" | "team";
+  en: string | null;
+  pt: string | null;
 }
 
 /** The caption to show first, and the English original under it when asked. */
@@ -30,6 +38,57 @@ export function captionLines(clip: RadioClip, showEnglish: boolean): { main: str
   const en = clip.transcript || null;
   if (pt) return { main: pt, original: showEnglish && en && en !== pt ? en : null };
   return { main: en, original: null };
+}
+
+/** A clip's caption: one line per speaker (driver or team) when the server
+ *  split it, otherwise the whole caption. */
+export function RadioCaption({ clip, showEnglish, color, size = "sm" }: {
+  clip: RadioClip;
+  showEnglish: boolean;
+  color: string;
+  size?: "sm" | "xs";
+}) {
+  const text = size === "sm" ? "text-sm" : "text-[13px]";
+  const sub = size === "sm" ? "text-xs" : "text-[11px]";
+  const lines = (clip.lines ?? []).filter((l) => l.en || l.pt);
+  if (lines.length === 0) {
+    const { main, original } = captionLines(clip, showEnglish);
+    if (!main) return null;
+    return (
+      <>
+        <p className={`${text} text-white/90 leading-snug mt-0.5`}>&ldquo;{main}&rdquo;</p>
+        {original && <p className={`${sub} text-f1-muted italic leading-snug mt-0.5`}>{original}</p>}
+      </>
+    );
+  }
+  return (
+    <div className="mt-1 space-y-1">
+      {lines.map((line, i) => {
+        const main = line.pt || line.en;
+        const isDriver = line.who === "driver";
+        return (
+          <div key={i} className="flex items-start gap-2">
+            <span
+              className="mt-[2px] w-14 flex-shrink-0 rounded px-1 py-[1px] text-center text-[9px] font-extrabold uppercase tracking-wider"
+              style={isDriver ? { color, backgroundColor: `${color}26` } : undefined}
+            >
+              {isDriver ? (
+                clip.driver || "Piloto"
+              ) : (
+                <span className="text-f1-muted">Equipe</span>
+              )}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className={`${text} leading-snug ${isDriver ? "text-white" : "text-white/75"}`}>{main}</p>
+              {showEnglish && line.pt && line.en && line.en !== line.pt && (
+                <p className={`${sub} text-f1-muted italic leading-snug`}>{line.en}</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // A jump bigger than this (replay seconds) is a seek: don't fire everything skipped.
@@ -196,8 +255,6 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
 
   const drv = drivers.find((d) => d.abbr === current.driver);
   const color = drv?.color || "#FFFFFF";
-  const { main, original } = captionLines(current, showEnglish);
-
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[min(30rem,calc(100%-1.5rem))]">
       <div
@@ -211,12 +268,7 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
             <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Rádio da equipe</span>
             <AudioLines className={`w-4 h-4 ml-auto flex-shrink-0 ${audioPlaying ? "text-white animate-pulse" : "text-f1-muted"}`} />
           </div>
-          {main && (
-            <p className="text-sm text-white/90 leading-snug mt-0.5">&ldquo;{main}&rdquo;</p>
-          )}
-          {original && (
-            <p className="text-xs text-f1-muted italic leading-snug mt-0.5">{original}</p>
-          )}
+          <RadioCaption clip={current} showEnglish={showEnglish} color={color} />
         </div>
       </div>
     </div>

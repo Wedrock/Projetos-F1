@@ -20,7 +20,7 @@ import os
 import re
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 
@@ -39,18 +39,22 @@ RETRY_WAIT_S = 30.0
 
 INSTRUCTIONS = """You caption Formula 1 team radio: short messages between a driver and their race engineer, often with engine noise and a poor signal.
 
-1. "en": write what is said in the audio, in English, as one caption.
+1. Split what is said into lines by who speaks, a new line each time the voice changes:
+   - "driver": the driver named as the speaker below (the clip is from their car).
+   - "team": the race engineer or anyone else on the pit wall.
+   Tell them apart by the voice (the driver's often has engine noise, wind or effort; the engineer's is calm and clear) and by what is said: the team gives information and instructions ("box this lap", "gap to Norris is 1.2", "copy"), the driver reports on the car, the tyres and other drivers. If one person speaks, that's one line.
+2. "en" of each line: what is said, in English.
    - The audio decides. A draft from a speech-to-text model may be given; use it only as a hint.
    - Spell driver, team and F1 terms correctly, using the context below. Use British spelling ("tyres").
    - Don't add or explain anything that wasn't said. Keep "copy", "box, box" and swearing.
    - If part is unintelligible, caption the parts you can hear.
-2. "pt": translate "en" into Brazilian Portuguese, as a Brazilian F1 broadcast would say it.
+3. "pt" of each line: "en" translated into Brazilian Portuguese, as a Brazilian F1 broadcast would say it.
    - Natural and short, like a subtitle. Keep the tone, including swearing.
    - Keep terms Brazilians use in English: box, pit, pit stop, safety car, VSC, undercut, overcut, delta, DRS. "Copy" becomes "entendido". "Tyres" becomes "pneus"; softs/mediums/hards become macios/médios/duros.
    - Keep names as they are.
 
-If nobody speaks, both are null.
-Reply with JSON only: {"en": "...", "pt": "..."} or {"en": null, "pt": null}."""
+If nobody speaks, lines is empty.
+Reply with JSON only: {"lines": [{"who": "team", "en": "...", "pt": "..."}, {"who": "driver", "en": "...", "pt": "..."}]} or {"lines": []}."""
 
 _lock = threading.Lock()
 _last_call = 0.0
@@ -60,6 +64,8 @@ _last_call = 0.0
 class Caption:
     en: str | None
     pt: str | None
+    # Who said what: [{"who": "driver" | "team", "en": ..., "pt": ...}]
+    lines: list[dict] = field(default_factory=list)
 
 
 def api_key() -> str | None:
@@ -108,7 +114,10 @@ def _clean(value) -> str | None:
 
 
 def parse_reply(text: str) -> Caption | None:
-    """The JSON reply as a Caption; None when it isn't the expected JSON."""
+    """The JSON reply as a Caption; None when it isn't the expected JSON.
+
+    Takes the reply split by speaker ({"lines": [...]}) and the older single
+    caption ({"en": ..., "pt": ...})."""
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", (text or "").strip())
     try:
         data = json.loads(text)
@@ -116,6 +125,26 @@ def parse_reply(text: str) -> Caption | None:
         return None
     if not isinstance(data, dict):
         return None
+    if isinstance(data.get("lines"), list):
+        lines = []
+        for item in data["lines"]:
+            if not isinstance(item, dict):
+                continue
+            en, pt = _clean(item.get("en")), _clean(item.get("pt"))
+            if not en:
+                continue
+            who = "driver" if str(item.get("who", "")).strip().lower() == "driver" else "team"
+            if lines and lines[-1]["who"] == who:
+                # Same voice twice in a row: one line
+                lines[-1]["en"] += " " + en
+                lines[-1]["pt"] = " ".join(x for x in (lines[-1]["pt"], pt) if x) or None
+            else:
+                lines.append({"who": who, "en": en, "pt": pt})
+        if not lines:
+            return Caption(None, None)
+        en = " ".join(l["en"] for l in lines)
+        pts = [l["pt"] for l in lines if l["pt"]]
+        return Caption(en, " ".join(pts) if pts else None, lines)
     en, pt = _clean(data.get("en")), _clean(data.get("pt"))
     return Caption(en, pt if en else None)
 
@@ -158,7 +187,7 @@ def caption(audio: bytes, context: dict | None = None, draft: str | None = None)
                 }},
             ],
         }],
-        "generationConfig": {"temperature": 0, "maxOutputTokens": 400, "responseMimeType": "application/json"},
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 800, "responseMimeType": "application/json"},
     }
     for attempt in range(2):
         try:

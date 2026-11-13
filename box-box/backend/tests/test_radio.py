@@ -17,6 +17,36 @@ def test_parse_reply():
     assert gemini_captions.parse_reply("[1, 2]") is None
 
 
+def test_parse_reply_split_by_speaker():
+    c = gemini_captions.parse_reply(json.dumps({"lines": [
+        {"who": "team", "en": "Box this lap.", "pt": "Box nesta volta."},
+        {"who": "driver", "en": "Copy.", "pt": "Entendido."},
+    ]}))
+    assert c.en == "Box this lap. Copy." and c.pt == "Box nesta volta. Entendido."
+    assert [l["who"] for l in c.lines] == ["team", "driver"]
+    # Same voice twice in a row is one line; unknown "who" counts as the team
+    c = gemini_captions.parse_reply(json.dumps({"lines": [
+        {"who": "Engineer", "en": "Gap is 2.", "pt": "Diferença de 2."},
+        {"who": "team", "en": "Push.", "pt": "Acelera."},
+        {"who": "driver", "en": "", "pt": "x"},
+    ]}))
+    assert c.lines == [{"who": "team", "en": "Gap is 2. Push.", "pt": "Diferença de 2. Acelera."}]
+    assert gemini_captions.parse_reply('{"lines": []}') == gemini_captions.Caption(None, None)
+
+
+def test_backfill_redoes_clips_without_lines(monkeypatch):
+    from services import radio_backfill
+    monkeypatch.setattr(team_radio, "captions_enabled", lambda: True)
+    monkeypatch.setattr(gemini_captions, "enabled", lambda: True)
+    clips = [
+        {"transcript": "a", "transcript_pt": "a"},  # Portuguese but not split: redo
+        {"transcript": "b", "transcript_pt": "b", "lines": [{"who": "team", "en": "b", "pt": "b"}]},
+        {"no_speech": True},
+        {"transcript": "c", "lines_tried": True},
+    ]
+    assert radio_backfill.needs_work(clips) == 1
+
+
 class FakeResponse:
     def __init__(self, status, body=None):
         self.status_code = status
@@ -81,6 +111,15 @@ def test_caption_both_prefers_gemini(gemini, monkeypatch):
     monkeypatch.setattr(team_radio, "whisper_available", lambda: False)
     monkeypatch.delenv("TEAM_RADIO_CAPTIONS", raising=False)
     assert team_radio.caption_both(b"x", "Lando", 2026) == ("Good job.", "Bom trabalho.")
+
+
+def test_caption_full_returns_lines(gemini, monkeypatch):
+    gemini(_reply('{"lines": [{"who": "driver", "en": "Tyres are gone.", "pt": "Os pneus acabaram."}]}'))
+    monkeypatch.setattr(team_radio, "whisper_available", lambda: False)
+    monkeypatch.delenv("TEAM_RADIO_CAPTIONS", raising=False)
+    en, pt, lines = team_radio.caption_full(b"x", "Lando", 2026)
+    assert (en, pt) == ("Tyres are gone.", "Os pneus acabaram.")
+    assert lines == [{"who": "driver", "en": "Tyres are gone.", "pt": "Os pneus acabaram."}]
 
 
 def test_caption_both_without_gemini(monkeypatch):
