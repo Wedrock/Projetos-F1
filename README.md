@@ -52,6 +52,7 @@
 - **Transmissão do F1 TV** dentro do app, sincronizada com os dados, com câmeras onboard (exige F1 TV Pro ou Premium).
 - **Sincronizar com uma gravação**: alinhe o replay com o que você está assistindo, por foto da tabela da TV ou digitando as diferenças.
 - **Picture-in-Picture**, tela cheia, unidades imperiais e texto em alto contraste.
+- **Alertas no celular**: largada, Safety Car, bandeira vermelha, troca de líder, última volta e pódio chegam como notificação na tela de bloqueio. No iPhone, o Box Box vira um app na Tela de Início.
 - **Tela inicial** com o traçado e o nome oficial de cada circuito da temporada.
 
 ## Capturas de tela
@@ -111,6 +112,37 @@ docker compose up -d
 
 **4. Abra** [http://localhost:8000](http://localhost:8000), escolha uma etapa e uma sessão. Na primeira vez, a sessão leva alguns minutos para baixar; depois disso, abre na hora.
 
+## Usar no iPhone
+
+O Box Box pode ser instalado no iPhone como um app (PWA), com ícone na Tela de Início e alertas de corrida na tela de bloqueio.
+
+**1. Deixe o app acessível por HTTPS.** O iPhone só aceita notificações de sites com HTTPS. O jeito mais simples é rodar o Box Box no seu computador e expor ele com um túnel:
+
+- **[Tailscale](https://tailscale.com)** (só você acessa): instale no computador e no iPhone, entre com a mesma conta e rode `tailscale serve --bg 8000`. O app fica em `https://nome-do-pc.seu-tailnet.ts.net`.
+- **[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)** (endereço na internet): aponte um domínio seu para `http://localhost:8000`. Nesse caso ligue `AUTH_ENABLED`.
+
+Nos dois casos, adicione o endereço em `ALLOWED_HOSTS` no `.env`.
+
+> Por que não num servidor na nuvem? A F1 bloqueia a cronometragem ao vivo vinda da maioria dos servidores na nuvem e VPNs, então os alertas param de funcionar. Rodando em casa, funciona.
+
+**2. Instale no iPhone.** Abra o endereço no Safari, toque em **Compartilhar** → **Adicionar à Tela de Início** e abra o Box Box pelo ícone.
+
+**3. Ligue os alertas.** Na tela inicial do app, abra o menu → **Alertas** → **Ligar alertas neste aparelho** e permita as notificações (precisa do iOS 16.4 ou mais novo). Chega uma notificação de teste na hora.
+
+Durante as corridas, sprints e classificações, o servidor acompanha a cronometragem ao vivo e avisa:
+
+| Quando | Exemplo |
+|---|---|
+| 15 minutos antes | ⏱️ Corrida em 15 min |
+| Largada | 🏁 Largada! · VER sai na pole |
+| Safety Car, VSC, bandeira vermelha | 🟡 Safety Car na pista · Volta 23/71 |
+| Bandeira verde depois deles | 🟢 Safety Car recolhido |
+| Novo líder | 🔄 NOR assume a liderança |
+| Última volta | 🏁 Última volta! · VER lidera, NOR a 1.2s |
+| Fim | 🏆 1º VER · 2º NOR · 3º LEC (ou a pole, na classificação) |
+
+O computador com o Box Box precisa estar ligado durante a sessão, porque é ele que manda os alertas.
+
 ## Configuração
 
 As opções ficam no `.env`. Todas têm um valor padrão sensato; mude só o que precisar.
@@ -128,6 +160,8 @@ As opções ficam no `.env`. Todas têm um valor padrão sensato; mude só o que
 | `TEAM_RADIO_CAPTIONS` / `TEAM_RADIO_MODEL` | Legendas do rádio e o modelo Whisper usado | ligado / `small.en` |
 | `OPENROUTER_API_KEY` | Liga os recursos de IA (correção de legendas e sincronização por foto) | — |
 | `STORAGE_MODE` | `local` ou `r2` (Cloudflare R2) para guardar as sessões | `local` |
+| `PUSH_ALERTS` | Alertas de corrida no celular (notificações) | ligado |
+| `PUSH_SESSIONS` | Sessões que mandam alertas | `R,S,Q,SQ` |
 
 ## Privacidade e segurança
 

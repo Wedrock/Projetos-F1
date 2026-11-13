@@ -16,3 +16,4 @@ Pillow>=10.0.0
 pillow-heif>=0.16.0
 faster-whisper==1.2.1
 av>=12.0.0  # decoding F1 TV audio to sync Broadcast
+pywebpush>=2.0.0
