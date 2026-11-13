@@ -188,6 +188,61 @@ def _retry_delay(resp) -> float:
     return RETRY_WAIT_S
 
 
+def _generate(key: str, payload: dict) -> tuple[str, str | None]:
+    """Send a request, retrying what's worth retrying. Returns ("ok", text),
+    ("empty", None) when Gemini answered with nothing to say, or
+    ("fail", None) when it couldn't answer (network, limits, blocked)."""
+    for attempt in range(MAX_ATTEMPTS):
+        last = attempt == MAX_ATTEMPTS - 1
+        backoff = BACKOFF_S[min(attempt, len(BACKOFF_S) - 1)]
+        try:
+            resp = _request(key, payload)
+        except Exception as e:
+            logger.warning(f"Gemini request failed: {type(e).__name__}")
+            if last:
+                return "fail", None
+            time.sleep(backoff)
+            continue
+        if resp.status_code == 429:
+            if last:
+                logger.warning("Gemini free plan limit reached; giving up on this clip for now")
+                return "fail", None
+            wait = _retry_delay(resp)
+            logger.info(f"Gemini free plan limit reached; trying again in {wait:.0f}s")
+            time.sleep(wait)
+            continue
+        if resp.status_code >= 500:
+            logger.info(f"Gemini busy (HTTP {resp.status_code}); trying again in {backoff:.0f}s")
+            if last:
+                return "fail", None
+            time.sleep(backoff)
+            continue
+        if resp.status_code != 200:
+            logger.warning(f"Gemini request failed ({model()}): HTTP {resp.status_code} {resp.text[:200]}")
+            return "fail", None
+        body = None
+        try:
+            body = resp.json()
+            parts = body["candidates"][0]["content"]["parts"]
+            return "ok", "".join(p.get("text", "") for p in parts)
+        except (KeyError, IndexError, TypeError, ValueError):
+            reason = (body.get("promptFeedback") or {}).get("blockReason") if isinstance(body, dict) else None
+            finish = None
+            try:
+                finish = body["candidates"][0].get("finishReason")
+            except Exception:
+                pass
+            if reason or (finish and finish != "STOP"):
+                # Blocked or cut off: not "nobody speaks", so don't record it as silence
+                logger.warning(f"Gemini returned nothing (block: {reason}, finish: {finish})")
+                if last:
+                    return "fail", None
+                time.sleep(backoff)
+                continue
+            return "empty", None
+    return "fail", None
+
+
 def caption(audio: bytes, context: dict | None = None, draft: str | None = None) -> Caption | None:
     """English and Portuguese captions for one clip. Caption(None, None) when
     nobody speaks; None if Gemini couldn't do it (no key, network, limits).
@@ -212,58 +267,37 @@ def caption(audio: bytes, context: dict | None = None, draft: str | None = None)
         "generationConfig": {"temperature": 0, "maxOutputTokens": 800, "responseMimeType": "application/json"},
         "safetySettings": SAFETY_OFF,
     }
-    for attempt in range(MAX_ATTEMPTS):
-        last = attempt == MAX_ATTEMPTS - 1
-        backoff = BACKOFF_S[min(attempt, len(BACKOFF_S) - 1)]
-        try:
-            resp = _request(key, payload)
-        except Exception as e:
-            logger.warning(f"Gemini caption request failed: {type(e).__name__}")
-            if last:
-                return None
-            time.sleep(backoff)
-            continue
-        if resp.status_code == 429:
-            if last:
-                logger.warning("Gemini free plan limit reached; giving up on this clip for now")
-                return None
-            wait = _retry_delay(resp)
-            logger.info(f"Gemini free plan limit reached; trying again in {wait:.0f}s")
-            time.sleep(wait)
-            continue
-        if resp.status_code >= 500:
-            logger.info(f"Gemini busy (HTTP {resp.status_code}); trying again in {backoff:.0f}s")
-            if last:
-                return None
-            time.sleep(backoff)
-            continue
-        if resp.status_code != 200:
-            logger.warning(f"Gemini caption request failed ({model()}): HTTP {resp.status_code} {resp.text[:200]}")
+    for attempt in range(2):  # a second go if the reply isn't JSON
+        status, text = _generate(key, payload)
+        if status == "fail":
             return None
-        try:
-            body = resp.json()
-            candidate = body["candidates"][0]
-            parts = candidate["content"]["parts"]
-            text = "".join(p.get("text", "") for p in parts)
-        except (KeyError, IndexError, TypeError, ValueError):
-            reason = (body.get("promptFeedback") or {}).get("blockReason") if isinstance(body, dict) else None
-            finish = None
-            try:
-                finish = body["candidates"][0].get("finishReason")
-            except Exception:
-                pass
-            if reason or (finish and finish != "STOP"):
-                # Blocked or cut off: not "nobody speaks", so don't record it as silence
-                logger.warning(f"Gemini returned no caption (block: {reason}, finish: {finish})")
-                if last:
-                    return None
-                time.sleep(backoff)
-                continue
-            return Caption(None, None)  # nothing to caption
-        result = parse_reply(text)
-        if result is None:
-            logger.warning(f"Gemini reply wasn't JSON: {text[:200]}")
-            if not last:
-                continue
-        return result
+        if status == "empty":
+            return Caption(None, None)
+        result = parse_reply(text or "")
+        if result is not None:
+            return result
+        logger.warning(f"Gemini reply wasn't JSON: {(text or '')[:200]}")
     return None
+
+
+TRANSLATE_INSTRUCTIONS = """Translate this Formula 1 team radio caption into Brazilian Portuguese, as a Brazilian F1 broadcast would say it.
+- Natural and short, like a subtitle. Keep the tone, including swearing.
+- Keep terms Brazilians use in English: box, pit, pit stop, safety car, VSC, undercut, overcut, delta, DRS. "Copy" becomes "entendido". "Tyres" becomes "pneus"; softs/mediums/hards become macios/médios/duros.
+- Keep names as they are. Don't add or explain anything.
+Reply with the translation only."""
+
+
+def translate(english: str, context: dict | None = None) -> str | None:
+    """Portuguese for an English caption (text only), for clips Gemini
+    couldn't caption from the audio. None if it couldn't."""
+    key = api_key()
+    if not key or not (english or "").strip():
+        return None
+    prompt = f"{TRANSLATE_INSTRUCTIONS}\n\n{_context_text({**(context or {})})}\n\nCaption: {english.strip()}"
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0, "maxOutputTokens": 400},
+        "safetySettings": SAFETY_OFF,
+    }
+    status, text = _generate(key, payload)
+    return _clean(text) if status == "ok" else None

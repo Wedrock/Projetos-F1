@@ -42,10 +42,28 @@ def test_backfill_redoes_clips_without_lines(monkeypatch):
         {"transcript": "a", "transcript_pt": "a"},  # Portuguese but not split: redo
         {"transcript": "b", "transcript_pt": "b", "lines": [{"who": "team", "en": "b", "pt": "b"}]},
         {"no_speech": True},
-        {"transcript": "c", "lines_tried": True},
+        {"transcript": "c", "transcript_pt": "c", "lines_tried": True},  # done as far as it goes
         {"transcript": "What the f***", "no_speech": True},  # likely blocked before: redo
+        {"transcript": "d", "lines_tried": True},  # English only: translate it
     ]
-    assert radio_backfill.needs_work(clips) == 2
+    assert radio_backfill.needs_work(clips) == 3
+
+
+def test_translate_sends_text_only(gemini):
+    calls = gemini(_reply("Entendido, box nesta volta."))
+    assert gemini_captions.translate("Copy, box this lap.") == "Entendido, box nesta volta."
+    parts = calls[0]["json"]["contents"][0]["parts"]
+    assert len(parts) == 1 and "Copy, box this lap." in parts[0]["text"]
+    assert gemini_captions.translate("  ") is None
+
+
+def test_caption_full_translates_whisper_when_gemini_fails(gemini, monkeypatch):
+    monkeypatch.setattr(team_radio, "whisper_available", lambda: True)
+    monkeypatch.setattr(team_radio, "transcribe", lambda *a, **k: "Tyres are gone.")
+    monkeypatch.delenv("TEAM_RADIO_CAPTIONS", raising=False)
+    # The audio request fails every time, then the text translation works
+    gemini(*[FakeResponse(500)] * gemini_captions.MAX_ATTEMPTS, _reply("Os pneus acabaram."))
+    assert team_radio.caption_full(b"x", "Lando", 2026) == ("Tyres are gone.", "Os pneus acabaram.", [])
 
 
 class FakeResponse:

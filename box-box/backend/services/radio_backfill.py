@@ -34,20 +34,30 @@ def status(year: int, round_num: int, session_type: str) -> dict:
         return dict(job) if job else {"running": False}
 
 
+def _pending(c: dict) -> bool:
+    """With Gemini: whether a clip still lacks its Portuguese caption split
+    by who speaks."""
+    if c.get("lines"):
+        return False
+    # English only (Gemini couldn't caption the audio): at least translate it
+    if c.get("transcript") and not c.get("transcript_pt"):
+        return True
+    if c.get("lines_tried"):
+        return False
+    # Marked silent though Whisper heard words: likely blocked by Gemini's
+    # filters before they were turned off, so try once more
+    if c.get("no_speech") and not c.get("transcript"):
+        return False
+    # Captioned before lines came in
+    return True
+
+
 def needs_work(clips: list[dict]) -> int:
     """Clips still missing the captions this server can make."""
     if not team_radio.captions_enabled():
         return 0
     if gemini_captions.enabled():
-        # Portuguese, split by who speaks (clips captioned before that came in
-        # have a Portuguese caption but no lines)
-        # A clip marked as silent but with words from Whisper was likely blocked
-        # by Gemini's filters before they were turned off: try it again once.
-        return sum(
-            1 for c in clips
-            if not c.get("lines") and not c.get("lines_tried")
-            and not (c.get("no_speech") and not c.get("transcript"))
-        )
+        return sum(1 for c in clips if _pending(c))
     return sum(1 for c in clips if not c.get("transcript") and not c.get("no_speech"))
 
 
@@ -133,6 +143,17 @@ def _run(year: int, round_num: int, session_type: str) -> None:
         label = f"{year} {info.get('event_name', '')}".strip()
         failures = 0
         for i, clip in enumerate(todo, 1):
+            if gemini_captions.enabled() and clip.get("lines_tried") and clip.get("transcript"):
+                # Gemini already listened and couldn't caption it: translate the English
+                drv = drivers.get(clip.get("racing_number", ""), {})
+                pt = gemini_captions.translate(clip["transcript"], {
+                    "speaker": team_radio._driver_label(drv) if drv else None, "drivers": roster, "session": label,
+                })
+                if pt:
+                    clip["transcript_pt"] = pt
+                    put_json(f"{base}/team_radio.json", data)
+                _update(key, done=i)
+                continue
             audio = _audio(base, clip)
             if audio:
                 drv = drivers.get(clip.get("racing_number", ""), {})
@@ -143,12 +164,19 @@ def _run(year: int, round_num: int, session_type: str) -> None:
                 }
                 if gemini_captions.enabled():
                     result = gemini_captions.caption(audio, {**context, "year": year}, clip.get("transcript"))
+                    if result is None and clip.get("transcript"):
+                        # Couldn't caption the audio: Portuguese from the English at least
+                        pt = gemini_captions.translate(clip["transcript"], {**context, "year": year})
+                        if pt:
+                            clip["transcript_pt"] = pt
+                            clip["lines_tried"] = True
+                            result = False  # handled
                     if result is None:
                         failures += 1
                         if failures >= 3:
                             raise RuntimeError("O Gemini não está respondendo (talvez o limite diário do plano grátis). "
                                                "Tente de novo mais tarde; o que já foi legendado ficou salvo.")
-                    else:
+                    elif result is not False:
                         failures = 0
                         if result.en:
                             clip["transcript"] = result.en if result.lines else (clip.get("transcript") or result.en)
@@ -158,7 +186,10 @@ def _run(year: int, round_num: int, session_type: str) -> None:
                             else:
                                 clip["lines_tried"] = True  # answered without lines: don't ask again
                         elif clip.get("transcript"):
-                            clip["lines_tried"] = True  # Gemini hears nobody, Whisper did: leave it
+                            # Gemini hears nobody, Whisper did: keep Whisper's words, in Portuguese
+                            clip["lines_tried"] = True
+                            clip["transcript_pt"] = clip.get("transcript_pt") or gemini_captions.translate(
+                                clip["transcript"], {**context, "year": year})
                         else:
                             clip["no_speech"] = True  # nobody speaks: don't ask again
                 else:
