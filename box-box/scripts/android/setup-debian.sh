@@ -53,7 +53,14 @@ if [ ! -x "$NODE_DIR/bin/node" ]; then
   curl -fsSL "https://nodejs.org/dist/latest-v20.x/$file" | tar -xJ -C "$NODE_DIR" --strip-components=1
 fi
 export PATH="$NODE_DIR/bin:$PATH"
-(cd "$BOX/frontend" && npm ci --no-audit --no-fund --loglevel=error && npm run build >/dev/null)
+# Rebuilt only when the frontend's code changed (its git tree hash)
+tree=$(git -C "$APP_DIR" rev-parse HEAD:box-box/frontend)
+if [ "$(cat "$BOX/frontend/out/.boxbox-build" 2>/dev/null)" != "$tree" ]; then
+  (cd "$BOX/frontend" && npm ci --no-audit --no-fund --loglevel=error && npm run build >/dev/null)
+  echo "$tree" > "$BOX/frontend/out/.boxbox-build"
+else
+  echo "Interface já está atualizada"
+fi
 
 say "Configuração"
 if [ ! -f "$BOX/.env" ]; then
@@ -94,12 +101,27 @@ bash "$BOX/scripts/android/start.sh" tailscale-only
 if ! tailscale status >/dev/null 2>&1; then
   echo
   echo "Abra o link abaixo e entre com a MESMA conta do Tailscale do seu iPhone:"
-  tailscale up --hostname=boxbox
+  # `tailscale up` can keep waiting after the login has gone through, so run
+  # it in the background and go on as soon as the phone is connected
+  tailscale up --hostname=boxbox >/tmp/boxbox-ts-up.log 2>&1 &
+  up_pid=$!
+  shown=""
+  for _ in $(seq 1 900); do
+    tailscale status >/dev/null 2>&1 && break
+    if [ -z "$shown" ] && grep -q "https://" /tmp/boxbox-ts-up.log; then
+      cat /tmp/boxbox-ts-up.log
+      shown=1
+    fi
+    sleep 1
+  done
+  kill "$up_pid" 2>/dev/null || true
+  if tailscale status >/dev/null 2>&1; then echo "Tailscale conectado"; else echo "O login do Tailscale não terminou; rode o instalador de novo"; fi
 fi
-# HTTPS at https://boxbox.<sua-rede>.ts.net, pointing at the app
-if ! tailscale serve --bg 8000; then
+# HTTPS at https://boxbox.<sua-rede>.ts.net, pointing at the app. Waits if
+# HTTPS still has to be turned on for the tailnet (it prints the link).
+if ! timeout 600 tailscale serve --bg 8000; then
   echo
-  echo "Ative o HTTPS na sua rede Tailscale pelo link acima e rode 'boxbox update' de novo."
+  echo "Ative o HTTPS em login.tailscale.com/admin/dns (HTTPS Certificates) e rode 'boxbox update'."
 fi
 
 # proot only exits once every process in it has, so stop the daemon here;
