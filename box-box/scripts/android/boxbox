@@ -38,7 +38,7 @@ case "${1:-status}" in
   logs) tail -n "${2:-40}" "$LOG" ;;
   gemini)
     key="${2:-}"
-    if ! printf '%s' "$key" | grep -Eq '^[A-Za-z0-9_-]{20,}$'; then
+    if ! printf '%s' "$key" | grep -Eq '^[A-Za-z0-9._-]{20,}$'; then
       echo "Uso: boxbox gemini SUA_CHAVE   (crie a chave grátis em aistudio.google.com)"
       exit 1
     fi
