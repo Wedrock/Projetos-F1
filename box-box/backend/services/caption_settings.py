@@ -69,7 +69,7 @@ def _path() -> Path:
 
 def _saved() -> dict[str, Any]:
     try:
-        return json.loads(_path().read_text())
+        return json.loads(_path().read_text(encoding="utf-8"))
     except FileNotFoundError:
         return {}
     except Exception as e:
@@ -191,5 +191,5 @@ def save(
             data["ai_model"] = ai
         path = _path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, indent=2))
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return describe()

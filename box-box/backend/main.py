@@ -275,7 +275,7 @@ if STATIC_DIR.exists():
         build assets of an earlier deploy. Public sites without a passphrase get
         a flag so the page can skip the login check."""
         if path not in _html_cache:
-            html = path.read_text()
+            html = path.read_text(encoding="utf-8")
             if is_public_mode() and not is_auth_enabled():
                 html = html.replace("<head>", "<head><script>window.__PUBLIC_MODE__=true</script>", 1)
             _html_cache[path] = html

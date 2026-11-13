@@ -56,7 +56,7 @@ def _local_list_keys(prefix: str) -> list[str]:
     base = _data_dir() / prefix
     if not base.exists():
         return []
-    return [str(p.relative_to(_data_dir())) for p in base.rglob("*") if p.is_file()]
+    return [p.relative_to(_data_dir()).as_posix() for p in base.rglob("*") if p.is_file()]
 
 
 def _local_list_sizes(prefix: str) -> dict[str, int]:
@@ -66,7 +66,7 @@ def _local_list_sizes(prefix: str) -> dict[str, int]:
     sizes: dict[str, int] = {}
     for p in base.rglob("*"):
         if p.is_file():
-            sizes[str(p.relative_to(_data_dir()))] = p.stat().st_size
+            sizes[p.relative_to(_data_dir()).as_posix()] = p.stat().st_size
     return sizes
 
 

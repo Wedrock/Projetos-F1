@@ -89,7 +89,7 @@ def _read_subs() -> list[dict]:
     if not path.exists():
         return []
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         return data if isinstance(data, list) else []
     except (OSError, ValueError):
         return []
@@ -98,7 +98,7 @@ def _read_subs() -> list[dict]:
 def _write_subs(subs: list[dict]) -> None:
     path = _subs_path()
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(subs))
+    tmp.write_text(json.dumps(subs), encoding="utf-8")
     tmp.replace(path)
 
 

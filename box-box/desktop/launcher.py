@@ -23,6 +23,7 @@ import socket
 import sys
 import threading
 import time
+import traceback
 import urllib.request
 import webbrowser
 from pathlib import Path
@@ -165,18 +166,28 @@ def open_window(url: str) -> bool:
     try:
         import webview
     except Exception:
+        print("Janela do app indisponível (pywebview não carregou):", file=sys.stderr)
+        traceback.print_exc()
         return False
+    selftest = os.environ.get("BOXBOX_SELFTEST") == "1"
     try:
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True
         webview.settings["ALLOW_DOWNLOADS"] = True
+        window = webview.create_window(APP_NAME, url, width=1440, height=900, min_size=(1024, 640))
+
+        def on_loaded():
+            print("Janela do app carregada.", flush=True)
+            if selftest:
+                threading.Timer(3, window.destroy).start()
+
+        window.events.loaded += on_loaded
         icon = static_dir() / "icon-512.png"
-        webview.create_window(APP_NAME, url, width=1440, height=900, min_size=(1024, 640))
-        storage = app_home() / "webview"
-        webview.start(private_mode=False, storage_path=str(storage),
+        webview.start(private_mode=False, storage_path=str(app_home() / "webview"),
                       icon=str(icon) if icon.is_file() else None)
         return True
-    except Exception as exc:  # no WebView2 / GTK / Qt available
-        print(f"Janela do app indisponível ({exc}); abrindo no navegador.", file=sys.stderr)
+    except Exception:  # no WebView2 / GTK / Qt available
+        print("Janela do app indisponível; abrindo no navegador:", file=sys.stderr)
+        traceback.print_exc()
         return False
 
 
@@ -198,6 +209,8 @@ def main() -> int:
             webbrowser.open(url)
         return 0
 
+    print(f"--- Box Box iniciando {time.strftime('%Y-%m-%d %H:%M:%S')} "
+          f"(Python {sys.version.split()[0]}, {sys.platform})", flush=True)
     configure_env(home, bundle_dir())
     port = pick_port(args.port)
     url = f"http://localhost:{port}"
