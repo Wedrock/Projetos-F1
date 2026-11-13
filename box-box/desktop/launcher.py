@@ -65,6 +65,13 @@ def setup_logging(home: Path) -> None:
         log = open(home / "boxbox.log", "a", encoding="utf-8", buffering=1)
         sys.stdout = sys.stdout or log
         sys.stderr = sys.stderr or log
+    # A crash in native code (WebView2, .NET) kills the process without a
+    # Python error; faulthandler still writes where it happened to the log.
+    try:
+        import faulthandler
+        faulthandler.enable(file=sys.stderr, all_threads=True)
+    except Exception:
+        pass
 
 
 def seed_data(src: Path, dest: Path) -> None:
@@ -170,6 +177,9 @@ def open_window(url: str, on_loaded=None) -> bool:
         traceback.print_exc()
         return False
     selftest = os.environ.get("BOXBOX_SELFTEST") == "1"
+    import logging
+    logging.getLogger("pywebview").setLevel(logging.DEBUG)
+    print(f"Abrindo a janela do app (pywebview {getattr(webview, '__version__', '?')})", flush=True)
     try:
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True
         webview.settings["ALLOW_DOWNLOADS"] = True
@@ -221,7 +231,8 @@ def run_window_process(url: str) -> bool:
     loaded = marker.exists()
     marker.unlink(missing_ok=True)
     if code != 0 or not loaded:
-        print(f"A janela do app fechou sem carregar (código {code}); abrindo no navegador.",
+        print(f"A janela do app fechou sem carregar (código {code}, 0x{code & 0xFFFFFFFF:08X}); "
+              "abrindo no navegador.",
               file=sys.stderr, flush=True)
         return False
     return True

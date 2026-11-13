@@ -85,6 +85,15 @@ jobs:
           Get-Content "$env:LOCALAPPDATA\BoxBox\boxbox.log" -ErrorAction SilentlyContinue
           if ($fail) { throw "Falhou: $($fail -join ', ')" }
 
+      - name: Testar a janela pelo Python (sem empacotar)
+        continue-on-error: true
+        run: |
+          $env:BOXBOX_SELFTEST = "1"
+          $p = Start-Process .venv\Scripts\python.exe -ArgumentList "launcher.py","--window","https://example.com" -PassThru -NoNewWindow -RedirectStandardOutput py-out.txt -RedirectStandardError py-err.txt
+          if (-not $p.WaitForExit(60000)) { Stop-Process $p -Force; Write-Host "Não fechou em 60 s" }
+          Write-Host "código de saída: $($p.ExitCode)"
+          Get-Content py-out.txt, py-err.txt -ErrorAction SilentlyContinue
+
       - name: Testar a janela do app
         continue-on-error: true
         run: |
