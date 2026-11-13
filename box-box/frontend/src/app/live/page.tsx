@@ -16,7 +16,8 @@ import LapNotifications from "@/components/LapNotifications";
 import LapAnalysisPanel from "@/components/LapAnalysisPanel";
 import SessionLapAnalysis from "@/components/SessionLapAnalysis";
 import SectorFocusChips, { sectorTarget } from "@/components/SectorFocus";
-import TeamRadio from "@/components/TeamRadio";
+import TeamRadio, { type RadioClip } from "@/components/TeamRadio";
+import RadioPanel from "@/components/RadioPanel";
 import TelemetryChart from "@/components/TelemetryChart";
 import Leaderboard, { leaderCrossingTimes } from "@/components/Leaderboard";
 import { miniMarkersWidth, MINI_HEX } from "@/lib/miniSectors";
@@ -109,6 +110,10 @@ function LiveTiming() {
   // Track dominance from Lap Analysis's Compare tab, on the track map
   const [dominance, setDominance] = useState<DominanceOverlay | null>(null);
   const [mobileLapAnalysisOpen, setMobileLapAnalysisOpen] = useState(false);
+  // Opened straight on the radio list from a team radio alert (?tab=radio)
+  const [radioOpen, setRadioOpen] = useState(false);
+  const [mobileRadioOpen, setMobileRadioOpen] = useState(false);
+  const [radioLog, setRadioLog] = useState<RadioClip[]>([]);
   const [mobileRcOpen, setMobileRcOpen] = useState(true);
   const [leaderboardScale, setLeaderboardScale] = useState(1);
   const [delayOffset, setDelayOffset] = useState(() => {
@@ -416,6 +421,33 @@ function LiveTiming() {
 
   // Mini-sectors (qualifying and practice, desktop), straight from the feed
   const miniCounts = live.frame?.mini_sector_counts;
+  // Every clip of the session so far: frames carry only the latest few
+  const frameRadio = live.frame?.team_radio;
+  useEffect(() => {
+    if (!frameRadio?.length) return;
+    setRadioLog((log) => {
+      const known = new Map(log.map((c) => [c.id ?? `${c.utc}_${c.racing_number}`, c]));
+      let changed = false;
+      for (const c of frameRadio) {
+        const k = c.id ?? `${c.utc}_${c.racing_number}`;
+        const old = known.get(k);
+        if (!old || old.transcript !== c.transcript || old.transcript_pt !== c.transcript_pt) {
+          known.set(k, c);
+          changed = true;
+        }
+      }
+      if (!changed) return log;
+      return Array.from(known.values()).sort((a, b) => (a.utc ?? "").localeCompare(b.utc ?? ""));
+    });
+  }, [frameRadio]);
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "radio") {
+      setRadioOpen(true);
+      setMobileRadioOpen(true);
+    }
+  }, [searchParams]);
+
   const miniSectors = !isRace && !isMobile && settings.showSectors && settings.showMiniSectors && miniCounts
     ? { counts: miniCounts, states: new Map(drivers.map((d) => [d.abbr, d.mini_sectors ?? null])) }
     : null;
@@ -717,7 +749,34 @@ function LiveTiming() {
                 clips={live.frame?.team_radio}
                 mode="live"
                 drivers={drivers}
+                showEnglish={settings.teamRadioEnglish}
               />
+
+              {/* Team radio list - desktop only (mobile: below the leaderboard) */}
+              {!isMobile && !broadcastOn && (
+                <button
+                  onClick={() => setRadioOpen(!radioOpen)}
+                  className={`absolute bottom-2 ${liveLaps ? "right-[72px]" : "right-3"} z-20 flex items-center gap-1 px-2 py-1 rounded text-xs font-bold transition-colors ${
+                    radioOpen
+                      ? "bg-f1-red text-white"
+                      : "bg-f1-card/90 border border-f1-border text-f1-muted hover:text-white backdrop-blur-sm"
+                  }`}
+                >
+                  Rádios
+                </button>
+              )}
+              {!isMobile && radioOpen && !broadcastOn && (
+                <div className="absolute top-2 right-3 bottom-11 z-30 w-[22rem] flex flex-col rounded-lg border border-f1-border shadow-xl overflow-hidden">
+                  <RadioPanel
+                    className="flex-1"
+                    clips={radioLog}
+                    drivers={drivers}
+                    mode="live"
+                    showEnglish={settings.teamRadioEnglish}
+                    onClose={() => setRadioOpen(false)}
+                  />
+                </div>
+              )}
 
               {/* Telemetry overlay - desktop only, bottom-left (telemetry arrives with an F1 TV sign-in) */}
               {hasTelemetry && !isMobile && showTelemetry && !broadcastOn && (
@@ -958,6 +1017,32 @@ function LiveTiming() {
               </div>
             )}
           </div>
+          </div>
+        )}
+
+        {/* Team radio section - mobile only, below the leaderboard */}
+        {isMobile && (
+          <div className="sm:hidden border-t border-f1-border">
+            <button
+              onClick={() => setMobileRadioOpen(!mobileRadioOpen)}
+              className="w-full flex items-center justify-between px-3 py-3 bg-f1-card border-b border-f1-border min-h-[44px]"
+            >
+              <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">
+                Rádios das equipes{radioLog.length ? ` · ${radioLog.length}` : ""}
+              </span>
+              <svg className={`w-4 h-4 text-f1-muted transition-transform ${mobileRadioOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {mobileRadioOpen && (
+              <RadioPanel
+                className="max-h-[60vh]"
+                clips={radioLog}
+                drivers={drivers}
+                mode="live"
+                showEnglish={settings.teamRadioEnglish}
+              />
+            )}
           </div>
         )}
 

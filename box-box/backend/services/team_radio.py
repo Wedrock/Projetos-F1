@@ -28,7 +28,7 @@ from typing import Any
 
 import requests
 
-from services import caption_ai, caption_settings, whisper_models
+from services import caption_ai, caption_settings, gemini_captions, whisper_models
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +46,10 @@ _unavailable_logged = False
 
 
 def captions_enabled() -> bool:
-    """Whether clips get captions: from Whisper, the AI step, or both."""
+    """Whether clips get captions: from Whisper, the AI step, Gemini, or a mix."""
     if os.environ.get("TEAM_RADIO_CAPTIONS", "true").strip().lower() in ("false", "0", "off", "no"):
         return False
-    return whisper_available() or caption_settings.ai_enabled()
+    return gemini_captions.enabled() or whisper_available() or caption_settings.ai_enabled()
 
 
 def whisper_available() -> bool:
@@ -225,6 +225,26 @@ def caption(
     return text
 
 
+def caption_both(
+    audio: bytes, first_name: str | None, year: int | None, context: dict | None = None, live: bool = False,
+) -> tuple[str | None, str | None]:
+    """(English, Portuguese) captions for one clip. With GEMINI_API_KEY,
+    Gemini writes both from the audio (with Whisper's caption as a hint when
+    Whisper is installed); otherwise, or if Gemini fails, English only."""
+    if not captions_enabled():
+        return None, None
+    if gemini_captions.enabled():
+        draft = transcribe(audio, first_name, year, live) if whisper_available() else None
+        result = gemini_captions.caption(audio, {**(context or {}), "year": year}, draft)
+        if result is not None:
+            return result.en, result.pt
+        if draft:
+            return draft, None
+        if not caption_settings.ai_enabled():
+            return None, None
+    return caption(audio, first_name, year, context, live), None
+
+
 def parse_utc(value: str) -> datetime | None:
     """F1's Utc field, e.g. '2026-10-11T11:56:17.5106502Z', as naive UTC
     (FastF1's Date columns are naive UTC too)."""
@@ -268,6 +288,7 @@ def build_clips(
     year: int | None = None,
     session: str | None = None,
     store_prefix: str | None = None,
+    with_captions: bool = True,
 ) -> list[dict]:
     """Replay clips with captions, timed in replay seconds from start_date.
 
@@ -276,8 +297,10 @@ def build_clips(
     e.g. "2026 United States Grand Prix, Qualifying". With store_prefix,
     each clip's audio is kept in storage there and the clip names it as
     "audio", so replays play it from this server rather than F1's (which
-    refuses some networks).
+    refuses some networks). A capture with "Url" (from OpenF1) plays from
+    there. with_captions off leaves captioning for later (radio_backfill).
     """
+    want_captions = with_captions and captions_enabled()
     roster = [_driver_label(d) for d in drivers.values() if d.get("abbr")]
     seen: set[str] = set()
     clips: list[dict] = []
@@ -289,17 +312,17 @@ def build_clips(
         seen.add(path)
         number = str(cap.get("RacingNumber", ""))
         drv = drivers.get(number, {})
-        url = audio_url(session_path, path)
-        transcript = None
+        url = cap.get("Url") or audio_url(session_path, path)
+        transcript = transcript_pt = None
         stored = None
-        if captions_enabled() or store_prefix:
+        if want_captions or store_prefix:
             if on_progress:
                 on_progress(i + 1, len(ordered))
             audio = fetch_audio(url)
             if audio and store_prefix:
                 stored = store_audio(store_prefix, path, audio)
-            if audio and captions_enabled():
-                transcript = caption(audio, drv.get("first_name"), year, {
+            if audio and want_captions:
+                transcript, transcript_pt = caption_both(audio, drv.get("first_name"), year, {
                     "speaker": _driver_label(drv) if drv else None,
                     "drivers": roster,
                     "session": session,
@@ -313,6 +336,7 @@ def build_clips(
             "url": url,
             **({"audio": stored} if stored else {}),
             "transcript": transcript,
+            "transcript_pt": transcript_pt,
         })
     return clips
 

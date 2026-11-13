@@ -32,6 +32,7 @@ from routers import f1_account as f1_account_routes
 from services.auto_precompute import auto_precompute_loop, get_allowed_session_types
 from services.retention import retention_loop
 from services.push import push_enabled
+from services.gemini_captions import enabled as gemini_enabled
 from services.race_alerts import race_alerts_loop
 
 load_dotenv()
@@ -96,6 +97,7 @@ PUBLIC_MODE_BLOCKED = [
     (None, re.compile(r"/api/downloads(/.*)?$")),
     (None, re.compile(r"/api/f1tv(/.*)?$")),
     (None, re.compile(r"/api/captions(/.*)?$")),
+    ("POST", re.compile(_SESSION + r"/team-radio/refresh$")),
     (None, re.compile(r"/api/live/\d+/\d+/telemetry$")),
 ]
 
@@ -228,6 +230,8 @@ async def app_config():
         "f1tv": not public,
         # Race alerts (Web Push) on the lock screen
         "push": push_enabled(),
+        # Team radio captions in Portuguese (Gemini)
+        "radio_pt": gemini_enabled() and not public,
         # Public sites only: the last round served, since F1 put timing data behind F1 TV.
         "public_archive": {
             "year": last[0],

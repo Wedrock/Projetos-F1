@@ -32,7 +32,8 @@
 - **Situação da pista** setor por setor: amarela, amarela dupla, vermelha, Safety Car e Virtual Safety Car.
 - **Mensagens da direção de prova** (investigações, punições, limites de pista) com cores para leitura rápida.
 - **Clima** da sessão: temperatura do ar e da pista, umidade, vento e chuva.
-- **Rádio das equipes** com áudio e legenda gerada no seu próprio computador (Whisper).
+- **Rádio das equipes** com áudio e legenda: em **português e inglês** com o Gemini (chave grátis do Google), ou em inglês com o Whisper rodando no seu computador. A aba **Rádios** lista todas as mensagens da sessão, com filtro por piloto e um toque para pular até o momento do rádio no replay.
+- **Alerta de rádio**: escolha seus pilotos e receba no celular a legenda do rádio deles assim que sair, durante o ao vivo.
 
 ### 🛞 Estratégia e pneus
 - **Saúde dos pneus**: um modelo bayesiano estima, volta a volta, quanto cada jogo de pneus já se desgastou. Ele aprende o ritmo de desgaste de cada composto com os dados da própria corrida, descontando o combustível e a abrasão do asfalto. Uma barrinha colorida na tabela mostra o resultado.
@@ -116,6 +117,8 @@ docker compose up -d
 
 O Box Box pode ser instalado no iPhone como um app (PWA), com ícone na Tela de Início e alertas de corrida na tela de bloqueio.
 
+> **Sem computador ligado:** um celular Android parado pode ser o servidor, sempre ligado em casa e acessado de qualquer lugar. Veja o guia [Box Box num celular Android](box-box/docs/android.md).
+
 **1. Deixe o app acessível por HTTPS.** O iPhone só aceita notificações de sites com HTTPS. O jeito mais simples é rodar o Box Box no seu computador e expor ele com um túnel:
 
 - **[Tailscale](https://tailscale.com)** (só você acessa): instale no computador e no iPhone, entre com a mesma conta e rode `tailscale serve --bg 8000`. O app fica em `https://nome-do-pc.seu-tailnet.ts.net`.
@@ -158,6 +161,7 @@ As opções ficam no `.env`. Todas têm um valor padrão sensato; mude só o que
 | `ALLOWED_HOSTS` | Endereços aceitos pelo servidor, separados por vírgula | `localhost,127.0.0.1` |
 | `AUTH_ENABLED` / `AUTH_PASSPHRASE` | Pede uma frase de acesso para abrir o app | desligado |
 | `TEAM_RADIO_CAPTIONS` / `TEAM_RADIO_MODEL` | Legendas do rádio e o modelo Whisper usado | ligado / `small.en` |
+| `GEMINI_API_KEY` | Legendas do rádio em português e inglês, pelo Gemini (chave grátis em [aistudio.google.com](https://aistudio.google.com/apikey)) | — |
 | `OPENROUTER_API_KEY` | Liga os recursos de IA (correção de legendas e sincronização por foto) | — |
 | `STORAGE_MODE` | `local` ou `r2` (Cloudflare R2) para guardar as sessões | `local` |
 | `PUSH_ALERTS` | Alertas de corrida no celular (notificações) | ligado |
@@ -168,7 +172,7 @@ As opções ficam no `.env`. Todas têm um valor padrão sensato; mude só o que
 - **Fica só no seu computador.** Por padrão a porta abre apenas em `127.0.0.1` e o servidor só responde a `localhost`, o que protege contra acesso pela rede e contra ataques de *DNS rebinding*. Para abrir na rede local, ajuste `BIND_ADDRESS` e `ALLOWED_HOSTS` e ligue `AUTH_ENABLED`: quem acessa o app pode usar o seu login do F1 TV.
 - **Senha protegida.** O login do F1 TV fica criptografado no seu disco e só é enviado para a F1. Os registros do servidor nunca mostram senha, token ou e-mail.
 - **Nada de rastreadores.** Sem analytics, sem scripts de terceiros. Os traçados dos circuitos e os dados das corridas são buscados pelo servidor, então o seu navegador só conversa com o próprio app.
-- **IA desligada por padrão.** Nada é enviado a serviços de IA a menos que você configure `OPENROUTER_API_KEY`.
+- **IA desligada por padrão.** Nada é enviado a serviços de IA a menos que você configure `GEMINI_API_KEY` ou `OPENROUTER_API_KEY`. Com o Gemini, o áudio dos rádios vai para o Google; no plano grátis, o Google pode usar esse conteúdo para melhorar os modelos dele.
 
 ## Como o projeto é organizado
 

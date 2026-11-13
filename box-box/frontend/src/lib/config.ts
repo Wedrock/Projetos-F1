@@ -16,6 +16,8 @@ export interface AppConfig {
   f1tv: boolean;
   /** Race alerts (push notifications), self-hosted only */
   push?: boolean;
+  /** Team radio captions in Portuguese (Gemini) */
+  radio_pt?: boolean;
 }
 
 export interface PublicArchive {

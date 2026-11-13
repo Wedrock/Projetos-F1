@@ -20,6 +20,16 @@ export interface RadioClip {
   driver: string;
   url: string | null;
   transcript: string | null;
+  /** Portuguese caption (Gemini), when the server makes them */
+  transcript_pt?: string | null;
+}
+
+/** The caption to show first, and the English original under it when asked. */
+export function captionLines(clip: RadioClip, showEnglish: boolean): { main: string | null; original: string | null } {
+  const pt = clip.transcript_pt || null;
+  const en = clip.transcript || null;
+  if (pt) return { main: pt, original: showEnglish && en && en !== pt ? en : null };
+  return { main: en, original: null };
 }
 
 // A jump bigger than this (replay seconds) is a seek: don't fire everything skipped.
@@ -45,12 +55,13 @@ interface Props {
   playing?: boolean;
   speed?: number;
   drivers: ReplayDriver[];
+  showEnglish?: boolean;
 }
 
 /** Where to play a clip from. Audio kept on this server (an /api/ path)
  *  needs the app's sign-in, which an audio element can't send, so it's
  *  fetched and played from memory. F1's own links play directly. */
-async function audioSource(url: string): Promise<string | null> {
+export async function audioSource(url: string): Promise<string | null> {
   if (!url.startsWith("/api/")) return url;
   try {
     const res = await fetch(apiUrl(url), { headers: authHeaders() });
@@ -61,11 +72,11 @@ async function audioSource(url: string): Promise<string | null> {
   }
 }
 
-function releaseSource(src: string | null) {
+export function releaseSource(src: string | null) {
   if (src?.startsWith("blob:")) URL.revokeObjectURL(src);
 }
 
-export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0, playing = true, speed = 1, drivers }: Props) {
+export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0, playing = true, speed = 1, drivers, showEnglish = false }: Props) {
   const [current, setCurrent] = useState<RadioClip | null>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const queueRef = useRef<RadioClip[]>([]);
@@ -155,7 +166,7 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
       audioRef.current = el;
       const fail = () => {
         setAudioPlaying(false);
-        timerRef.current = setTimeout(() => setCurrent(null), readingMs(next.transcript));
+        timerRef.current = setTimeout(() => setCurrent(null), readingMs(next.transcript_pt || next.transcript));
       };
       el.onended = () => { releaseSource(el.src); done(); };
       el.onerror = () => { releaseSource(el.src); fail(); };
@@ -166,7 +177,7 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
         el.play().then(() => setAudioPlaying(true)).catch(() => el.onerror?.(new Event("error")));
       });
     } else {
-      timerRef.current = setTimeout(() => setCurrent(null), readingMs(next.transcript));
+      timerRef.current = setTimeout(() => setCurrent(null), readingMs(next.transcript_pt || next.transcript));
     }
   }, [current, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -185,6 +196,7 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
 
   const drv = drivers.find((d) => d.abbr === current.driver);
   const color = drv?.color || "#FFFFFF";
+  const { main, original } = captionLines(current, showEnglish);
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-[min(30rem,calc(100%-1.5rem))]">
@@ -199,8 +211,11 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
             <span className="text-[10px] font-bold text-f1-muted uppercase tracking-wider">Rádio da equipe</span>
             <AudioLines className={`w-4 h-4 ml-auto flex-shrink-0 ${audioPlaying ? "text-white animate-pulse" : "text-f1-muted"}`} />
           </div>
-          {current.transcript && (
-            <p className="text-sm text-white/90 leading-snug mt-0.5">&ldquo;{current.transcript}&rdquo;</p>
+          {main && (
+            <p className="text-sm text-white/90 leading-snug mt-0.5">&ldquo;{main}&rdquo;</p>
+          )}
+          {original && (
+            <p className="text-xs text-f1-muted italic leading-snug mt-0.5">{original}</p>
           )}
         </div>
       </div>

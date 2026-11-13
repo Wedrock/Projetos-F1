@@ -1,0 +1,58 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# `boxbox`: controls Box Box on the phone, from Termux.
+DISTRO=debian
+LOG="$HOME/boxbox.log"
+APP=/root/Projetos-F1/box-box
+
+in_debian() { proot-distro login --shared-tmp "$DISTRO" -- "$@"; }
+
+running() { pgrep -f "uvicorn main:app" >/dev/null; }
+
+start() {
+  if running; then echo "O Box Box já está rodando"; return; fi
+  termux-wake-lock 2>/dev/null || true
+  nohup proot-distro login --shared-tmp "$DISTRO" -- bash "$APP/scripts/android/start.sh" >>"$LOG" 2>&1 &
+  echo "Box Box iniciando (registro em $LOG)"
+}
+
+stop() {
+  pkill -f "scripts/android/start.sh" 2>/dev/null
+  pkill -f "uvicorn main:app" 2>/dev/null
+  pkill -x tailscaled 2>/dev/null
+  sleep 1
+  echo "Box Box parado"
+}
+
+case "${1:-status}" in
+  start) start ;;
+  stop) stop; termux-wake-unlock 2>/dev/null || true ;;
+  restart) stop; start ;;
+  status)
+    if running; then echo "✅ Rodando"; else echo "⛔ Parado (use: boxbox start)"; fi
+    in_debian tailscale status 2>/dev/null | head -3
+    ;;
+  address)
+    name=$(in_debian tailscale status --json 2>/dev/null | grep -o '"DNSName": *"[^"]*"' | head -1 | sed -E 's/.*"([^"]*)"$/\1/; s/\.$//')
+    if [ -n "$name" ]; then echo "Abra no iPhone: https://$name"; else echo "Tailscale ainda não conectado (veja: boxbox logs)"; fi
+    ;;
+  logs) tail -n "${2:-40}" "$LOG" ;;
+  gemini)
+    key="${2:-}"
+    if ! printf '%s' "$key" | grep -Eq '^[A-Za-z0-9._-]{20,}$'; then
+      echo "Uso: boxbox gemini SUA_CHAVE   (crie a chave grátis em aistudio.google.com)"
+      exit 1
+    fi
+    in_debian bash -c "sed -i '/^#\\? *GEMINI_API_KEY=/d' $APP/.env && echo 'GEMINI_API_KEY=$key' >> $APP/.env"
+    echo "Chave do Gemini salva. Reiniciando..."
+    stop; start
+    ;;
+  update)
+    stop
+    branch=$(in_debian git -C /root/Projetos-F1 rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+    in_debian env BRANCH="$branch" bash "$APP/scripts/android/setup-debian.sh"
+    in_debian cat "$APP/scripts/android/boxbox" > "$PREFIX/tmp/boxbox.new" && \
+      [ -s "$PREFIX/tmp/boxbox.new" ] && install -m 755 "$PREFIX/tmp/boxbox.new" "$PREFIX/bin/boxbox"
+    start
+    ;;
+  *) echo "Uso: boxbox {start|stop|restart|status|address|logs|update|gemini CHAVE}" ;;
+esac

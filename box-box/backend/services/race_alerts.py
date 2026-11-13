@@ -207,8 +207,9 @@ async def _send(alert: Alert, url: str) -> None:
         logger.error("Race alert failed: %s", e)
 
 
-async def _watch(info: dict) -> bool:
-    """Watch one session; True once it is over (finished or past its window)."""
+async def _watch(info: dict, race_alerts: bool = True) -> bool:
+    """Watch one session; True once it is over (finished or past its window).
+    race_alerts off: only keep the feed open, for team radio alerts."""
     from routers import live
     from routers.live_status import SESSION_DURATIONS
 
@@ -230,7 +231,8 @@ async def _watch(info: dict) -> bool:
                 frame = session.get_frame()
                 if frame:
                     for alert in detector.update(frame, sm.session_status, time.monotonic()):
-                        await _send(alert, url)
+                        if race_alerts:
+                            await _send(alert, url)
             await asyncio.sleep(POLL_INTERVAL_S)
     finally:
         await live.release_session(year, rnd, stype, session, holder)
@@ -255,7 +257,9 @@ async def race_alerts_loop() -> None:
     while True:
         try:
             info = (await live_status()).get("live")
-            if info and info.get("session_type") in watched_session_types() and push.subscription_count():
+            race = bool(info) and info.get("session_type") in watched_session_types()
+            # Team radio alerts come from the same feed, in every session
+            if info and push.subscription_count() and (race or push.any_follows_radio()):
                 key = f"{info['year']}_{info['round_number']}_{info['session_type']}"
                 url = _live_url(info)
                 event = short_event_name(info.get("event_name", ""))
@@ -263,7 +267,7 @@ async def race_alerts_loop() -> None:
 
                 if key not in reminded:
                     reminded.add(key)
-                    if info.get("pre_session"):
+                    if race and info.get("pre_session"):
                         start = datetime.fromisoformat(info["session_start"].replace("Z", "+00:00"))
                         if start.tzinfo is None:
                             start = start.replace(tzinfo=timezone.utc)
@@ -271,7 +275,7 @@ async def race_alerts_loop() -> None:
                         await _send(Alert(f"⏱️ {label} em {minutes} min", event, f"{key}-soon"), url)
 
                 if key not in done and (task is None or task.done()):
-                    task = asyncio.create_task(_watch(info))
+                    task = asyncio.create_task(_watch(info, race))
                     task.add_done_callback(lambda t, k=key: _finished(t, k))
         except asyncio.CancelledError:
             if task is not None:

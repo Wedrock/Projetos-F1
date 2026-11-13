@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Bell, BellOff, Share, X } from "lucide-react";
+import { Bell, BellOff, Radio, Share, X } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { authHeaders } from "@/lib/f1tv";
 
@@ -52,10 +52,18 @@ async function registration(): Promise<ServiceWorkerRegistration> {
   return navigator.serviceWorker.ready;
 }
 
+interface RosterDriver {
+  abbr: string;
+  name: string | null;
+  color: string | null;
+  team: string | null;
+}
+
 export function usePushAlerts() {
   const [state, setState] = useState<State>("loading");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [radioDrivers, setRadioDrivers] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     if (!window.isSecureContext) return setState("insecure");
@@ -67,8 +75,11 @@ export function usePushAlerts() {
       const sub = await reg.pushManager.getSubscription();
       if (!sub) return setState("off");
       // The server may have dropped it (a new data volume, say)
-      const { subscribed } = await post<{ subscribed: boolean }>("/status", { endpoint: sub.endpoint });
+      const { subscribed, radio_drivers } = await post<{ subscribed: boolean; radio_drivers?: string[] }>(
+        "/status", { endpoint: sub.endpoint },
+      );
       if (!subscribed) await post("/subscribe", sub.toJSON());
+      setRadioDrivers(radio_drivers ?? []);
       setState("on");
     } catch {
       setState("off");
@@ -141,7 +152,22 @@ export function usePushAlerts() {
     }
   }, []);
 
-  return { state, busy, error, enable, disable, test };
+  const toggleRadioDriver = useCallback(async (abbr: string) => {
+    setError(null);
+    try {
+      const reg = await registration();
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) throw new Error("Os alertas não estão ligados neste aparelho");
+      const next = radioDrivers.includes(abbr) ? radioDrivers.filter((d) => d !== abbr) : [...radioDrivers, abbr];
+      setRadioDrivers(next);
+      const saved = await post<{ radio_drivers: string[] }>("/radio-drivers", { endpoint: sub.endpoint, drivers: next });
+      setRadioDrivers(saved.radio_drivers);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não deu para salvar os pilotos");
+    }
+  }, [radioDrivers]);
+
+  return { state, busy, error, enable, disable, test, radioDrivers, toggleRadioDriver };
 }
 
 const EVENTS = [
@@ -154,7 +180,16 @@ const EVENTS = [
 ];
 
 export default function PushAlertsDialog({ onClose }: { onClose: () => void }) {
-  const { state, busy, error, enable, disable, test } = usePushAlerts();
+  const { state, busy, error, enable, disable, test, radioDrivers, toggleRadioDriver } = usePushAlerts();
+  const [roster, setRoster] = useState<RosterDriver[] | null>(null);
+
+  useEffect(() => {
+    if (state !== "on" || roster) return;
+    fetch(apiUrl("/api/push/drivers"), { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : { drivers: [] }))
+      .then((d) => setRoster(d.drivers ?? []))
+      .catch(() => setRoster([]));
+  }, [state, roster]);
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -233,6 +268,32 @@ export default function PushAlertsDialog({ onClose }: { onClose: () => void }) {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-white/10 text-f1-muted font-bold rounded-lg hover:text-white hover:border-white/30 disabled:opacity-60 transition-colors">
                   <BellOff className="w-4 h-4" /> Desligar
                 </button>
+              </div>
+
+              <div className="pt-3 border-t border-f1-border space-y-2">
+                <p className="text-white font-bold flex items-center gap-2"><Radio className="w-4 h-4 text-f1-red" /> Rádio dos pilotos</p>
+                <p className="text-xs">
+                  Toque nos pilotos para receber um alerta, com a legenda, quando sair rádio deles ao vivo.
+                  Os rádios ao vivo precisam do login do F1 TV no servidor.
+                </p>
+                {roster === null ? (
+                  <p className="text-xs">Carregando os pilotos…</p>
+                ) : roster.length === 0 ? (
+                  <p className="text-xs">Baixe alguma sessão desta temporada para aparecer a lista de pilotos.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {roster.map((d) => {
+                      const on = radioDrivers.includes(d.abbr);
+                      return (
+                        <button key={d.abbr} onClick={() => toggleRadioDriver(d.abbr)} title={d.name ?? d.abbr}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${on ? "bg-f1-red/20 border-f1-red text-white" : "border-white/10 text-f1-muted hover:text-white"}`}>
+                          <span className="w-1 h-3.5 rounded-sm" style={{ backgroundColor: d.color || "#888" }} />
+                          {d.abbr}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
