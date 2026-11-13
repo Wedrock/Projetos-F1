@@ -10,7 +10,6 @@ REPO_URL="${REPO_URL:-https://github.com/Wedrock/Projetos-F1.git}"
 BRANCH="${BRANCH:-main}"
 DISTRO=debian
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOTFS="$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO"
 
 say() { printf '\n\033[1;31m▶\033[0m \033[1m%s\033[0m\n' "$*"; }
 
@@ -18,14 +17,16 @@ say "Instalando os pacotes do Termux"
 pkg update -y
 pkg install -y proot-distro termux-tools
 
-if [ ! -d "$ROOTFS" ]; then
+# Where proot-distro keeps the system changes between versions, so ask it
+if ! proot-distro login "$DISTRO" -- true >/dev/null 2>&1; then
   say "Instalando o Debian dentro do Termux (só na primeira vez)"
   proot-distro install "$DISTRO"
 fi
 
 say "Instalando o Box Box e o Tailscale no Debian (demora uns 10 a 20 minutos na primeira vez)"
-cp "$HERE/setup-debian.sh" "$ROOTFS/root/boxbox-setup.sh"
-proot-distro login --shared-tmp "$DISTRO" -- env REPO_URL="$REPO_URL" BRANCH="$BRANCH" bash /root/boxbox-setup.sh
+# Termux's tmp is the Debian's /tmp with --shared-tmp
+cp "$HERE/setup-debian.sh" "$PREFIX/tmp/boxbox-setup.sh"
+proot-distro login --shared-tmp "$DISTRO" -- env REPO_URL="$REPO_URL" BRANCH="$BRANCH" bash /tmp/boxbox-setup.sh
 
 say "Configurando para iniciar junto com o celular"
 mkdir -p "$HOME/.termux/boot"

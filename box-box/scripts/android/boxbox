@@ -38,10 +38,10 @@ case "${1:-status}" in
   logs) tail -n "${2:-40}" "$LOG" ;;
   update)
     stop
-    cp "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO$APP/scripts/android/setup-debian.sh" \
-       "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO/root/boxbox-setup.sh" 2>/dev/null
-    in_debian bash /root/boxbox-setup.sh
-    cp "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO$APP/scripts/android/boxbox" "$PREFIX/bin/boxbox"
+    branch=$(in_debian git -C /root/Projetos-F1 rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+    in_debian env BRANCH="$branch" bash "$APP/scripts/android/setup-debian.sh"
+    in_debian cat "$APP/scripts/android/boxbox" > "$PREFIX/tmp/boxbox.new" && \
+      [ -s "$PREFIX/tmp/boxbox.new" ] && install -m 755 "$PREFIX/tmp/boxbox.new" "$PREFIX/bin/boxbox"
     start
     ;;
   *) echo "Uso: boxbox {start|stop|restart|status|address|logs|update}" ;;

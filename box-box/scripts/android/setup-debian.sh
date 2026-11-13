@@ -29,9 +29,9 @@ apt-get install -y -q git curl ca-certificates openssl xz-utils procps >/dev/nul
 
 say "Código do Box Box"
 if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" fetch -q origin "$BRANCH"
-  git -C "$APP_DIR" checkout -q "$BRANCH"
-  git -C "$APP_DIR" reset -q --hard "origin/$BRANCH"
+  # FETCH_HEAD works in the shallow, single-branch clone, even for a new branch
+  git -C "$APP_DIR" fetch -q --depth 1 origin "$BRANCH"
+  git -C "$APP_DIR" checkout -q -f -B "$BRANCH" FETCH_HEAD
 else
   git clone -q --depth 1 --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
 fi
