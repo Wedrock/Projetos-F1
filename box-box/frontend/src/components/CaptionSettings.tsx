@@ -181,7 +181,7 @@ function GeminiKey({ data, onSaved }: { data: CaptionSettingsData; onSaved: (d: 
               value={key}
               onChange={(e) => setKey(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && key.trim()) send(key.trim()); }}
-              placeholder="Cole a chave do Gemini (começa com AIza…)"
+              placeholder="Cole a chave do Gemini (começa com AQ. ou AIza)"
               autoComplete="off"
               spellCheck={false}
               disabled={busy}
