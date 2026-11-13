@@ -54,6 +54,11 @@ export function loadConfig(): Promise<AppConfig> {
   return configPromise;
 }
 
+/** Load /api/config again next time (after a setting that changes it). */
+export function forgetConfig(): void {
+  configPromise = null;
+}
+
 /** null until loaded, so admin-only controls never flash before public mode is known. */
 export function useAppConfig(): AppConfig | null {
   const [config, setConfig] = useState<AppConfig | null>(null);

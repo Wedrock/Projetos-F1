@@ -80,6 +80,8 @@ class CaptionSettingsUpdate(BaseModel):
     live_whisper_model: Optional[str] = None
     ai_enabled: Optional[bool] = None
     ai_model: Optional[str] = None
+    # Gemini key for Portuguese captions; "" removes it
+    gemini_api_key: Optional[str] = None
 
 
 @router.get("/captions/settings")
@@ -99,6 +101,7 @@ async def caption_settings_put(body: CaptionSettingsUpdate):
             whisper=sent.get("whisper_model"),
             ai_on=sent.get("ai_enabled"),
             ai=sent.get("ai_model"),
+            gemini=sent.get("gemini_api_key"),
             **kwargs,
         )
     except caption_settings.CaptionSettingsError as e:
