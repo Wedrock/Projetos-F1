@@ -36,6 +36,10 @@ export interface ReplaySettings {
   teamRadioMuted: boolean;
   /** Also show the original English caption under the Portuguese one */
   teamRadioEnglish: boolean;
+  /** Radio squelch and hiss around each clip */
+  teamRadioSquelch: boolean;
+  /** Turn the broadcast down while a radio clip talks */
+  teamRadioDuck: boolean;
   highlightClose: boolean;
   useImperial: boolean;
   rcSound: boolean;
@@ -84,6 +88,8 @@ export const DEFAULTS: ReplaySettings = {
   showTeamRadio: true,
   teamRadioMuted: false,
   teamRadioEnglish: false,
+  teamRadioSquelch: true,
+  teamRadioDuck: true,
   highlightClose: true,
   useImperial: false,
   rcSound: false,

@@ -5,6 +5,7 @@ import { AudioLines } from "lucide-react";
 import type { ReplayDriver } from "@/hooks/useReplaySocket";
 import { apiUrl } from "@/lib/api";
 import { authHeaders } from "@/lib/f1tv";
+import { playSquelch, setRadioTalking, startHiss, stopHiss } from "@/lib/radioFx";
 
 // Team radio pop-ups over the track map (or the broadcast): the driver, the
 // caption, and the clip playing. Clips are the ones F1 picks for the world
@@ -115,7 +116,14 @@ interface Props {
   speed?: number;
   drivers: ReplayDriver[];
   showEnglish?: boolean;
+  /** Radio squelch as the channel opens and closes, and a faint hiss */
+  squelch?: boolean;
+  /** Turn the broadcast down while the clip talks */
+  duck?: boolean;
 }
+
+// The voice starts just after the opening squelch.
+const SQUELCH_LEAD_MS = 140;
 
 /** Where to play a clip from. Audio kept on this server (an /api/ path)
  *  needs the app's sign-in, which an audio element can't send, so it's
@@ -135,7 +143,7 @@ export function releaseSource(src: string | null) {
   if (src?.startsWith("blob:")) URL.revokeObjectURL(src);
 }
 
-export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0, playing = true, speed = 1, drivers, showEnglish = false }: Props) {
+export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0, playing = true, speed = 1, drivers, showEnglish = false, squelch = true, duck = true }: Props) {
   const [current, setCurrent] = useState<RadioClip | null>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const queueRef = useRef<RadioClip[]>([]);
@@ -148,11 +156,25 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
   // Only play audio at normal speed: sped-up replays would talk over themselves.
   const playAudio = audio && (mode === "live" || (playing && speed === 1));
 
+  // The channel is open: broadcast down, hiss on
+  const fxOn = () => {
+    if (duck) setRadioTalking(true);
+    if (squelch) startHiss();
+  };
+  const fxOff = (closing: boolean) => {
+    stopHiss();
+    if (closing && squelch) playSquelch("close");
+    // Bring the broadcast back once the closing squelch has played
+    if (closing) setTimeout(() => { if (!audioRef.current || audioRef.current.paused) setRadioTalking(false); }, 250);
+    else setRadioTalking(false);
+  };
+
   const clearCurrent = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
     audioRef.current?.pause();
     audioRef.current = null;
+    fxOff(false);
     setAudioPlaying(false);
     setCurrent(null);
   };
@@ -222,18 +244,25 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
 
     if (playAudio && next.url) {
       const el = new Audio();
+      el.volume = 1; // the radio at full volume; the broadcast goes down instead
       audioRef.current = el;
       const fail = () => {
+        fxOff(false);
         setAudioPlaying(false);
         timerRef.current = setTimeout(() => setCurrent(null), readingMs(next.transcript_pt || next.transcript));
       };
-      el.onended = () => { releaseSource(el.src); done(); };
+      el.onended = () => { releaseSource(el.src); fxOff(true); done(); };
       el.onerror = () => { releaseSource(el.src); fail(); };
       void audioSource(next.url).then((src) => {
         if (audioRef.current !== el) { releaseSource(src); return; } // moved on meanwhile
         if (!src) { fail(); return; }
         el.src = src;
-        el.play().then(() => setAudioPlaying(true)).catch(() => el.onerror?.(new Event("error")));
+        if (duck) setRadioTalking(true); // start turning the broadcast down now
+        if (squelch) playSquelch("open");
+        setTimeout(() => {
+          if (audioRef.current !== el) return;
+          el.play().then(() => { setAudioPlaying(true); fxOn(); }).catch(() => el.onerror?.(new Event("error")));
+        }, squelch ? SQUELCH_LEAD_MS : 0);
       });
     } else {
       timerRef.current = setTimeout(() => setCurrent(null), readingMs(next.transcript_pt || next.transcript));
@@ -245,11 +274,12 @@ export default function TeamRadio({ enabled, audio, clips, mode, currentTime = 0
     const el = audioRef.current;
     if (!el || mode !== "replay") return;
     if (playing) {
-      if (el.paused && !el.ended) el.play().catch(() => {});
-    } else {
+      if (el.src && el.paused && !el.ended) el.play().then(fxOn).catch(() => {});
+    } else if (!el.paused) {
       el.pause();
+      fxOff(false);
     }
-  }, [playing, mode]);
+  }, [playing, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!enabled || !current) return null;
 

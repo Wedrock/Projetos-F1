@@ -748,6 +748,8 @@ function LiveTiming() {
                 mode="live"
                 drivers={drivers}
                 showEnglish={settings.teamRadioEnglish}
+                squelch={settings.teamRadioSquelch}
+                duck={settings.teamRadioDuck}
               />
 
               {/* Team radio list - desktop only (mobile: below the leaderboard) */}
