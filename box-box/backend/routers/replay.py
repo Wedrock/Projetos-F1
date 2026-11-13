@@ -22,9 +22,13 @@ def _log_memory():
             else:
                 mem_mb = 0
     except FileNotFoundError:
-        # macOS fallback
-        import resource
-        mem_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024 * 1024)
+        try:
+            # macOS fallback
+            import resource
+            mem_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / (1024 * 1024)
+        except ImportError:
+            # Windows (desktop app): no /proc and no resource module
+            mem_mb = 0
     cache_sessions = len(_replay_cache)
     return f"process: {mem_mb:.0f}MB, cached sessions: {cache_sessions}"
 

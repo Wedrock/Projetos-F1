@@ -112,6 +112,30 @@ docker compose up -d
 
 **4. Abra** [http://localhost:8000](http://localhost:8000), escolha uma etapa e uma sessão. Na primeira vez, a sessão leva alguns minutos para baixar; depois disso, abre na hora.
 
+## App para PC (Windows)
+
+Prefere um programa normal, sem Docker? O Box Box também roda como app de Windows: um instalador, um ícone no menu Iniciar e o app abre na própria janela.
+
+**1. Baixe o instalador** `BoxBox-Setup-<versão>.exe` na página de [Releases](https://github.com/Wedrock/Projetos-F1/releases) (ou nos *Artifacts* de uma execução do workflow **App para Windows**, na aba Actions).
+
+**2. Instale.** Não pede senha de administrador. Se o Windows SmartScreen avisar que o app é desconhecido, clique em **Mais informações → Executar assim mesmo** (o instalador não é assinado).
+
+**3. Abra o Box Box** pelo menu Iniciar ou pela área de trabalho. Ele sobe o servidor sozinho, só para este computador, e fecha junto com a janela.
+
+- Os dados (sessões baixadas, login do F1 TV, modelos de legenda) ficam em `%LOCALAPPDATA%\BoxBox` e não são apagados ao atualizar ou desinstalar.
+- Para mudar alguma configuração, crie `%LOCALAPPDATA%\BoxBox\.env` com as mesmas chaves do `.env.example`. Não é obrigatório preencher `F1TV_SECRET_KEY`: sem ela, o app gera uma chave no seu perfil do Windows.
+- A janela usa o Microsoft Edge WebView2, que já vem no Windows 10 e 11. Se algo não funcionar nela (vídeo do F1 TV, notificações ou picture-in-picture), use o atalho **Box Box (no navegador)**, que abre o mesmo app no seu navegador padrão.
+- Problemas? O registro fica em `%LOCALAPPDATA%\BoxBox\boxbox.log`.
+
+**Gerar o instalador você mesmo.** No Windows, com Python 3.11, Node.js 20 e [Inno Setup 6](https://jrsoftware.org/isinfo.php) instalados:
+
+```powershell
+cd box-box\desktop
+.\build-windows.ps1
+```
+
+O resultado fica em `box-box\desktop\dist`. Pelo GitHub, rode o workflow **App para Windows** na aba Actions, ou crie uma tag `v*` (por exemplo `v2.5.1`) para publicar o instalador numa Release.
+
 ## Usar no iPhone
 
 O Box Box pode ser instalado no iPhone como um app (PWA), com ícone na Tela de Início e alertas de corrida na tela de bloqueio.
@@ -188,6 +212,7 @@ box-box/
 │       ├── app/             Páginas: início, replay, ao vivo, recursos, sobre
 │       ├── components/      Mapa, tabela, telemetria, painel de análises...
 │       └── lib/             Desenho da pista, modelo de pneus, utilidades
+├── desktop/                 App para PC: janela própria, PyInstaller e instalador
 ├── docs/media/              Vídeo e capturas deste README
 ├── Dockerfile               Um único contêiner com frontend e backend
 └── docker-compose.yml

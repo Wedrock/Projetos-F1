@@ -1,0 +1,71 @@
+name: App para Windows
+
+# Gera o instalador do Box Box para PC.
+# - Manual: aba Actions → "App para Windows" → Run workflow. O instalador fica
+#   nos "Artifacts" da execução.
+# - Tag v* (ex.: v2.5.1): também publica o instalador numa Release.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: box-box/desktop
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: box-box/frontend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            box-box/backend/requirements.txt
+            box-box/desktop/requirements.txt
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Versão
+        id: ver
+        run: |
+          $v = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart("v") } else { "2.5.1" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Compilar
+        run: .\build-windows.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      - name: Testar o executável
+        run: |
+          $p = Start-Process dist\BoxBox\BoxBox.exe -ArgumentList "--no-ui","--port","8799" -PassThru
+          $ok = $false
+          foreach ($i in 1..90) {
+            try { if ((Invoke-WebRequest http://127.0.0.1:8799/api/health -UseBasicParsing).StatusCode -eq 200) { $ok = $true; break } } catch {}
+            Start-Sleep 1
+          }
+          Stop-Process $p -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { Get-Content "$env:LOCALAPPDATA\BoxBox\boxbox.log" -ErrorAction SilentlyContinue; throw "O app não respondeu" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BoxBox-Setup-${{ steps.ver.outputs.version }}
+          path: box-box/desktop/dist/BoxBox-Setup-*.exe
+
+      - name: Publicar na Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: box-box/desktop/dist/BoxBox-Setup-*.exe
