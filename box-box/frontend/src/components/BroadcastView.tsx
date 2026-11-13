@@ -1,5 +1,6 @@
 "use client";
 
+import { DUCK_LEVEL, rampVolume, useRadioTalking } from "@/lib/radioFx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { f1tv, F1TVRequestError, type F1TVChannel, type F1TVContent } from "@/lib/f1tv";
 import type { RCMessage, ReplayDriver } from "@/hooks/useReplaySocket";
@@ -552,12 +553,14 @@ export default function BroadcastView({ sessionKey, timestamp, playing, speed, m
     // In a fixed order, so swapping views moves them without reloading
     .sort((a, b) => Number(a.number) - Number(b.number));
 
+  // Turned down while a team radio clip talks (radioFx)
+  const radioTalking = useRadioTalking();
   useEffect(() => {
     const video = mainRef.current;
     if (!video) return;
     video.muted = muted || audible !== BROADCAST;
-    video.volume = Math.max(0, Math.min(1, volume));
-  }, [muted, volume, main.state, audible]);
+    rampVolume(video, volume * (radioTalking ? DUCK_LEVEL : 1));
+  }, [muted, volume, main.state, audible, radioTalking]);
 
   // (Re)load the main feed.
   useEffect(() => {
@@ -1102,6 +1105,7 @@ function OnboardPane({ rect, link, channel, opts, mainRef, mainUtc, mainReady, p
   volume: number;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const radioTalking = useRadioTalking();
   const stream = useF1TVStream(ref);
   // Replays: the feeds share one timeline, so follow the broadcast's
   // position. Live: their timelines can differ, so line them up by the real
@@ -1127,8 +1131,8 @@ function OnboardPane({ rect, link, channel, opts, mainRef, mainUtc, mainReady, p
     const video = ref.current;
     if (!video) return;
     video.muted = muted || !audible;
-    video.volume = Math.max(0, Math.min(1, volume));
-  }, [audible, muted, volume, stream.state]);
+    rampVolume(video, volume * (radioTalking ? DUCK_LEVEL : 1));
+  }, [audible, muted, volume, stream.state, radioTalking]);
 
   return (
     <div className="absolute z-20 group/pane has-[[data-open]]:z-40" style={place(rect)}>

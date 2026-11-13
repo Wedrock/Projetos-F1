@@ -703,6 +703,8 @@ export default function ReplayPage() {
                 speed={replay.speed}
                 drivers={drivers}
                 showEnglish={settings.teamRadioEnglish}
+                squelch={settings.teamRadioSquelch}
+                duck={settings.teamRadioDuck}
               />
 
               {/* Track dominance legend (from Lap Analysis → Compare) */}

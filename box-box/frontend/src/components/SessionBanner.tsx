@@ -383,6 +383,26 @@ export default function SessionBanner({
                       </div>
                     </button>
                     <button
+                      onClick={() => onSettingChange?.("teamRadioDuck", !settings.teamRadioDuck)}
+                      disabled={!settings.showTeamRadio || settings.teamRadioMuted}
+                      className={`w-full flex items-center justify-between pl-4 sm:pl-10 pr-2 sm:pr-6 py-1 hover:bg-white/5 transition-colors ${!settings.showTeamRadio || settings.teamRadioMuted ? "opacity-40 pointer-events-none" : ""}`}
+                    >
+                      <span className="text-sm text-white">Abaixar a transmissão durante o rádio</span>
+                      <div className={`relative w-9 h-5 rounded-full transition-colors ${settings.teamRadioDuck ? "bg-f1-red" : "bg-f1-border"}`}>
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.teamRadioDuck ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => onSettingChange?.("teamRadioSquelch", !settings.teamRadioSquelch)}
+                      disabled={!settings.showTeamRadio || settings.teamRadioMuted}
+                      className={`w-full flex items-center justify-between pl-4 sm:pl-10 pr-2 sm:pr-6 py-1 hover:bg-white/5 transition-colors ${!settings.showTeamRadio || settings.teamRadioMuted ? "opacity-40 pointer-events-none" : ""}`}
+                    >
+                      <span className="text-sm text-white">Barulho de rádio (chiado e bipe)</span>
+                      <div className={`relative w-9 h-5 rounded-full transition-colors ${settings.teamRadioSquelch ? "bg-f1-red" : "bg-f1-border"}`}>
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.teamRadioSquelch ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                      </div>
+                    </button>
+                    <button
                       onClick={() => onSettingChange?.("teamRadioEnglish", !settings.teamRadioEnglish)}
                       disabled={!settings.showTeamRadio}
                       className={`w-full flex items-center justify-between pl-4 sm:pl-10 pr-2 sm:pr-6 py-1 hover:bg-white/5 transition-colors ${!settings.showTeamRadio ? "opacity-40 pointer-events-none" : ""}`}
