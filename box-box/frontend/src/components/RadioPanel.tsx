@@ -6,7 +6,7 @@ import type { ReplayDriver } from "@/hooks/useReplaySocket";
 import { apiUrl } from "@/lib/api";
 import { authHeaders } from "@/lib/f1tv";
 import { useAppConfig } from "@/lib/config";
-import { type RadioClip, audioSource, captionLines, releaseSource } from "./TeamRadio";
+import { type RadioClip, RadioCaption, audioSource, releaseSource } from "./TeamRadio";
 
 // Every team radio message of the session so far: filter by driver, play
 // any of them and, in replays, jump to the moment it was said. Replays only
@@ -178,7 +178,7 @@ export default function RadioPanel({
               {refresh.error && <p className="text-amber-300">{refresh.error}</p>}
               {noClips && !refresh.error && <p>Esta sessão ainda não tem rádios. Dá para buscar no OpenF1.</p>}
               {!noClips && missing > 0 && (
-                <p>{missing} {missing === 1 ? "rádio está" : "rádios estão"} sem legenda{appConfig?.radio_pt ? " em português" : ""}.</p>
+                <p>{missing} {missing === 1 ? "rádio está" : "rádios estão"} sem legenda{appConfig?.radio_pt ? " em português com as falas do piloto e da equipe separadas" : ""}.</p>
               )}
               <button onClick={startRefresh}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-f1-border text-white font-bold hover:bg-f1-red transition-colors">
@@ -219,7 +219,7 @@ export default function RadioPanel({
             {shown.map((clip) => {
               const key = clipKey(clip);
               const color = drivers.find((d) => d.abbr === clip.driver)?.color || "#fff";
-              const { main, original } = captionLines(clip, showEnglish);
+              const hasCaption = !!(clip.transcript_pt || clip.transcript || clip.lines?.length);
               const isPlaying = playingKey === key;
               return (
                 <li key={key} className="flex gap-2.5 px-3 py-2.5">
@@ -237,12 +237,11 @@ export default function RadioPanel({
                         </button>
                       )}
                     </div>
-                    {main ? (
-                      <p className="text-[13px] text-white/90 leading-snug mt-0.5">&ldquo;{main}&rdquo;</p>
+                    {hasCaption ? (
+                      <RadioCaption clip={clip} showEnglish={showEnglish} color={color} size="xs" />
                     ) : (
                       <p className="text-[12px] text-f1-muted italic mt-0.5">Sem legenda</p>
                     )}
-                    {original && <p className="text-[11px] text-f1-muted italic leading-snug mt-0.5">{original}</p>}
                   </div>
                   {clip.url && (
                     <button onClick={() => play(clip)} aria-label={isPlaying ? "Parar" : "Ouvir"} title={isPlaying ? "Parar" : "Ouvir"}

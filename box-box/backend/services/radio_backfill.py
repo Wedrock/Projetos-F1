@@ -2,8 +2,8 @@
 
 - No clips (downloaded from OpenF1 before it read team radio, or without an
   F1 TV sign-in): the list comes from OpenF1, timed against the replay.
-- Clips without a Portuguese caption (Gemini turned on later): each gets
-  captioned, and the file is saved after every clip so the page can show
+- Clips without a Portuguese caption split by who speaks (Gemini turned on
+  later, or captioned before lines came in): each gets captioned, and the file is saved after every clip so the page can show
   them as they come.
 
 One session at a time, in a background thread; the page polls status().
@@ -39,7 +39,9 @@ def needs_work(clips: list[dict]) -> int:
     if not team_radio.captions_enabled():
         return 0
     if gemini_captions.enabled():
-        return sum(1 for c in clips if not c.get("transcript_pt") and not c.get("no_speech"))
+        # Portuguese, split by who speaks (clips captioned before that came in
+        # have a Portuguese caption but no lines)
+        return sum(1 for c in clips if not c.get("lines") and not c.get("no_speech") and not c.get("lines_tried"))
     return sum(1 for c in clips if not c.get("transcript") and not c.get("no_speech"))
 
 
@@ -143,8 +145,12 @@ def _run(year: int, round_num: int, session_type: str) -> None:
                     else:
                         failures = 0
                         if result.en:
-                            clip["transcript"] = clip.get("transcript") or result.en
+                            clip["transcript"] = result.en if result.lines else (clip.get("transcript") or result.en)
                             clip["transcript_pt"] = result.pt
+                            if result.lines:
+                                clip["lines"] = result.lines
+                            else:
+                                clip["lines_tried"] = True  # answered without lines: don't ask again
                         else:
                             clip["no_speech"] = True  # nobody speaks: don't ask again
                 else:

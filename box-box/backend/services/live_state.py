@@ -1176,11 +1176,14 @@ class LiveStateManager:
             out.append({**clip, "first_name": drv.first_name if drv else None})
         return out
 
-    def set_radio_caption(self, clip_id: str, transcript: str | None, transcript_pt: str | None = None) -> None:
+    def set_radio_caption(
+        self, clip_id: str, transcript: str | None, transcript_pt: str | None = None, lines: list[dict] | None = None,
+    ) -> None:
         clip = self._radio.get(clip_id)
         if clip and clip["state"] == "captioning":
             clip["transcript"] = transcript
             clip["transcript_pt"] = transcript_pt
+            clip["lines"] = lines or []
             clip["state"] = "ready"
 
     def radio_driver(self, racing_number: str) -> str:
@@ -1207,6 +1210,7 @@ class LiveStateManager:
                 "url": c.get("url"),
                 "transcript": c["transcript"],
                 "transcript_pt": c.get("transcript_pt"),
+                "lines": c.get("lines") or [],
             })
         return out
 

@@ -185,15 +185,16 @@ class LiveSession:
         from services import team_radio
 
         transcript = transcript_pt = None
+        lines: list[dict] = []
         if team_radio.captions_enabled():
             audio = await asyncio.to_thread(team_radio.fetch_audio, clip["url"])
             if audio:
                 context = self._state_manager.radio_context(clip["racing_number"]) if self._state_manager else {}
-                transcript, transcript_pt = await asyncio.to_thread(
-                    team_radio.caption_both, audio, clip.get("first_name"), self._year, context, True,
+                transcript, transcript_pt, lines = await asyncio.to_thread(
+                    team_radio.caption_full, audio, clip.get("first_name"), self._year, context, True,
                 )
         if self._state_manager is not None:
-            self._state_manager.set_radio_caption(clip["id"], transcript, transcript_pt)
+            self._state_manager.set_radio_caption(clip["id"], transcript, transcript_pt, lines)
 
     async def _record_history(self):
         last_utc = None
