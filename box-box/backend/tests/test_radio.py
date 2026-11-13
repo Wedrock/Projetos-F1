@@ -42,9 +42,28 @@ def test_backfill_redoes_clips_without_lines(monkeypatch):
         {"transcript": "a", "transcript_pt": "a"},  # Portuguese but not split: redo
         {"transcript": "b", "transcript_pt": "b", "lines": [{"who": "team", "en": "b", "pt": "b"}]},
         {"no_speech": True},
-        {"transcript": "c", "lines_tried": True},
+        {"transcript": "c", "transcript_pt": "c", "lines_tried": True},  # done as far as it goes
+        {"transcript": "What the f***", "no_speech": True},  # likely blocked before: redo
+        {"transcript": "d", "lines_tried": True},  # English only: translate it
     ]
-    assert radio_backfill.needs_work(clips) == 1
+    assert radio_backfill.needs_work(clips) == 3
+
+
+def test_translate_sends_text_only(gemini):
+    calls = gemini(_reply("Entendido, box nesta volta."))
+    assert gemini_captions.translate("Copy, box this lap.") == "Entendido, box nesta volta."
+    parts = calls[0]["json"]["contents"][0]["parts"]
+    assert len(parts) == 1 and "Copy, box this lap." in parts[0]["text"]
+    assert gemini_captions.translate("  ") is None
+
+
+def test_caption_full_translates_whisper_when_gemini_fails(gemini, monkeypatch):
+    monkeypatch.setattr(team_radio, "whisper_available", lambda: True)
+    monkeypatch.setattr(team_radio, "transcribe", lambda *a, **k: "Tyres are gone.")
+    monkeypatch.delenv("TEAM_RADIO_CAPTIONS", raising=False)
+    # The audio request fails every time, then the text translation works
+    gemini(*[FakeResponse(500)] * gemini_captions.MAX_ATTEMPTS, _reply("Os pneus acabaram."))
+    assert team_radio.caption_full(b"x", "Lando", 2026) == ("Tyres are gone.", "Os pneus acabaram.", [])
 
 
 class FakeResponse:
@@ -66,6 +85,7 @@ def gemini(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
     monkeypatch.setenv("GEMINI_MIN_INTERVAL_S", "0")
     monkeypatch.setattr(gemini_captions, "RETRY_WAIT_S", 0)
+    monkeypatch.setattr(gemini_captions, "BACKOFF_S", (0, 0, 0))
     calls = []
 
     def install(*responses):
@@ -96,8 +116,38 @@ def test_caption_retries_once_on_rate_limit(gemini):
 
 
 def test_caption_failure_is_none(gemini):
-    gemini(FakeResponse(500))
+    gemini(*[FakeResponse(500)] * gemini_captions.MAX_ATTEMPTS)
     assert gemini_captions.caption(b"x") is None
+
+
+def test_caption_retries_when_gemini_is_busy(gemini):
+    calls = gemini(FakeResponse(503), FakeResponse(500), _reply('{"en": "Box.", "pt": "Box."}'))
+    assert gemini_captions.caption(b"x").pt == "Box."
+    assert len(calls) == 3
+
+
+def test_caption_turns_safety_filters_off(gemini):
+    calls = gemini(_reply('{"en": "What the hell.", "pt": "Que inferno."}'))
+    gemini_captions.caption(b"x")
+    settings = calls[0]["json"]["safetySettings"]
+    assert settings and all(s["threshold"] == "BLOCK_NONE" for s in settings)
+
+
+def test_blocked_reply_is_retried_not_silence(gemini):
+    blocked = FakeResponse(200, {"candidates": [{"finishReason": "SAFETY"}]})
+    gemini(blocked, _reply('{"en": "Damn it.", "pt": "Droga."}'))
+    assert gemini_captions.caption(b"x").pt == "Droga."
+    gemini(*[blocked] * gemini_captions.MAX_ATTEMPTS)
+    assert gemini_captions.caption(b"x") is None  # a failure, so it's tried again later
+
+
+def test_rate_limit_waits_as_google_asks(gemini, monkeypatch):
+    waits = []
+    monkeypatch.setattr(gemini_captions.time, "sleep", lambda s: waits.append(s))
+    limited = FakeResponse(429, {"error": {"details": [{"retryDelay": "12s"}]}})
+    gemini(limited, _reply('{"en": "Go.", "pt": "Vai."}'))
+    assert gemini_captions.caption(b"x").pt == "Vai."
+    assert 12.0 in waits
 
 
 def test_no_key_no_caption(monkeypatch):

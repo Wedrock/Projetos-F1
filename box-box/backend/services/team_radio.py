@@ -230,8 +230,9 @@ def caption_full(
 ) -> tuple[str | None, str | None, list[dict]]:
     """(English, Portuguese, lines) for one clip. With a Gemini key, Gemini
     writes both from the audio, split into lines by who speaks (driver or
-    team), with Whisper's caption as a hint when Whisper is installed;
-    otherwise, or if Gemini fails, English only and no lines."""
+    team), with Whisper's caption as a hint when Whisper is installed. If
+    Gemini can't caption the audio, Whisper's caption translated (no lines);
+    without Gemini, English only."""
     if not captions_enabled():
         return None, None, []
     if gemini_captions.enabled():
@@ -240,7 +241,8 @@ def caption_full(
         if result is not None:
             return result.en, result.pt, result.lines
         if draft:
-            return draft, None, []
+            # Couldn't caption the audio: translate Whisper's caption instead
+            return draft, gemini_captions.translate(draft, {**(context or {}), "year": year}), []
         if not caption_settings.ai_enabled():
             return None, None, []
     return caption(audio, first_name, year, context, live), None, []
