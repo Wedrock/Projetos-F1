@@ -116,6 +116,8 @@ docker compose up -d
 
 O Box Box pode ser instalado no iPhone como um app (PWA), com ícone na Tela de Início e alertas de corrida na tela de bloqueio.
 
+> **Sem computador ligado:** um celular Android parado pode ser o servidor, sempre ligado em casa e acessado de qualquer lugar. Veja o guia [Box Box num celular Android](box-box/docs/android.md).
+
 **1. Deixe o app acessível por HTTPS.** O iPhone só aceita notificações de sites com HTTPS. O jeito mais simples é rodar o Box Box no seu computador e expor ele com um túnel:
 
 - **[Tailscale](https://tailscale.com)** (só você acessa): instale no computador e no iPhone, entre com a mesma conta e rode `tailscale serve --bg 8000`. O app fica em `https://nome-do-pc.seu-tailnet.ts.net`.

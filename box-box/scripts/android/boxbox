@@ -1,0 +1,48 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# `boxbox`: controls Box Box on the phone, from Termux.
+DISTRO=debian
+LOG="$HOME/boxbox.log"
+APP=/root/Projetos-F1/box-box
+
+in_debian() { proot-distro login --shared-tmp "$DISTRO" -- "$@"; }
+
+running() { pgrep -f "uvicorn main:app" >/dev/null; }
+
+start() {
+  if running; then echo "O Box Box já está rodando"; return; fi
+  termux-wake-lock 2>/dev/null || true
+  nohup proot-distro login --shared-tmp "$DISTRO" -- bash "$APP/scripts/android/start.sh" >>"$LOG" 2>&1 &
+  echo "Box Box iniciando (registro em $LOG)"
+}
+
+stop() {
+  pkill -f "scripts/android/start.sh" 2>/dev/null
+  pkill -f "uvicorn main:app" 2>/dev/null
+  pkill -x tailscaled 2>/dev/null
+  sleep 1
+  echo "Box Box parado"
+}
+
+case "${1:-status}" in
+  start) start ;;
+  stop) stop; termux-wake-unlock 2>/dev/null || true ;;
+  restart) stop; start ;;
+  status)
+    if running; then echo "✅ Rodando"; else echo "⛔ Parado (use: boxbox start)"; fi
+    in_debian tailscale status 2>/dev/null | head -3
+    ;;
+  address)
+    name=$(in_debian tailscale status --json 2>/dev/null | grep -o '"DNSName": *"[^"]*"' | head -1 | sed -E 's/.*"([^"]*)"$/\1/; s/\.$//')
+    if [ -n "$name" ]; then echo "Abra no iPhone: https://$name"; else echo "Tailscale ainda não conectado (veja: boxbox logs)"; fi
+    ;;
+  logs) tail -n "${2:-40}" "$LOG" ;;
+  update)
+    stop
+    cp "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO$APP/scripts/android/setup-debian.sh" \
+       "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO/root/boxbox-setup.sh" 2>/dev/null
+    in_debian bash /root/boxbox-setup.sh
+    cp "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO$APP/scripts/android/boxbox" "$PREFIX/bin/boxbox"
+    start
+    ;;
+  *) echo "Uso: boxbox {start|stop|restart|status|address|logs|update}" ;;
+esac
