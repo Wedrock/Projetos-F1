@@ -1,5 +1,6 @@
 "use client";
 
+import { raceControlPt } from "@/lib/raceControlPt";
 import { DUCK_LEVEL, rampVolume, useRadioTalking } from "@/lib/radioFx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { f1tv, F1TVRequestError, type F1TVChannel, type F1TVContent } from "@/lib/f1tv";
@@ -1068,7 +1069,7 @@ function RaceControlTicker({ message }: { message: RCMessage }) {
     >
       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot}`} />
       <span className="text-[9px] font-bold text-orange-300 uppercase tracking-wider flex-shrink-0">Direção de prova</span>
-      <span className="text-[11px] text-white truncate">{message.message}</span>
+      <span className="text-[11px] text-white truncate" title={message.message}>{raceControlPt(message.message)}</span>
     </div>
   );
 }

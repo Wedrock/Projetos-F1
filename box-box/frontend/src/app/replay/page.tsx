@@ -1,5 +1,6 @@
 "use client";
 
+import { raceControlPt } from "@/lib/raceControlPt";
 import { useState, useEffect, useRef, useCallback, useMemo, cloneElement } from "react";
 import { useSearchParams } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
@@ -618,7 +619,7 @@ export default function ReplayPage() {
                     isPenalty ? "bg-red-500" : isInvestigation ? "bg-orange-400" : isCleared ? "bg-green-500" : "bg-f1-muted"
                   }`} />
                   <div className="min-w-0">
-                    <p className="text-[11px] text-white leading-tight">{latest.message}</p>
+                    <p className="text-[11px] text-white leading-tight" title={latest.message}>{raceControlPt(latest.message)}</p>
                     {latest.lap && <span className="text-[9px] text-f1-muted">Volta {latest.lap}</span>}
                   </div>
                 </div>
@@ -838,7 +839,7 @@ export default function ReplayPage() {
                                 isPenalty ? "bg-red-500" : isInvestigation ? "bg-orange-400" : isCleared ? "bg-green-500" : "bg-f1-muted"
                               }`} />
                               <div className="min-w-0">
-                                <p className="text-[11px] text-white leading-tight">{rc.message}</p>
+                                <p className="text-[11px] text-white leading-tight" title={rc.message}>{raceControlPt(rc.message)}</p>
                                 {rc.lap && <span className="text-[9px] text-f1-muted">Volta {rc.lap}</span>}
                               </div>
                             </div>
@@ -1144,7 +1145,7 @@ export default function ReplayPage() {
                                 isPenalty ? "bg-red-500" : isInvestigation ? "bg-orange-400" : isCleared ? "bg-green-500" : "bg-f1-muted"
                               }`} />
                               <div className="min-w-0">
-                                <p className="text-[11px] text-white leading-tight">{rc.message}</p>
+                                <p className="text-[11px] text-white leading-tight" title={rc.message}>{raceControlPt(rc.message)}</p>
                                 {rc.lap && <span className="text-[9px] text-f1-muted">Volta {rc.lap}</span>}
                               </div>
                             </div>
@@ -1446,7 +1447,7 @@ export default function ReplayPage() {
                         isPenalty ? "bg-red-500" : isInvestigation ? "bg-orange-400" : isCleared ? "bg-green-500" : "bg-f1-muted"
                       }`} />
                       <div className="min-w-0">
-                        <p className="text-[11px] text-white leading-tight">{latest.message}</p>
+                        <p className="text-[11px] text-white leading-tight" title={latest.message}>{raceControlPt(latest.message)}</p>
                         {latest.lap && <span className="text-[9px] text-f1-muted">Volta {latest.lap}</span>}
                       </div>
                     </div>
