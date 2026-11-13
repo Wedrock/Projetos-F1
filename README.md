@@ -150,7 +150,7 @@ As opções ficam no `.env`. Todas têm um valor padrão sensato; mude só o que
 | `ALLOWED_HOSTS` | Endereços aceitos pelo servidor, separados por vírgula | `localhost,127.0.0.1` |
 | `AUTH_ENABLED` / `AUTH_PASSPHRASE` | Pede uma frase de acesso para abrir o app | desligado |
 | `TEAM_RADIO_CAPTIONS` / `TEAM_RADIO_MODEL` | Legendas do rádio e o modelo Whisper usado | ligado / `small.en` |
-| `GEMINI_API_KEY` | Legendas do rádio em português e inglês, pelo Gemini (chave grátis em [aistudio.google.com](https://aistudio.google.com/apikey)) | — |
+| `GEMINI_API_KEY` | Legendas do rádio em português e inglês, pelo Gemini (chave grátis em [aistudio.google.com](https://aistudio.google.com/apikey)). Também dá para colar a chave no app: **Configurações → Rádio → Legendas em português** | — |
 | `OPENROUTER_API_KEY` | Liga os recursos de IA (correção de legendas e sincronização por foto) | — |
 | `STORAGE_MODE` | `local` ou `r2` (Cloudflare R2) para guardar as sessões | `local` |
 

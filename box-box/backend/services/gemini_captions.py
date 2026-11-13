@@ -1,6 +1,7 @@
 """Team radio captions in English and Portuguese with Google's Gemini.
 
-Turned on by GEMINI_API_KEY (a free key from aistudio.google.com). Gemini
+Turned on by GEMINI_API_KEY (a free key from aistudio.google.com), or by
+pasting the key in the app (Settings > Team Radio). Gemini
 listens to the clip itself, so it needs no Whisper: light enough for a phone
 server. It writes what's said in English and a Portuguese translation that
 keeps F1 terms people use in Brazil ("box", "pit", "safety car").
@@ -28,6 +29,7 @@ from services.caption_ai import _audio_format, _context_text
 logger = logging.getLogger(__name__)
 
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}"
 # Google's alias for its current Flash-Lite model, which the free plan covers
 DEFAULT_MODEL = "gemini-flash-lite-latest"
 TIMEOUT_S = 45.0
@@ -61,8 +63,26 @@ class Caption:
 
 
 def api_key() -> str | None:
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
-    return key or None
+    """GEMINI_API_KEY from .env, or the key pasted in the app."""
+    from services import caption_settings
+    return caption_settings.gemini_key()
+
+
+def check_key(key: str) -> None:
+    """Make sure Google accepts a key before it's saved. Raises
+    CaptionSettingsError with a message for the app."""
+    from services.caption_settings import CaptionSettingsError
+
+    if not key or len(key) < 20 or any(c.isspace() for c in key):
+        raise CaptionSettingsError("Isso não parece uma chave do Gemini. Copie a chave inteira do Google AI Studio.")
+    try:
+        resp = httpx.get(MODEL_URL.format(model=model()), headers={"x-goog-api-key": key}, timeout=15.0)
+    except Exception as e:
+        raise CaptionSettingsError(f"Não consegui falar com o Google para conferir a chave ({type(e).__name__}).")
+    if resp.status_code in (400, 401, 403):
+        raise CaptionSettingsError("O Google recusou essa chave. Confira se copiou a chave inteira do Google AI Studio.")
+    if resp.status_code != 200:
+        raise CaptionSettingsError(f"O Google não confirmou a chave agora (HTTP {resp.status_code}). Tente de novo.")
 
 
 def enabled() -> bool:

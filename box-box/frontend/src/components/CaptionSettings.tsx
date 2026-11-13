@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { authHeaders } from "@/lib/f1tv";
+import { forgetConfig } from "@/lib/config";
 
 // Team radio caption settings for this server (self-hosted only): the Whisper
 // models for replays and live timing, and the optional AI step. Settings in
@@ -35,6 +36,9 @@ interface CaptionSettingsData {
   ai_model: string;
   ai_model_locked: boolean;
   ai_models: ModelOption[];
+  gemini_enabled: boolean;
+  gemini_key_locked: boolean;
+  gemini_key_hint: string | null;
   model_status: Record<string, ModelStatus>;
 }
 
@@ -107,6 +111,97 @@ function Status({ status, saved }: { status?: ModelStatus; saved: boolean }) {
   }
 }
 
+/** Portuguese captions: paste a free Gemini key. Saved on this computer only;
+ *  the server checks it with Google first and never sends it back. */
+function GeminiKey({ data, onSaved }: { data: CaptionSettingsData; onSaved: (d: CaptionSettingsData) => void }) {
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  async function send(value: string) {
+    setBusy(true);
+    setError(null);
+    setDone(false);
+    try {
+      const d = await request("PUT", { gemini_api_key: value });
+      forgetConfig();
+      onSaved(d);
+      setKey("");
+      setDone(value !== "");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-f1-border bg-white/[0.02] p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-bold text-white">Legendas em português</span>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${data.gemini_enabled ? "bg-green-500/15 text-green-400" : "bg-f1-border text-f1-muted"}`}>
+          {data.gemini_enabled ? "Ligadas" : "Desligadas"}
+        </span>
+      </div>
+
+      {data.gemini_enabled ? (
+        <>
+          <p className="text-[11px] text-f1-muted leading-relaxed">
+            O Gemini, do Google, escuta cada rádio e escreve a legenda em português (e em inglês).
+            {data.gemini_key_hint && <> Chave terminada em <span className="font-mono text-white">…{data.gemini_key_hint}</span>.</>}
+          </p>
+          {done && (
+            <p className="text-[11px] text-green-400 leading-relaxed">
+              Pronto! Os novos rádios já saem em português. Para traduzir os de uma sessão que você já baixou, abra a aba <b>Rádios</b> e clique em <b>Legendar agora</b>.
+            </p>
+          )}
+          {data.gemini_key_locked ? (
+            <Locked name="GEMINI_API_KEY" />
+          ) : (
+            <button onClick={() => send("")} disabled={busy}
+              className="text-[11px] text-f1-muted underline hover:text-white disabled:opacity-50">
+              Remover a chave
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <ol className="text-[11px] text-f1-muted leading-relaxed list-decimal pl-4 space-y-0.5">
+            <li>
+              Crie uma chave grátis em{" "}
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-white underline">aistudio.google.com/apikey</a>{" "}
+              (entre com sua conta Google e clique em <b>Create API key</b>).
+            </li>
+            <li>Copie a chave e cole aqui.</li>
+          </ol>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && key.trim()) send(key.trim()); }}
+              placeholder="Cole a chave do Gemini (começa com AIza…)"
+              autoComplete="off"
+              spellCheck={false}
+              disabled={busy}
+              className="flex-1 min-w-0 bg-f1-dark border border-f1-border rounded px-2 py-1.5 text-sm text-white font-mono placeholder:font-sans placeholder:text-f1-muted focus:outline-none focus:border-f1-muted disabled:opacity-50"
+            />
+            <button onClick={() => send(key.trim())} disabled={busy || !key.trim()}
+              className="px-3 py-1.5 rounded bg-f1-red text-white text-xs font-bold disabled:opacity-40 hover:bg-red-700 transition-colors">
+              {busy ? "Conferindo…" : "Ligar"}
+            </button>
+          </div>
+          <p className="text-[10px] text-f1-muted leading-relaxed">
+            A chave fica só neste computador. O áudio de cada rádio vai para o Google; no plano grátis, o Google pode usar esse conteúdo para melhorar os modelos dele.
+          </p>
+        </>
+      )}
+      {error && <p className="text-[11px] text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 export default function CaptionSettings() {
   const [data, setData] = useState<CaptionSettingsData | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -167,6 +262,8 @@ export default function CaptionSettings() {
         <p className="text-xs font-bold text-f1-muted uppercase tracking-wider">Legendas neste servidor</p>
         <p className="text-[10px] text-f1-muted mt-0.5">Para todos que usam este servidor. Modelos maiores são mais precisos, mas mais lentos e baixam mais dados.</p>
       </div>
+
+      <GeminiKey data={data} onSaved={(d) => { setData(d); setDraft(draftOf(d)); }} />
 
       {/* Whisper model for replays */}
       <label className="block">

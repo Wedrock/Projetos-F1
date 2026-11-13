@@ -12,6 +12,9 @@ different ones.
 - TEAM_RADIO_AI: true/false, improve captions with an AI model via OpenRouter
   (needs OPENROUTER_API_KEY)
 - TEAM_RADIO_AI_MODEL: the OpenRouter model; it must accept audio input
+- GEMINI_API_KEY: Google Gemini key for captions in Portuguese (and English).
+  Can also be pasted in the app; it's stored only in this server's
+  captions.json and never sent back to the browser.
 """
 
 from __future__ import annotations
@@ -93,6 +96,11 @@ def openrouter_key() -> str | None:
     return _env("OPENROUTER_API_KEY")
 
 
+def gemini_key() -> str | None:
+    """The Gemini key: GEMINI_API_KEY in .env, or the one saved from the app."""
+    return _env("GEMINI_API_KEY") or (str(_saved().get("gemini_api_key") or "").strip() or None)
+
+
 def whisper_model(live: bool = False) -> str:
     """The Whisper model for replays, or for live timing."""
     replay = _env("TEAM_RADIO_MODEL") or _saved().get("whisper_model") or DEFAULT_WHISPER_MODEL
@@ -128,6 +136,10 @@ def describe() -> dict[str, Any]:
         "ai_model": ai_model(),
         "ai_model_locked": _env("TEAM_RADIO_AI_MODEL") is not None,
         "ai_models": AI_MODELS,
+        # Portuguese captions with Gemini. The key itself is never sent back.
+        "gemini_enabled": gemini_key() is not None,
+        "gemini_key_locked": _env("GEMINI_API_KEY") is not None,
+        "gemini_key_hint": (gemini_key() or "")[-4:] or None,
         # Whether each Whisper model is on this server, and download progress
         "model_status": {m["id"]: _model_status(m["id"]) for m in WHISPER_MODELS},
     }
@@ -162,9 +174,16 @@ def save(
     live_whisper: Any = _UNSET,
     ai_on: bool | None = None,
     ai: str | None = None,
+    gemini: str | None = None,
 ) -> dict[str, Any]:
     """Save settings from the app. Ones locked by .env are refused.
-    live_whisper None means "the same as replays"."""
+    live_whisper None means "the same as replays". gemini "" removes the key;
+    a new key is checked with Google before it's saved."""
+    if gemini:
+        if _env("GEMINI_API_KEY"):
+            raise CaptionSettingsError("A chave do Gemini está definida por GEMINI_API_KEY no .env.")
+        from services import gemini_captions
+        gemini_captions.check_key(gemini.strip())
     with _lock:
         data = _saved()
         if live_whisper is not _UNSET:
@@ -189,6 +208,13 @@ def save(
             if ai not in {m["id"] for m in AI_MODELS}:
                 raise CaptionSettingsError(f"Unknown AI model: {ai}")
             data["ai_model"] = ai
+        if gemini is not None:
+            if _env("GEMINI_API_KEY"):
+                raise CaptionSettingsError("A chave do Gemini está definida por GEMINI_API_KEY no .env.")
+            if gemini.strip():
+                data["gemini_api_key"] = gemini.strip()
+            else:
+                data.pop("gemini_api_key", None)
         path = _path()
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=2), encoding="utf-8")
