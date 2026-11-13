@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AudioLines } from "lucide-react";
 import type { ReplayDriver } from "@/hooks/useReplaySocket";
 import { apiUrl } from "@/lib/api";
@@ -90,6 +90,53 @@ export function RadioCaption({ clip, showEnglish, color, size = "sm" }: {
       })}
     </div>
   );
+}
+
+export type AirStatus = "off" | "working" | "ready" | "protected" | "failed";
+
+/** When the F1 TV broadcast airs each clip (replay seconds), worked out by
+ *  the server from the broadcast's sound. Clips the broadcast plays are moved
+ *  to that moment, so ours plays with it; the rest keep their own time. */
+export function useBroadcastRadio(
+  clips: RadioClip[] | undefined, enabled: boolean, year: number, round: number, type: string,
+): { clips: RadioClip[] | undefined; status: AirStatus; found: number } {
+  const [air, setAir] = useState<Record<string, number> | null>(null);
+  const [status, setStatus] = useState<AirStatus>("off");
+
+  useEffect(() => {
+    if (!enabled || !year || !round) { setStatus("off"); return; }
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let tries = 0;
+    const check = async () => {
+      try {
+        const res = await fetch(apiUrl(`/api/sessions/${year}/${round}/team-radio/air?type=${type}`), { headers: authHeaders() });
+        const data = res.ok ? await res.json() : { status: "failed" };
+        if (cancelled) return;
+        setStatus(data.status ?? "failed");
+        if (data.status === "ready") setAir(data.air ?? {});
+        else if (data.status === "working" && ++tries < 60) timer = setTimeout(check, 15000);
+      } catch {
+        if (!cancelled) setStatus("failed");
+      }
+    };
+    setStatus("working");
+    void check();
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [enabled, year, round, type]);
+
+  const moved = useMemo(() => {
+    if (!enabled || !air || !clips) return clips;
+    return clips
+      .map((c) => {
+        const at = air[`${c.t}_${c.racing_number}`];
+        // A little early, so our squelch comes before the voice and the voice lands on the broadcast's
+        return at !== undefined ? { ...c, t: Math.max(0, at - SQUELCH_LEAD_MS / 1000) } : c;
+      })
+      .sort((a, b) => (a.t ?? 0) - (b.t ?? 0));
+  }, [clips, air, enabled]);
+
+  return { clips: moved, status, found: air ? Object.keys(air).length : 0 };
 }
 
 // A jump bigger than this (replay seconds) is a seek: don't fire everything skipped.

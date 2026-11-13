@@ -22,6 +22,8 @@ interface Props {
   onReportProblem?: () => void;
   /** Show Settings > Broadcast (F1 TV Pro or Premium) */
   broadcastSettings?: boolean;
+  /** Team radio following the F1 TV broadcast: what the server found */
+  radioBroadcast?: { status: string; found: number };
 }
 
 const SESSION_LABELS: Record<string, string> = {
@@ -102,6 +104,7 @@ export default function SessionBanner({
   mobileTeamAbbrHidden,
   onReportProblem,
   broadcastSettings,
+  radioBroadcast,
 }: Props) {
   const settings = settingsProp || DEFAULT_SETTINGS;
   const isRace = sessionType === "R" || sessionType === "S";
@@ -402,6 +405,29 @@ export default function SessionBanner({
                         <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.teamRadioSquelch ? "translate-x-[18px]" : "translate-x-0.5"}`} />
                       </div>
                     </button>
+                    {broadcastSettings && radioBroadcast && (<>
+                      <button
+                        onClick={() => onSettingChange?.("teamRadioFollowBroadcast", !settings.teamRadioFollowBroadcast)}
+                        disabled={!settings.showTeamRadio || settings.teamRadioMuted}
+                        className={`w-full flex items-center justify-between pl-4 sm:pl-10 pr-2 sm:pr-6 py-1 hover:bg-white/5 transition-colors ${!settings.showTeamRadio || settings.teamRadioMuted ? "opacity-40 pointer-events-none" : ""}`}
+                      >
+                        <span className="text-sm text-white text-left">Tocar junto com a transmissão do F1 TV</span>
+                        <div className={`relative w-9 h-5 flex-shrink-0 rounded-full transition-colors ${settings.teamRadioFollowBroadcast ? "bg-f1-red" : "bg-f1-border"}`}>
+                          <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.teamRadioFollowBroadcast ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                        </div>
+                      </button>
+                      <p className="pl-4 sm:pl-10 pr-2 sm:pr-6 pb-1 text-[10px] text-f1-muted leading-relaxed">
+                        Quando a transmissão passa um rádio, o nosso toca junto, com legenda, e a transmissão abaixa. Os rádios que a transmissão não passa tocam na hora em que foram gravados.
+                        {settings.teamRadioFollowBroadcast && radioBroadcast && radioBroadcast.status !== "off" && (
+                          <span className="block mt-0.5 text-white/70">
+                            {radioBroadcast.status === "working" && "Procurando os rádios na transmissão… (alguns minutos na primeira vez)"}
+                            {radioBroadcast.status === "ready" && `${radioBroadcast.found} ${radioBroadcast.found === 1 ? "rádio encontrado" : "rádios encontrados"} na transmissão.`}
+                            {radioBroadcast.status === "protected" && "O F1 TV protege o áudio desta transmissão, então não dá para achar os rádios nela."}
+                            {radioBroadcast.status === "failed" && "Não deu para analisar a transmissão agora. Tento de novo mais tarde."}
+                          </span>
+                        )}
+                      </p>
+                    </>)}
                     <button
                       onClick={() => onSettingChange?.("teamRadioEnglish", !settings.teamRadioEnglish)}
                       disabled={!settings.showTeamRadio}

@@ -71,6 +71,17 @@ async def team_radio_refresh(year: int, round_num: int, type: str = Query("R")):
     return await asyncio.to_thread(radio_backfill.start, year, round_num, type)
 
 
+@router.get("/sessions/{year}/{round_num}/team-radio/air")
+async def team_radio_air(year: int, round_num: int, type: str = Query("R")):
+    """When the F1 TV broadcast plays each clip (replay seconds), so the app
+    can play its own copy at the same moment. Worked out in the background
+    the first time: {"status": "working"} until then; "protected" when F1 TV
+    encrypts the broadcast's sound."""
+    validate_session(year, round_num, type)
+    from services import radio_air
+    return await radio_air.airtimes(year, round_num, type)
+
+
 # Caption settings for this server (Settings > Team Radio). Self-hosted only:
 # blocked in public mode (main.py).
 

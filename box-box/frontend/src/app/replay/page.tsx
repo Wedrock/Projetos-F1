@@ -24,7 +24,7 @@ import type { DominanceOverlay } from "@/lib/lapCompare";
 import { miniStatesAt, miniMarkersWidth, MINI_HEX, type MiniSectorData } from "@/lib/miniSectors";
 import type { SegmentOverlay } from "@/lib/trackRenderer";
 import LapNotifications from "@/components/LapNotifications";
-import TeamRadio, { type RadioClip } from "@/components/TeamRadio";
+import TeamRadio, { type RadioClip, useBroadcastRadio } from "@/components/TeamRadio";
 import RadioPanel from "@/components/RadioPanel";
 
 // F1 TV video isn't finished: the Broadcast button stays hidden until it is.
@@ -257,6 +257,10 @@ export default function ReplayPage() {
 
   const { data: radioResponse, retry: reloadRadio } = useApi<{ clips: RadioClip[] }>(
     `/api/sessions/${year}/${round}/team-radio?type=${sessionType}`,
+  );
+  // With F1 TV on, each clip plays when the broadcast airs it
+  const broadcastRadio = useBroadcastRadio(
+    radioResponse?.clips, broadcastOn && settings.teamRadioFollowBroadcast, year, round, sessionType,
   );
 
   // Build lookup: driver -> lap_number -> lap_time
@@ -583,6 +587,7 @@ export default function ReplayPage() {
               Sair
             </a>
           }
+          radioBroadcast={broadcastRadio}
         />
       )}
 
@@ -696,7 +701,7 @@ export default function ReplayPage() {
               <TeamRadio
                 enabled={settings.showTeamRadio}
                 audio={!settings.teamRadioMuted}
-                clips={radioResponse?.clips}
+                clips={broadcastRadio.clips}
                 mode="replay"
                 currentTime={replay.frame?.timestamp || 0}
                 playing={replay.playing}
