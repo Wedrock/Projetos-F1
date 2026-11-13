@@ -66,8 +66,44 @@ jobs:
             try { if ((Invoke-WebRequest http://127.0.0.1:8799/api/health -UseBasicParsing).StatusCode -eq 200) { $ok = $true; break } } catch {}
             Start-Sleep 1
           }
+          $fail = @()
+          if (-not $ok) { $fail += "/api/health" }
+          else {
+            foreach ($path in "/", "/api/seasons", "/api/seasons/2026/events", "/api/seasons/2025/events") {
+              try {
+                $r = Invoke-WebRequest "http://localhost:8799$path" -UseBasicParsing -TimeoutSec 120
+                Write-Host "OK $($r.StatusCode) $path ($($r.Content.Length) bytes)"
+              } catch {
+                Write-Host "FALHOU $path : $($_.Exception.Message)"
+                try { Write-Host (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() } catch {}
+                $fail += $path
+              }
+            }
+          }
           Stop-Process $p -Force -ErrorAction SilentlyContinue
-          if (-not $ok) { Get-Content "$env:LOCALAPPDATA\BoxBox\boxbox.log" -ErrorAction SilentlyContinue; throw "O app não respondeu" }
+          Write-Host "===== boxbox.log ====="
+          Get-Content "$env:LOCALAPPDATA\BoxBox\boxbox.log" -ErrorAction SilentlyContinue
+          if ($fail) { throw "Falhou: $($fail -join ', ')" }
+
+      - name: Testar a janela pelo Python (sem empacotar)
+        continue-on-error: true
+        run: |
+          $env:BOXBOX_SELFTEST = "1"
+          $p = Start-Process .venv\Scripts\python.exe -ArgumentList "launcher.py","--window","https://example.com" -PassThru -NoNewWindow -RedirectStandardOutput py-out.txt -RedirectStandardError py-err.txt
+          if (-not $p.WaitForExit(60000)) { Stop-Process $p -Force; Write-Host "Não fechou em 60 s" }
+          Write-Host "código de saída: $($p.ExitCode)"
+          Get-Content py-out.txt, py-err.txt -ErrorAction SilentlyContinue
+
+      - name: Testar a janela do app
+        run: |
+          Remove-Item "$env:LOCALAPPDATA\BoxBox\boxbox.log" -ErrorAction SilentlyContinue
+          $env:BOXBOX_SELFTEST = "1"
+          $p = Start-Process dist\BoxBox\BoxBox.exe -ArgumentList "--port","8798" -PassThru
+          if (-not $p.WaitForExit(90000)) { Stop-Process $p -Force; Write-Host "A janela não fechou sozinha em 90 s" }
+          Write-Host "===== boxbox.log ====="
+          $log = Get-Content "$env:LOCALAPPDATA\BoxBox\boxbox.log" -Raw -ErrorAction SilentlyContinue
+          Write-Host $log
+          if ($log -notmatch "Janela do app carregada") { throw "A janela do app não abriu" }
 
       - uses: actions/upload-artifact@v4
         with:

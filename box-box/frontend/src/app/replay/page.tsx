@@ -183,13 +183,11 @@ export default function ReplayPage() {
   const telemetryPanelRef = useRef<HTMLDivElement>(null);
   const [telemetryHeight, setTelemetryHeight] = useState<number>(0);
 
-  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 640); setIsMediumScreen(window.innerWidth >= 640 && window.innerWidth < 1400); }
     check();
     window.addEventListener("resize", check);
-    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
     return () => window.removeEventListener("resize", check);
   }, []);
 
@@ -1330,7 +1328,7 @@ export default function ReplayPage() {
         onReset={replay.reset}
         isRace={isRace}
         onSyncPhoto={() => setShowSyncPhoto(true)}
-        onPiP={!isMobile && !isIOS ? () => setPipActive(true) : undefined}
+        onPiP={!isMobile ? () => setPipActive(true) : undefined}
         pipActive={pipActive}
         onToggleMute={broadcastOn ? toggleBroadcastMute : undefined}
         muted={broadcastMuted}
@@ -1351,7 +1349,7 @@ export default function ReplayPage() {
       />
 
       {/* Document PiP window — visible across tabs */}
-      {pipActive && !isMobile && !isIOS && (
+      {pipActive && !isMobile && (
         <PiPWindow onClose={() => setPipActive(false)} width={400} height={780}>
           <div className="flex flex-col h-full bg-f1-dark overflow-hidden">
             {/* PiP Track Map */}

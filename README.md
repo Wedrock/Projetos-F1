@@ -32,8 +32,7 @@
 - **Situação da pista** setor por setor: amarela, amarela dupla, vermelha, Safety Car e Virtual Safety Car.
 - **Mensagens da direção de prova** (investigações, punições, limites de pista) com cores para leitura rápida.
 - **Clima** da sessão: temperatura do ar e da pista, umidade, vento e chuva.
-- **Rádio das equipes** com áudio e legenda: em **português e inglês** com o Gemini (chave grátis do Google), ou em inglês com o Whisper rodando no seu computador. A aba **Rádios** lista todas as mensagens da sessão, com filtro por piloto e um toque para pular até o momento do rádio no replay.
-- **Alerta de rádio**: escolha seus pilotos e receba no celular a legenda do rádio deles assim que sair, durante o ao vivo.
+- **Rádio das equipes** com áudio e legenda: em **português e inglês** com o Gemini (chave grátis do Google), ou em inglês com o Whisper rodando no seu computador. A aba **Rádios** lista todas as mensagens da sessão, com filtro por piloto e um clique para pular até o momento do rádio no replay.
 
 ### 🛞 Estratégia e pneus
 - **Saúde dos pneus**: um modelo bayesiano estima, volta a volta, quanto cada jogo de pneus já se desgastou. Ele aprende o ritmo de desgaste de cada composto com os dados da própria corrida, descontando o combustível e a abrasão do asfalto. Uma barrinha colorida na tabela mostra o resultado.
@@ -53,7 +52,6 @@
 - **Transmissão do F1 TV** dentro do app, sincronizada com os dados, com câmeras onboard (exige F1 TV Pro ou Premium).
 - **Sincronizar com uma gravação**: alinhe o replay com o que você está assistindo, por foto da tabela da TV ou digitando as diferenças.
 - **Picture-in-Picture**, tela cheia, unidades imperiais e texto em alto contraste.
-- **Alertas no celular**: largada, Safety Car, bandeira vermelha, troca de líder, última volta e pódio chegam como notificação na tela de bloqueio. No iPhone, o Box Box vira um app na Tela de Início.
 - **Tela inicial** com o traçado e o nome oficial de cada circuito da temporada.
 
 ## Capturas de tela
@@ -125,7 +123,7 @@ Prefere um programa normal, sem Docker? O Box Box também roda como app de Windo
 
 - Os dados (sessões baixadas, login do F1 TV, modelos de legenda) ficam em `%LOCALAPPDATA%\BoxBox` e não são apagados ao atualizar ou desinstalar.
 - Para mudar alguma configuração, crie `%LOCALAPPDATA%\BoxBox\.env` com as mesmas chaves do `.env.example`. Não é obrigatório preencher `F1TV_SECRET_KEY`: sem ela, o app gera uma chave no seu perfil do Windows.
-- A janela usa o Microsoft Edge WebView2, que já vem no Windows 10 e 11. Se algo não funcionar nela (vídeo do F1 TV, notificações ou picture-in-picture), use o atalho **Box Box (no navegador)**, que abre o mesmo app no seu navegador padrão.
+- A janela usa o Microsoft Edge WebView2, que já vem no Windows 10 e 11. Se algo não funcionar nela (vídeo do F1 TV ou picture-in-picture), use o atalho **Box Box (no navegador)**, que abre o mesmo app no seu navegador padrão.
 - Problemas? O registro fica em `%LOCALAPPDATA%\BoxBox\boxbox.log`.
 
 **Gerar o instalador você mesmo.** No Windows, com Python 3.11, Node.js 20 e [Inno Setup 6](https://jrsoftware.org/isinfo.php) instalados:
@@ -136,39 +134,6 @@ cd box-box\desktop
 ```
 
 O resultado fica em `box-box\desktop\dist`. Pelo GitHub, rode o workflow **App para Windows** na aba Actions, ou crie uma tag `v*` (por exemplo `v2.5.1`) para publicar o instalador numa Release.
-
-## Usar no iPhone
-
-O Box Box pode ser instalado no iPhone como um app (PWA), com ícone na Tela de Início e alertas de corrida na tela de bloqueio.
-
-> **Sem computador ligado:** um celular Android parado pode ser o servidor, sempre ligado em casa e acessado de qualquer lugar. Veja o guia [Box Box num celular Android](box-box/docs/android.md).
-
-**1. Deixe o app acessível por HTTPS.** O iPhone só aceita notificações de sites com HTTPS. O jeito mais simples é rodar o Box Box no seu computador e expor ele com um túnel:
-
-- **[Tailscale](https://tailscale.com)** (só você acessa): instale no computador e no iPhone, entre com a mesma conta e rode `tailscale serve --bg 8000`. O app fica em `https://nome-do-pc.seu-tailnet.ts.net`.
-- **[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)** (endereço na internet): aponte um domínio seu para `http://localhost:8000`. Nesse caso ligue `AUTH_ENABLED`.
-
-Nos dois casos, adicione o endereço em `ALLOWED_HOSTS` no `.env`.
-
-> Por que não num servidor na nuvem? A F1 bloqueia a cronometragem ao vivo vinda da maioria dos servidores na nuvem e VPNs, então os alertas param de funcionar. Rodando em casa, funciona.
-
-**2. Instale no iPhone.** Abra o endereço no Safari, toque em **Compartilhar** → **Adicionar à Tela de Início** e abra o Box Box pelo ícone.
-
-**3. Ligue os alertas.** Na tela inicial do app, abra o menu → **Alertas** → **Ligar alertas neste aparelho** e permita as notificações (precisa do iOS 16.4 ou mais novo). Chega uma notificação de teste na hora.
-
-Durante as corridas, sprints e classificações, o servidor acompanha a cronometragem ao vivo e avisa:
-
-| Quando | Exemplo |
-|---|---|
-| 15 minutos antes | ⏱️ Corrida em 15 min |
-| Largada | 🏁 Largada! · VER sai na pole |
-| Safety Car, VSC, bandeira vermelha | 🟡 Safety Car na pista · Volta 23/71 |
-| Bandeira verde depois deles | 🟢 Safety Car recolhido |
-| Novo líder | 🔄 NOR assume a liderança |
-| Última volta | 🏁 Última volta! · VER lidera, NOR a 1.2s |
-| Fim | 🏆 1º VER · 2º NOR · 3º LEC (ou a pole, na classificação) |
-
-O computador com o Box Box precisa estar ligado durante a sessão, porque é ele que manda os alertas.
 
 ## Configuração
 
@@ -188,8 +153,6 @@ As opções ficam no `.env`. Todas têm um valor padrão sensato; mude só o que
 | `GEMINI_API_KEY` | Legendas do rádio em português e inglês, pelo Gemini (chave grátis em [aistudio.google.com](https://aistudio.google.com/apikey)) | — |
 | `OPENROUTER_API_KEY` | Liga os recursos de IA (correção de legendas e sincronização por foto) | — |
 | `STORAGE_MODE` | `local` ou `r2` (Cloudflare R2) para guardar as sessões | `local` |
-| `PUSH_ALERTS` | Alertas de corrida no celular (notificações) | ligado |
-| `PUSH_SESSIONS` | Sessões que mandam alertas | `R,S,Q,SQ` |
 
 ## Privacidade e segurança
 

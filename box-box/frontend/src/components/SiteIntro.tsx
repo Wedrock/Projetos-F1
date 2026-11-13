@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Flag, CircleDot, Smartphone, RefreshCw, PictureInPicture2, X } from "lucide-react";
+import { Flag, CircleDot, RefreshCw, PictureInPicture2, X } from "lucide-react";
 
 // Short "what is this" panel for the public site's home page. Hiding it is
 // remembered per browser; an Overview button in the header brings it back.
@@ -14,7 +14,6 @@ const HIGHLIGHTS = [
   { icon: <CircleDot className="w-4 h-4" />, title: "Desgaste dos pneus", text: "Composto atual, idade do pneu e histórico de pneus." },
   { icon: <RefreshCw className="w-4 h-4" />, title: "Sincronize com a sua TV", text: "Alinhe o replay com uma gravação digitando a volta e as diferenças." },
   { icon: <PictureInPicture2 className="w-4 h-4" />, title: "Picture-in-picture", text: "Uma janela flutuante para assistir junto com a transmissão." },
-  { icon: <Smartphone className="w-4 h-4" />, title: "Celular e tablet", text: "Funciona em celulares e tablets, além do computador." },
 ];
 
 /** Whether the intro is showing (null until the saved choice is read, so nothing flashes). */

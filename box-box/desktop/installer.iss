@@ -24,6 +24,9 @@ SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
+; Fecha o Box Box aberto antes de substituir os arquivos (ver [Code])
+CloseApplications=force
+RestartApplications=no
 
 [Languages]
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
@@ -45,3 +48,19 @@ Filename: "{app}\BoxBox.exe"; Description: "Abrir o Box Box agora"; Flags: nowai
 
 ; As sessões baixadas ficam em %LOCALAPPDATA%\BoxBox e não são apagadas na
 ; desinstalação, para não perder downloads ao atualizar.
+
+[UninstallRun]
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /T /IM BoxBox.exe"; Flags: runhidden; RunOnceId: "FecharBoxBox"
+
+[Code]
+// Um Box Box ainda aberto (às vezes só na bandeja ou em segundo plano)
+// trava os arquivos e a atualização falha com "arquivo em uso".
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /T /IM BoxBox.exe', '', SW_HIDE,
+       ewWaitUntilTerminated, ResultCode);
+  Sleep(1000);
+  Result := '';
+end;

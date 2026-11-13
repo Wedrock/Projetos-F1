@@ -34,7 +34,7 @@ hiddenimports = (
 
 # Pacotes com dados, DLLs ou imports dinâmicos
 for pkg in ("fastf1", "faster_whisper", "ctranslate2", "av", "pillow_heif",
-            "webview", "clr_loader", "pythonnet", "pywebpush", "py_vapid",
+            "webview", "clr_loader", "pythonnet", "pystray",
             "tokenizers", "onnxruntime"):
     try:
         d, b, h = collect_all(pkg)

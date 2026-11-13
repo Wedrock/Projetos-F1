@@ -110,7 +110,7 @@ function LiveTiming() {
   // Track dominance from Lap Analysis's Compare tab, on the track map
   const [dominance, setDominance] = useState<DominanceOverlay | null>(null);
   const [mobileLapAnalysisOpen, setMobileLapAnalysisOpen] = useState(false);
-  // Opened straight on the radio list from a team radio alert (?tab=radio)
+  // ?tab=radio opens straight on the radio list
   const [radioOpen, setRadioOpen] = useState(false);
   const [mobileRadioOpen, setMobileRadioOpen] = useState(false);
   const [radioLog, setRadioLog] = useState<RadioClip[]>([]);
@@ -138,13 +138,11 @@ function LiveTiming() {
     try { localStorage.setItem("f1live_delay", String(delayOffset)); } catch {}
   }, [delayOffset]);
 
-  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 640); }
     check();
     window.addEventListener("resize", check);
-    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
     return () => window.removeEventListener("resize", check);
   }, []);
 
@@ -1320,7 +1318,7 @@ function LiveTiming() {
                 Volta {live.frame.lap}{live.frame.total_laps > 0 && `/${live.frame.total_laps}`}
               </span>
             )}
-            {!isMobile && !isIOS && (
+            {!isMobile && (
               <button
                 onClick={() => setPipActive(!pipActive)}
                 className={`px-3 py-1.5 rounded border transition-colors text-xs font-bold ${
@@ -1360,7 +1358,7 @@ function LiveTiming() {
       </div>
 
       {/* PiP window */}
-      {pipActive && !isMobile && !isIOS && (
+      {pipActive && !isMobile && (
         <PiPWindow onClose={() => setPipActive(false)} width={400} height={720}>
           <div className="flex flex-col h-full bg-f1-dark">
             {/* PiP Track Map */}

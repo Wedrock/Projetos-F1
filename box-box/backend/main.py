@@ -27,13 +27,10 @@ from app_config import (
 from auth import is_auth_enabled, verify_token
 from routers import sessions, track, laps, results, replay, replay_data, telemetry, sync, live, live_status
 from routers import auth_routes, f1tv, team_radio, insights, circuits
-from routers import push as push_routes
 from routers import f1_account as f1_account_routes
 from services.auto_precompute import auto_precompute_loop, get_allowed_session_types
 from services.retention import retention_loop
-from services.push import push_enabled
 from services.gemini_captions import enabled as gemini_enabled
-from services.race_alerts import race_alerts_loop
 
 load_dotenv()
 
@@ -60,14 +57,10 @@ async def lifespan(app: FastAPI):
         logger.info("Retention sweep disabled (RETENTION_SWEEP_ENABLED=false)")
     if is_public_mode():
         logger.info("Public mode: admin, processing, photo sync and live timing are off")
-    # Push notifications for live sessions; idle unless a device turned them on
-    alerts_task: asyncio.Task | None = None
-    if push_enabled():
-        alerts_task = asyncio.create_task(race_alerts_loop())
 
     yield
 
-    for t in (task, retention_task, alerts_task):
+    for t in (task, retention_task):
         if t is not None:
             t.cancel()
             try:
@@ -185,9 +178,6 @@ async def static_cache_headers(request: Request, call_next):
     # Next.js build assets have content hashes in their names, so they never change.
     if request.url.path.startswith("/_next/static/"):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-    # The service worker and manifest must update with each deploy
-    elif request.url.path in ("/sw.js", "/manifest.webmanifest"):
-        response.headers["Cache-Control"] = "no-cache"
     return response
 
 
@@ -208,7 +198,6 @@ app.include_router(live.router)
 app.include_router(live_status.router)
 app.include_router(f1_account_routes.router)
 app.include_router(f1tv.router)
-app.include_router(push_routes.router)
 
 
 @app.get("/api/health")
@@ -228,8 +217,6 @@ async def app_config():
         "live": not public,
         # F1 TV sign-in for downloading session data (self-hosted only)
         "f1tv": not public,
-        # Race alerts (Web Push) on the lock screen
-        "push": push_enabled(),
         # Team radio captions in Portuguese (Gemini)
         "radio_pt": gemini_enabled() and not public,
         # Public sites only: the last round served, since F1 put timing data behind F1 TV.
@@ -259,7 +246,6 @@ async def redirect_results(year: int, round: int, type: str = "R"):
 
 
 # Serve static frontend files (unified container mode)
-mimetypes.add_type("application/manifest+json", ".webmanifest")
 STATIC_DIR = Path(os.environ.get("STATIC_DIR", "/app/static"))
 
 if STATIC_DIR.exists():
@@ -275,7 +261,7 @@ if STATIC_DIR.exists():
         build assets of an earlier deploy. Public sites without a passphrase get
         a flag so the page can skip the login check."""
         if path not in _html_cache:
-            html = path.read_text()
+            html = path.read_text(encoding="utf-8")
             if is_public_mode() and not is_auth_enabled():
                 html = html.replace("<head>", "<head><script>window.__PUBLIC_MODE__=true</script>", 1)
             _html_cache[path] = html

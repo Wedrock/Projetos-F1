@@ -28,7 +28,7 @@ def _path() -> Path:
 
 def _read() -> dict[str, dict[str, Any]]:
     try:
-        return json.loads(_path().read_text())
+        return json.loads(_path().read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
@@ -37,7 +37,7 @@ def _write(data: dict[str, dict[str, Any]]) -> None:
     path = _path()
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, indent=2))
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     except OSError as e:
         logger.warning(f"Couldn't save download problems: {e}")
 

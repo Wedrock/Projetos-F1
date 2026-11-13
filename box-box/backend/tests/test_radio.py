@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from services import gemini_captions, openf1_radio, push, radio_alerts, team_radio
+from services import gemini_captions, openf1_radio, team_radio
 
 
 # -- Gemini ---------------------------------------------------------------
@@ -114,32 +114,3 @@ def test_build_clips_uses_full_url_from_openf1(monkeypatch):
     clips = team_radio.build_clips(caps, "", datetime(2026, 11, 8, 17, 0, 0), {"3": {"abbr": "VER"}}, with_captions=False)
     assert clips[0]["url"] == "https://f1/VER_3_x.mp3"
     assert clips[0]["t"] == 30.0 and clips[0]["driver"] == "VER"
-
-
-# -- Radio alerts ---------------------------------------------------------
-
-@pytest.fixture
-def subs(tmp_path, monkeypatch):
-    monkeypatch.setenv("DATA_DIR", str(tmp_path))
-    sub = {"endpoint": "https://web.push.apple.com/a", "keys": {"p256dh": "p", "auth": "a"}}
-    push.add_subscription(sub)
-    return sub
-
-
-def test_radio_drivers_are_kept_per_device(subs):
-    assert push.set_radio_drivers(subs["endpoint"], ["VER", "nor", "LEC", "VER"]) == ["LEC", "VER"]
-    # Subscribing again (the app checks on every open) keeps the choice
-    push.add_subscription(subs)
-    assert push.get_subscription(subs["endpoint"])["radio_drivers"] == ["LEC", "VER"]
-    assert push.any_follows_radio()
-    only = push.follows_radio("VER")
-    assert only(push.get_subscription(subs["endpoint"]))
-    assert not push.follows_radio("NOR")(push.get_subscription(subs["endpoint"]))
-    assert push.set_radio_drivers("https://unknown", ["VER"]) is None
-
-
-def test_alert_text():
-    assert radio_alerts.alert_text("VER", "Box, box.", "Box, box agora.") == ("📻 Rádio de VER", "Box, box agora.")
-    assert radio_alerts.alert_text("VER", "Push.", None)[1] == "Push."
-    assert "Toque para ouvir" in radio_alerts.alert_text("VER", None, None)[1]
-    assert len(radio_alerts.alert_text("VER", None, "x" * 500)[1]) <= radio_alerts.MAX_BODY
