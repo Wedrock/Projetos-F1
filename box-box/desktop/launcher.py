@@ -161,7 +161,7 @@ def show_error(message: str) -> None:
             pass
 
 
-def open_window(url: str) -> bool:
+def open_window(url: str, on_loaded=None) -> bool:
     """Show the app in a native window. Returns False if that isn't possible."""
     try:
         import webview
@@ -175,12 +175,14 @@ def open_window(url: str) -> bool:
         webview.settings["ALLOW_DOWNLOADS"] = True
         window = webview.create_window(APP_NAME, url, width=1440, height=900, min_size=(1024, 640))
 
-        def on_loaded():
+        def loaded():
             print("Janela do app carregada.", flush=True)
+            if on_loaded:
+                on_loaded()
             if selftest:
                 threading.Timer(3, window.destroy).start()
 
-        window.events.loaded += on_loaded
+        window.events.loaded += loaded
         icon = static_dir() / "icon-512.png"
         webview.start(private_mode=False, storage_path=str(app_home() / "webview"),
                       icon=str(icon) if icon.is_file() else None)
@@ -191,21 +193,103 @@ def open_window(url: str) -> bool:
         return False
 
 
+def window_command(url: str) -> list[str]:
+    if getattr(sys, "frozen", False):
+        return [sys.executable, "--window", url]
+    return [sys.executable, str(Path(__file__).resolve()), "--window", url]
+
+
+def run_window_process(url: str) -> bool:
+    """Open the app window in a child process, so a crash in the window
+    (WebView2) can't take the server down with it.
+
+    True when the window loaded and the person closed it; False when it never
+    loaded or crashed, so the caller falls back to the browser.
+    """
+    import subprocess
+
+    marker = app_home() / "window.ok"
+    marker.unlink(missing_ok=True)
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        proc = subprocess.Popen(window_command(url), stdout=sys.stdout, stderr=sys.stderr,
+                                creationflags=flags)
+    except Exception:
+        traceback.print_exc()
+        return False
+    code = proc.wait()
+    loaded = marker.exists()
+    marker.unlink(missing_ok=True)
+    if code != 0 or not loaded:
+        print(f"A janela do app fechou sem carregar (código {code}); abrindo no navegador.",
+              file=sys.stderr, flush=True)
+        return False
+    return True
+
+
+def window_child(url: str) -> int:
+    """Child process: just the window. Marks window.ok once the page loads."""
+    marker = app_home() / "window.ok"
+
+    def mark():
+        marker.write_text("ok", encoding="utf-8")
+
+    return 0 if open_window(url, on_loaded=mark) else 1
+
+
+def browser_mode(url: str, server=None, thread=None) -> None:
+    """Open the browser and keep the server running, with a tray icon to
+    reopen or quit (a windowed app has no console to close)."""
+    webbrowser.open(url)
+    if thread is None:
+        return
+    try:
+        import pystray
+        from PIL import Image
+
+        icon_file = static_dir() / "icon-192.png"
+        image = Image.open(icon_file) if icon_file.is_file() else Image.new("RGB", (64, 64), "red")
+
+        def quit_app(icon, _item):
+            icon.stop()
+
+        tray = pystray.Icon("boxbox", image, f"{APP_NAME} (rodando)", menu=pystray.Menu(
+            pystray.MenuItem("Abrir o Box Box", lambda *_: webbrowser.open(url), default=True),
+            pystray.MenuItem("Sair", quit_app),
+        ))
+        print("Ícone do Box Box na bandeja do sistema: use Sair para encerrar.", flush=True)
+        tray.run()
+        return
+    except Exception:
+        print("Ícone na bandeja indisponível:", file=sys.stderr)
+        traceback.print_exc()
+    print("Feche esta janela (ou Ctrl+C) para encerrar o Box Box.")
+    try:
+        while thread.is_alive():
+            thread.join(1)
+    except KeyboardInterrupt:
+        pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Box Box para PC")
     parser.add_argument("--browser", action="store_true", help="abrir no navegador")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--no-ui", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--window", metavar="URL", help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     home = app_home()
     home.mkdir(parents=True, exist_ok=True)
     setup_logging(home)
 
+    if args.window:
+        return window_child(args.window)
+
     # A second double-click just brings up the one that's already running.
     if already_running(args.port):
         url = f"http://localhost:{args.port}"
-        if args.browser or not open_window(url):
+        if args.browser or not run_window_process(url):
             webbrowser.open(url)
         return 0
 
@@ -224,22 +308,17 @@ def main() -> int:
     if not wait_until_up(port, thread):
         show_error(f"O Box Box não iniciou.\nVeja os detalhes em {home / 'boxbox.log'}")
         return 1
-    print(f"Box Box rodando em {url}")
+    print(f"Box Box rodando em {url}", flush=True)
 
     if args.no_ui:
         try:
             thread.join()
         except KeyboardInterrupt:
             pass
-    elif args.browser or not open_window(url):
-        webbrowser.open(url)
-        print("Feche esta janela (ou Ctrl+C) para encerrar o Box Box.")
-        try:
-            while thread.is_alive():
-                thread.join(1)
-        except KeyboardInterrupt:
-            pass
+    elif args.browser or not run_window_process(url):
+        browser_mode(url, server, thread)
 
+    print("Encerrando o Box Box.", flush=True)
     server.should_exit = True
     thread.join(10)
     return 0
