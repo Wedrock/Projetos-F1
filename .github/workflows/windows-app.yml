@@ -2,10 +2,20 @@ name: App para Windows
 
 # Gera o instalador do Box Box para PC.
 # - Manual: aba Actions → "App para Windows" → Run workflow. O instalador fica
-#   nos "Artifacts" da execução.
+#   nos "Artifacts" da execução. Marque "Publicar numa Release" para criar a
+#   tag v<versão> e publicar o instalador em Releases.
 # - Tag v* (ex.: v2.5.1): também publica o instalador numa Release.
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão (ex.: 2.5.1)"
+        default: "2.5.1"
+        required: true
+      release:
+        description: "Publicar numa Release (cria a tag v<versão>)"
+        type: boolean
+        default: false
   push:
     tags: ["v*"]
 
@@ -42,7 +52,7 @@ jobs:
       - name: Versão
         id: ver
         run: |
-          $v = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart("v") } else { "2.5.1" }
+          $v = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart("v") } elseif ("${{ inputs.version }}") { "${{ inputs.version }}" } else { "2.5.1" }
           "version=$v" >> $env:GITHUB_OUTPUT
 
       - name: Compilar
@@ -65,7 +75,16 @@ jobs:
           path: box-box/desktop/dist/BoxBox-Setup-*.exe
 
       - name: Publicar na Release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: Box Box ${{ steps.ver.outputs.version }}
+          body: |
+            Instalador do Box Box para Windows 10 e 11.
+
+            1. Baixe o `BoxBox-Setup-${{ steps.ver.outputs.version }}.exe` abaixo.
+            2. Abra o arquivo. Se o Windows avisar que o app é desconhecido, clique em **Mais informações → Executar assim mesmo** (o instalador não é assinado).
+            3. Abra o Box Box pelo menu Iniciar.
           files: box-box/desktop/dist/BoxBox-Setup-*.exe
