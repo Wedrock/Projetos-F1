@@ -351,6 +351,30 @@ async def _get_or_create_session(
     return _live_sessions[key]
 
 
+async def _release_if_unused(session: "LiveSession", key: str) -> None:
+    """Stop a live session once nothing uses it (a short delay lets React
+    Strict Mode remounts reuse it)."""
+    if session.client_count == 0:
+        await asyncio.sleep(2)
+        if session.client_count == 0 and _live_sessions.get(key) is session:
+            await session.stop()
+            del _live_sessions[key]
+
+
+async def acquire_session(year: int, round_num: int, session_type: str) -> tuple[LiveSession, object]:
+    """Keep the live session for a race open without a page connected (race
+    alerts). Returns the session and a holder to pass to release_session."""
+    session = await _get_or_create_session(year, round_num, session_type, 1.0, "signalr")
+    holder = object()
+    session.add_client(holder)  # counted like a page, so it isn't stopped
+    return session, holder
+
+
+async def release_session(year: int, round_num: int, session_type: str, session: LiveSession, holder: object) -> None:
+    session.remove_client(holder)
+    await _release_if_unused(session, f"{year}_{round_num}_{session_type}")
+
+
 @router.get("/api/live/{year}/{round_num}/telemetry")
 async def live_lap_telemetry(year: int, round_num: int, type: str = Query("Q"), driver: str = Query(...), lap: int = Query(...)):
     """One lap's telemetry recorded during the live session, for Lap
@@ -486,12 +510,4 @@ async def live_websocket(
     finally:
         if session:
             session.remove_client(websocket)
-            # Clean up session if no more clients (delay slightly to allow
-            # React Strict Mode remounts to reuse the session)
-            if session.client_count == 0:
-                await asyncio.sleep(2)
-                if session.client_count == 0:
-                    key = f"{year}_{round_num}_{type}"
-                    if key in _live_sessions:
-                        await session.stop()
-                        del _live_sessions[key]
+            await _release_if_unused(session, f"{year}_{round_num}_{type}")

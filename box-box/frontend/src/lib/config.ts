@@ -14,6 +14,8 @@ export interface AppConfig {
   public_archive: PublicArchive | null;
   /** F1 TV sign-in for downloading session data (self-hosted only) */
   f1tv: boolean;
+  /** Race alerts (push notifications), self-hosted only */
+  push?: boolean;
 }
 
 export interface PublicArchive {
@@ -31,6 +33,7 @@ const FALLBACK: AppConfig = {
   live: true,
   public_archive: null,
   f1tv: false,
+  push: false,
 };
 
 export const REPO_URL = "https://github.com/Wedrock/Projetos-F1";

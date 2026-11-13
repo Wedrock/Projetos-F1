@@ -7,7 +7,8 @@ import { apiUrl } from "@/lib/api";
 import StorageManager from "./StorageManager";
 import { F1TVAccountDialog } from "./F1TVAccount";
 import { f1tv, type F1TVStatus } from "@/lib/f1tv";
-import { TriangleAlert } from "lucide-react";
+import { Bell, TriangleAlert } from "lucide-react";
+import PushAlertsDialog from "./PushAlerts";
 import SiteFooter from "./SiteFooter";
 import BrandMark from "./BrandMark";
 import SiteIntro, { useIntroVisibility } from "./SiteIntro";
@@ -246,6 +247,7 @@ export default function SessionPicker() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [storageOpen, setStorageOpen] = useState(false);
   const [f1tvOpen, setF1tvOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const [f1tvStatus, setF1tvStatus] = useState<F1TVStatus | null>(null);
   const [navigating, setNavigating] = useState(false);
   useEffect(() => {
@@ -376,6 +378,7 @@ export default function SessionPicker() {
   const publicMode = appConfig?.public_mode ?? false;
   const showAdmin = !!appConfig && !appConfig.public_mode;
   const showF1TV = !!appConfig?.f1tv;
+  const showAlerts = !!appConfig?.push;
   const f1tvSignedOut = showF1TV && f1tvStatus !== null && !f1tvStatus.signed_in;
 
   useEffect(() => {
@@ -700,6 +703,7 @@ export default function SessionPicker() {
       )}
 
       {storageOpen && <StorageManager onClose={() => setStorageOpen(false)} />}
+      {alertsOpen && <PushAlertsDialog onClose={() => setAlertsOpen(false)} />}
       {f1tvOpen && <F1TVAccountDialog onClose={() => setF1tvOpen(false)} onChange={setF1tvStatus} />}
 
       {/* Delete confirmation */}
@@ -837,6 +841,15 @@ export default function SessionPicker() {
               Armazenamento
             </button>
           )}
+          {showAlerts && (
+            <button
+              onClick={() => setAlertsOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-f1-muted hover:text-white hover:bg-white/[0.06] transition-colors"
+              title="Alertas de corrida na tela de bloqueio"
+            >
+              <Bell className="w-4 h-4" /> Alertas
+            </button>
+          )}
           {showF1TV && (
             <button
               onClick={() => setF1tvOpen(true)}
@@ -885,6 +898,14 @@ export default function SessionPicker() {
                     className="block w-full text-left px-4 py-2.5 text-sm font-bold text-f1-muted hover:text-white hover:bg-white/5 transition-colors"
                   >
                     Armazenamento
+                  </button>
+                )}
+                {showAlerts && (
+                  <button
+                    onClick={() => { setMenuOpen(false); setAlertsOpen(true); }}
+                    className="block w-full text-left px-4 py-2.5 text-sm font-bold text-f1-muted hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <span className="flex items-center gap-1.5"><Bell className="w-4 h-4" /> Alertas</span>
                   </button>
                 )}
                 {showF1TV && (
