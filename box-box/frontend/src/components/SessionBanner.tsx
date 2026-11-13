@@ -382,11 +382,23 @@ export default function SessionBanner({
                         <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.teamRadioMuted ? "translate-x-[18px]" : "translate-x-0.5"}`} />
                       </div>
                     </button>
+                    <button
+                      onClick={() => onSettingChange?.("teamRadioEnglish", !settings.teamRadioEnglish)}
+                      disabled={!settings.showTeamRadio}
+                      className={`w-full flex items-center justify-between pl-4 sm:pl-10 pr-2 sm:pr-6 py-1 hover:bg-white/5 transition-colors ${!settings.showTeamRadio ? "opacity-40 pointer-events-none" : ""}`}
+                    >
+                      <span className="text-sm text-white">Mostrar também o original em inglês</span>
+                      <div className={`relative w-9 h-5 rounded-full transition-colors ${settings.teamRadioEnglish ? "bg-f1-red" : "bg-f1-border"}`}>
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.teamRadioEnglish ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                      </div>
+                    </button>
                     <p className="px-2 sm:px-6 pt-3 text-xs text-f1-muted leading-relaxed">
                       As mensagens de rádio que a F1 escolhe para a transmissão, mostradas sobre o mapa da pista com legenda. Nos replays, o áudio toca só em velocidade 1x.
                     </p>
                     <p className="px-2 sm:px-6 pt-2 text-xs text-f1-muted leading-relaxed">
-                      {appConfig?.f1tv
+                      {appConfig?.radio_pt
+                        ? "As legendas em português e inglês são feitas pelo Gemini, do Google, ouvindo o áudio. A precisão varia com a qualidade do áudio."
+                        : appConfig?.f1tv
                         ? "As legendas são feitas localmente com o Whisper e podem ser melhoradas por um modelo de IA (abaixo). A precisão varia com a qualidade e a clareza do áudio."
                         : "As legendas são feitas localmente com o Whisper. A precisão varia com a qualidade e a clareza do áudio."}
                     </p>

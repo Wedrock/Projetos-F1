@@ -52,6 +52,25 @@ async def team_radio_audio(
     return Response(content=found[0], media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=86400"})
 
 
+@router.get("/sessions/{year}/{round_num}/team-radio/refresh")
+async def team_radio_refresh_status(year: int, round_num: int, type: str = Query("R")):
+    """Progress of filling in this session's team radio (radio_backfill)."""
+    validate_session(year, round_num, type)
+    from services import radio_backfill
+    data = await aget_json(f"sessions/{year}/{round_num}/{type}/team_radio.json")
+    clips = (data or {}).get("clips") or []
+    return {**radio_backfill.status(year, round_num, type), "missing": radio_backfill.needs_work(clips), "clips": len(clips)}
+
+
+@router.post("/sessions/{year}/{round_num}/team-radio/refresh")
+async def team_radio_refresh(year: int, round_num: int, type: str = Query("R")):
+    """Fetch this session's team radio from OpenF1 if it has none, and
+    caption clips missing a caption (Portuguese with Gemini)."""
+    validate_session(year, round_num, type)
+    from services import radio_backfill
+    return await asyncio.to_thread(radio_backfill.start, year, round_num, type)
+
+
 # Caption settings for this server (Settings > Team Radio). Self-hosted only:
 # blocked in public mode (main.py).
 

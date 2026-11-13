@@ -34,6 +34,8 @@ export interface ReplaySettings {
   showLapNotificationSectors: boolean;
   showTeamRadio: boolean;
   teamRadioMuted: boolean;
+  /** Also show the original English caption under the Portuguese one */
+  teamRadioEnglish: boolean;
   highlightClose: boolean;
   useImperial: boolean;
   rcSound: boolean;
@@ -81,6 +83,7 @@ export const DEFAULTS: ReplaySettings = {
   showLapNotificationSectors: true,
   showTeamRadio: true,
   teamRadioMuted: false,
+  teamRadioEnglish: false,
   highlightClose: true,
   useImperial: false,
   rcSound: false,

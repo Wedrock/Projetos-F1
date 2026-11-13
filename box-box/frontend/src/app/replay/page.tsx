@@ -25,6 +25,7 @@ import { miniStatesAt, miniMarkersWidth, MINI_HEX, type MiniSectorData } from "@
 import type { SegmentOverlay } from "@/lib/trackRenderer";
 import LapNotifications from "@/components/LapNotifications";
 import TeamRadio, { type RadioClip } from "@/components/TeamRadio";
+import RadioPanel from "@/components/RadioPanel";
 
 // F1 TV video isn't finished: the Broadcast button stays hidden until it is.
 const BROADCAST_ENABLED = true;
@@ -85,8 +86,10 @@ export default function ReplayPage() {
   const [mobileRcOpen, setMobileRcOpen] = useState(true);
   const [lapAnalysisOpen, setLapAnalysisOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
+  const [radioOpen, setRadioOpen] = useState(false);
   const [dominance, setDominance] = useState<DominanceOverlay | null>(null);
   const [mobileLapAnalysisOpen, setMobileLapAnalysisOpen] = useState(false);
+  const [mobileRadioOpen, setMobileRadioOpen] = useState(false);
   // Force telemetry to bottom when lap analysis panel is open to avoid squashing the track map
   // effectiveTelemetryPosition is computed later after settings is available
   const [forceBottomTelemetry, setForceBottomTelemetry] = useState(false);
@@ -254,7 +257,7 @@ export default function ReplayPage() {
     `/api/sessions/${year}/${round}/laps?type=${sessionType}`,
   );
 
-  const { data: radioResponse } = useApi<{ clips: RadioClip[] }>(
+  const { data: radioResponse, retry: reloadRadio } = useApi<{ clips: RadioClip[] }>(
     `/api/sessions/${year}/${round}/team-radio?type=${sessionType}`,
   );
 
@@ -701,6 +704,7 @@ export default function ReplayPage() {
                 playing={replay.playing}
                 speed={replay.speed}
                 drivers={drivers}
+                showEnglish={settings.teamRadioEnglish}
               />
 
               {/* Track dominance legend (from Lap Analysis → Compare) */}
@@ -982,10 +986,40 @@ export default function ReplayPage() {
                 </button>
               )}
 
+              {/* Team radio list - desktop only (mobile: below the leaderboard) */}
+              {!isMobile && (
+                <button
+                  onClick={() => { setRadioOpen(!radioOpen); setInsightsOpen(false); }}
+                  className={`absolute bottom-2 ${lapsResponse?.laps ? "right-[150px]" : "right-3"} z-20 flex items-center gap-1 px-2 py-1 rounded text-xs font-bold transition-colors ${
+                    radioOpen
+                      ? "bg-f1-red text-white"
+                      : "bg-f1-card/90 border border-f1-border text-f1-muted hover:text-white backdrop-blur-sm"
+                  }`}
+                >
+                  Rádios
+                </button>
+              )}
+              {!isMobile && radioOpen && (
+                <div className="absolute top-2 right-3 bottom-11 z-30 w-[22rem] flex flex-col rounded-lg border border-f1-border shadow-xl overflow-hidden">
+                  <RadioPanel
+                    className="flex-1"
+                    clips={radioResponse?.clips}
+                    drivers={drivers}
+                    mode="replay"
+                    currentTime={replay.frame?.timestamp || 0}
+                    onSeek={replay.seek}
+                    showEnglish={settings.teamRadioEnglish}
+                    session={{ year, round, type: sessionType }}
+                    onUpdated={reloadRadio}
+                    onClose={() => setRadioOpen(false)}
+                  />
+                </div>
+              )}
+
               {/* Insights (tyre strategy, championship, tyre model) - desktop only */}
               {!isMobile && lapsResponse?.laps && (
                 <button
-                  onClick={() => setInsightsOpen(!insightsOpen)}
+                  onClick={() => { setInsightsOpen(!insightsOpen); setRadioOpen(false); }}
                   className={`absolute bottom-2 right-[72px] z-20 flex items-center gap-1 px-2 py-1 rounded text-xs font-bold transition-colors ${
                     insightsOpen
                       ? "bg-f1-red text-white"
@@ -1207,6 +1241,34 @@ export default function ReplayPage() {
                 />
               )}
             </div>
+          </div>
+        )}
+
+        {/* Team radio section - mobile only, below leaderboard */}
+        {isMobile && (
+          <div className="sm:hidden border-t border-f1-border">
+            <button
+              onClick={() => setMobileRadioOpen(!mobileRadioOpen)}
+              className="w-full flex items-center justify-between px-3 py-3 bg-f1-card border-b border-f1-border min-h-[44px]"
+            >
+              <span className="text-[11px] font-bold text-f1-muted uppercase tracking-wider">Rádios das equipes</span>
+              <svg className={`w-4 h-4 text-f1-muted transition-transform ${mobileRadioOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {mobileRadioOpen && (
+              <RadioPanel
+                className="max-h-[60vh]"
+                clips={radioResponse?.clips}
+                drivers={drivers}
+                mode="replay"
+                currentTime={replay.frame?.timestamp || 0}
+                onSeek={replay.seek}
+                showEnglish={settings.teamRadioEnglish}
+                session={{ year, round, type: sessionType }}
+                onUpdated={reloadRadio}
+              />
+            )}
           </div>
         )}
 

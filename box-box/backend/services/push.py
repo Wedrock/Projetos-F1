@@ -12,6 +12,7 @@ import base64
 import json
 import logging
 import os
+import re
 import threading
 import time
 from pathlib import Path
@@ -121,9 +122,36 @@ def add_subscription(sub: dict) -> None:
         "created": int(time.time()),
     }
     with _lock:
-        subs = [s for s in _read_subs() if s.get("endpoint") != clean["endpoint"]]
+        subs = _read_subs()
+        # Keep this device's choices (drivers whose radio it follows)
+        old = next((s for s in subs if s.get("endpoint") == clean["endpoint"]), None)
+        if old and old.get("radio_drivers"):
+            clean["radio_drivers"] = old["radio_drivers"]
+        subs = [s for s in subs if s.get("endpoint") != clean["endpoint"]]
         subs.append(clean)
         _write_subs(subs[-MAX_SUBSCRIPTIONS:])
+
+
+_DRIVER_RE = re.compile(r"^[A-Z]{3}$")
+
+
+def set_radio_drivers(endpoint: str, drivers: list[str]) -> list[str] | None:
+    """The drivers whose team radio this device is alerted to; None if the
+    device isn't subscribed."""
+    clean = sorted({d for d in drivers if isinstance(d, str) and _DRIVER_RE.match(d)})[:30]
+    with _lock:
+        subs = _read_subs()
+        for sub in subs:
+            if sub.get("endpoint") == endpoint:
+                sub["radio_drivers"] = clean
+                _write_subs(subs)
+                return clean
+    return None
+
+
+def get_subscription(endpoint: str) -> dict | None:
+    with _lock:
+        return next((s for s in _read_subs() if s.get("endpoint") == endpoint), None)
 
 
 def remove_subscription(endpoint: str) -> bool:
@@ -172,12 +200,12 @@ def _send_one(sub: dict, payload: str, key_path: str, contact: str) -> bool:
     return True
 
 
-def broadcast(title: str, body: str, url: str = "/", tag: str | None = None) -> int:
-    """Send a notification to every device. Blocking; run it in a thread.
-    Returns how many devices it reached."""
+def broadcast(title: str, body: str, url: str = "/", tag: str | None = None, only=None) -> int:
+    """Send a notification to every device, or to those `only(sub)` accepts.
+    Blocking; run it in a thread. Returns how many devices it reached."""
     with _lock:
         _load_or_create_key()
-        subs = _read_subs()
+        subs = [s for s in _read_subs() if only is None or only(s)]
     if not subs:
         return 0
     payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
@@ -196,6 +224,16 @@ def broadcast(title: str, body: str, url: str = "/", tag: str | None = None) -> 
     if gone:
         logger.info("Dropped %d push subscription(s) that no longer exist", len(gone))
     return sent
+
+
+def follows_radio(driver: str):
+    """A filter for broadcast(): devices following this driver's radio."""
+    return lambda sub: driver in (sub.get("radio_drivers") or [])
+
+
+def any_follows_radio() -> bool:
+    with _lock:
+        return any(s.get("radio_drivers") for s in _read_subs())
 
 
 def send_to(endpoint: str, title: str, body: str, url: str = "/") -> bool:

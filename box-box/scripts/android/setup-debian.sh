@@ -70,11 +70,14 @@ DATA_DIR=$DATA_DIR
 F1TV_SECRET_KEY=$(openssl rand -hex 32)
 # Só o próprio celular e o endereço do Tailscale (*.ts.net) abrem o app
 ALLOWED_HOSTS=localhost,127.0.0.1,*.ts.net
-# Legendas do rádio usam o Whisper, pesado demais para o celular
-TEAM_RADIO_CAPTIONS=false
+# Legendas do rádio em português e inglês: chave grátis em aistudio.google.com
+# (ou rode no Termux: boxbox gemini SUA_CHAVE)
+# GEMINI_API_KEY=
 AUTO_PRECOMPUTE=race+qual
 EOF
 fi
+# Older installs turned captions off (no Whisper here); Gemini makes them now
+sed -i '/^# Legendas do rádio usam o Whisper/d; /^TEAM_RADIO_CAPTIONS=false$/d' "$BOX/.env"
 mkdir -p "$DATA_DIR/fastf1-cache"
 cp -n "$BOX/backend/data/pit_loss.json" "$DATA_DIR/pit_loss.json" 2>/dev/null || true
 

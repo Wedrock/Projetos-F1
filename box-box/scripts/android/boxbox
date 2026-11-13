@@ -36,6 +36,16 @@ case "${1:-status}" in
     if [ -n "$name" ]; then echo "Abra no iPhone: https://$name"; else echo "Tailscale ainda não conectado (veja: boxbox logs)"; fi
     ;;
   logs) tail -n "${2:-40}" "$LOG" ;;
+  gemini)
+    key="${2:-}"
+    if ! printf '%s' "$key" | grep -Eq '^[A-Za-z0-9_-]{20,}$'; then
+      echo "Uso: boxbox gemini SUA_CHAVE   (crie a chave grátis em aistudio.google.com)"
+      exit 1
+    fi
+    in_debian bash -c "sed -i '/^#\\? *GEMINI_API_KEY=/d' $APP/.env && echo 'GEMINI_API_KEY=$key' >> $APP/.env"
+    echo "Chave do Gemini salva. Reiniciando..."
+    stop; start
+    ;;
   update)
     stop
     branch=$(in_debian git -C /root/Projetos-F1 rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
@@ -44,5 +54,5 @@ case "${1:-status}" in
       [ -s "$PREFIX/tmp/boxbox.new" ] && install -m 755 "$PREFIX/tmp/boxbox.new" "$PREFIX/bin/boxbox"
     start
     ;;
-  *) echo "Uso: boxbox {start|stop|restart|status|address|logs|update}" ;;
+  *) echo "Uso: boxbox {start|stop|restart|status|address|logs|update|gemini CHAVE}" ;;
 esac
