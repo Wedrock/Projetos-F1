@@ -193,9 +193,15 @@ def open_window(url: str, on_loaded=None) -> bool:
                 threading.Timer(3, window.destroy).start()
 
         window.events.loaded += loaded
-        icon = static_dir() / "icon-512.png"
-        webview.start(private_mode=False, storage_path=str(app_home() / "webview"),
-                      icon=str(icon) if icon.is_file() else None)
+        # On Windows, pywebview builds the window icon with .NET's
+        # System.Drawing.Icon, which only takes .ico files: a PNG throws an
+        # unhandled .NET exception (0xE0434352) and kills the process. With no
+        # icon it uses the one embedded in BoxBox.exe, which is ours anyway.
+        icon = None
+        if sys.platform != "win32":
+            png = static_dir() / "icon-512.png"
+            icon = str(png) if png.is_file() else None
+        webview.start(private_mode=False, storage_path=str(app_home() / "webview"), icon=icon)
         return True
     except Exception:  # no WebView2 / GTK / Qt available
         print("Janela do app indisponível; abrindo no navegador:", file=sys.stderr)
