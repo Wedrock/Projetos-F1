@@ -41,7 +41,13 @@ def needs_work(clips: list[dict]) -> int:
     if gemini_captions.enabled():
         # Portuguese, split by who speaks (clips captioned before that came in
         # have a Portuguese caption but no lines)
-        return sum(1 for c in clips if not c.get("lines") and not c.get("no_speech") and not c.get("lines_tried"))
+        # A clip marked as silent but with words from Whisper was likely blocked
+        # by Gemini's filters before they were turned off: try it again once.
+        return sum(
+            1 for c in clips
+            if not c.get("lines") and not c.get("lines_tried")
+            and not (c.get("no_speech") and not c.get("transcript"))
+        )
     return sum(1 for c in clips if not c.get("transcript") and not c.get("no_speech"))
 
 
@@ -151,6 +157,8 @@ def _run(year: int, round_num: int, session_type: str) -> None:
                                 clip["lines"] = result.lines
                             else:
                                 clip["lines_tried"] = True  # answered without lines: don't ask again
+                        elif clip.get("transcript"):
+                            clip["lines_tried"] = True  # Gemini hears nobody, Whisper did: leave it
                         else:
                             clip["no_speech"] = True  # nobody speaks: don't ask again
                 else:

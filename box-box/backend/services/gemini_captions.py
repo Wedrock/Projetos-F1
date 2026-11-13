@@ -36,6 +36,16 @@ TIMEOUT_S = 45.0
 # The free plan's per-minute limit is around 15 requests for Flash-Lite
 DEFAULT_MIN_INTERVAL_S = 4.5
 RETRY_WAIT_S = 30.0
+# Tries per clip: Gemini is often briefly overloaded (503) or rate limited
+MAX_ATTEMPTS = 4
+# Waits before retrying an overloaded server or a network error (seconds)
+BACKOFF_S = (3.0, 8.0, 15.0)
+# Team radio is full of swearing: don't let the safety filters drop a clip
+SAFETY_OFF = [
+    {"category": c, "threshold": "BLOCK_NONE"}
+    for c in ("HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH",
+              "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT")
+]
 
 INSTRUCTIONS = """You caption Formula 1 team radio: short messages between a driver and their race engineer, often with engine noise and a poor signal.
 
@@ -166,6 +176,18 @@ def _request(key: str, payload: dict) -> httpx.Response:
             _last_call = time.monotonic()
 
 
+def _retry_delay(resp) -> float:
+    """How long Google asks us to wait after a 429 (its RetryInfo), capped."""
+    try:
+        for detail in resp.json().get("error", {}).get("details", []):
+            delay = str(detail.get("retryDelay", ""))
+            if delay.endswith("s"):
+                return min(60.0, max(1.0, float(delay[:-1])))
+    except Exception:
+        pass
+    return RETRY_WAIT_S
+
+
 def caption(audio: bytes, context: dict | None = None, draft: str | None = None) -> Caption | None:
     """English and Portuguese captions for one clip. Caption(None, None) when
     nobody speaks; None if Gemini couldn't do it (no key, network, limits).
@@ -188,28 +210,60 @@ def caption(audio: bytes, context: dict | None = None, draft: str | None = None)
             ],
         }],
         "generationConfig": {"temperature": 0, "maxOutputTokens": 800, "responseMimeType": "application/json"},
+        "safetySettings": SAFETY_OFF,
     }
-    for attempt in range(2):
+    for attempt in range(MAX_ATTEMPTS):
+        last = attempt == MAX_ATTEMPTS - 1
+        backoff = BACKOFF_S[min(attempt, len(BACKOFF_S) - 1)]
         try:
             resp = _request(key, payload)
         except Exception as e:
             logger.warning(f"Gemini caption request failed: {type(e).__name__}")
-            return None
-        if resp.status_code == 429 and attempt == 0:
-            logger.info("Gemini free plan limit reached; trying again shortly")
-            time.sleep(RETRY_WAIT_S)
+            if last:
+                return None
+            time.sleep(backoff)
+            continue
+        if resp.status_code == 429:
+            if last:
+                logger.warning("Gemini free plan limit reached; giving up on this clip for now")
+                return None
+            wait = _retry_delay(resp)
+            logger.info(f"Gemini free plan limit reached; trying again in {wait:.0f}s")
+            time.sleep(wait)
+            continue
+        if resp.status_code >= 500:
+            logger.info(f"Gemini busy (HTTP {resp.status_code}); trying again in {backoff:.0f}s")
+            if last:
+                return None
+            time.sleep(backoff)
             continue
         if resp.status_code != 200:
             logger.warning(f"Gemini caption request failed ({model()}): HTTP {resp.status_code} {resp.text[:200]}")
             return None
         try:
-            parts = resp.json()["candidates"][0]["content"]["parts"]
+            body = resp.json()
+            candidate = body["candidates"][0]
+            parts = candidate["content"]["parts"]
             text = "".join(p.get("text", "") for p in parts)
         except (KeyError, IndexError, TypeError, ValueError):
-            # No candidates: blocked or empty audio
-            return Caption(None, None)
+            reason = (body.get("promptFeedback") or {}).get("blockReason") if isinstance(body, dict) else None
+            finish = None
+            try:
+                finish = body["candidates"][0].get("finishReason")
+            except Exception:
+                pass
+            if reason or (finish and finish != "STOP"):
+                # Blocked or cut off: not "nobody speaks", so don't record it as silence
+                logger.warning(f"Gemini returned no caption (block: {reason}, finish: {finish})")
+                if last:
+                    return None
+                time.sleep(backoff)
+                continue
+            return Caption(None, None)  # nothing to caption
         result = parse_reply(text)
         if result is None:
             logger.warning(f"Gemini reply wasn't JSON: {text[:200]}")
+            if not last:
+                continue
         return result
     return None
