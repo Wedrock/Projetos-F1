@@ -2051,14 +2051,20 @@ def _get_team_radio_sync(year: int, round_num: int, session_type: str, on_progre
         if isinstance(entry, (list, tuple)) and len(entry) == 2:
             captures.extend(team_radio.captures_from(entry[1]))
     if not captures:
-        # Downloaded from OpenF1 (no F1 TV sign-in): it lists the clips too
+        # No list from F1 (downloaded from OpenF1, or F1 sent none): OpenF1
+        # lists the clips too
         from services import openf1_radio, openf1_source
-        src = openf1_source._registry.get(session.api_path)
-        if src is not None:
-            try:
-                captures = openf1_radio.captures_for(src.session_key)
-            except Exception as e:
-                logger.warning(f"No team radio from OpenF1: {e}")
+        try:
+            src = openf1_source._registry.get(session.api_path)
+            if src is not None:
+                key = src.session_key
+            else:
+                key = openf1_source.find_session_key(
+                    year, session_type, getattr(session, "date", None), str(session.event.get("Country", "")) or None,
+                )
+            captures = openf1_radio.captures_for(key)
+        except Exception as e:
+            logger.warning(f"No team radio from OpenF1: {e}")
 
     drivers: dict[str, dict] = {}
     for _, row in session.results.iterrows():

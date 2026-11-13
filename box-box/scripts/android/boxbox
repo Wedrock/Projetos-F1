@@ -42,13 +42,17 @@ case "${1:-status}" in
       echo "Uso: boxbox gemini SUA_CHAVE   (crie a chave grátis em aistudio.google.com)"
       exit 1
     fi
-    in_debian bash -c "sed -i '/^#\\? *GEMINI_API_KEY=/d' $APP/.env && echo 'GEMINI_API_KEY=$key' >> $APP/.env"
+    # TEAM_RADIO_CAPTIONS=false (older installs) would turn Gemini's captions off too
+    in_debian bash -c "sed -i '/^#\\? *GEMINI_API_KEY=/d; /^TEAM_RADIO_CAPTIONS=false\$/d' $APP/.env && echo 'GEMINI_API_KEY=$key' >> $APP/.env"
     echo "Chave do Gemini salva. Reiniciando..."
     stop; start
     ;;
   update)
     stop
+    # Get the new code first, so the new setup script is the one that runs
     branch=$(in_debian git -C /root/Projetos-F1 rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+    case "$branch" in main|"") ;; *) in_debian git -C /root/Projetos-F1 ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1 || branch=main ;; esac
+    in_debian bash -c "cd /root/Projetos-F1 && git fetch -q --depth 1 origin '$branch' && git checkout -q -f -B '$branch' FETCH_HEAD"
     in_debian env BRANCH="$branch" bash "$APP/scripts/android/setup-debian.sh"
     in_debian cat "$APP/scripts/android/boxbox" > "$PREFIX/tmp/boxbox.new" && \
       [ -s "$PREFIX/tmp/boxbox.new" ] && install -m 755 "$PREFIX/tmp/boxbox.new" "$PREFIX/bin/boxbox"
