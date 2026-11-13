@@ -95,7 +95,6 @@ jobs:
           Get-Content py-out.txt, py-err.txt -ErrorAction SilentlyContinue
 
       - name: Testar a janela do app
-        continue-on-error: true
         run: |
           Remove-Item "$env:LOCALAPPDATA\BoxBox\boxbox.log" -ErrorAction SilentlyContinue
           $env:BOXBOX_SELFTEST = "1"

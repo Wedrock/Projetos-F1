@@ -194,8 +194,6 @@ class LiveSession:
                 )
         if self._state_manager is not None:
             self._state_manager.set_radio_caption(clip["id"], transcript, transcript_pt)
-            from services import radio_alerts
-            await radio_alerts.notify(self, clip, transcript, transcript_pt)
 
     async def _record_history(self):
         last_utc = None
@@ -361,20 +359,6 @@ async def _release_if_unused(session: "LiveSession", key: str) -> None:
         if session.client_count == 0 and _live_sessions.get(key) is session:
             await session.stop()
             del _live_sessions[key]
-
-
-async def acquire_session(year: int, round_num: int, session_type: str) -> tuple[LiveSession, object]:
-    """Keep the live session for a race open without a page connected (race
-    alerts). Returns the session and a holder to pass to release_session."""
-    session = await _get_or_create_session(year, round_num, session_type, 1.0, "signalr")
-    holder = object()
-    session.add_client(holder)  # counted like a page, so it isn't stopped
-    return session, holder
-
-
-async def release_session(year: int, round_num: int, session_type: str, session: LiveSession, holder: object) -> None:
-    session.remove_client(holder)
-    await _release_if_unused(session, f"{year}_{round_num}_{session_type}")
 
 
 @router.get("/api/live/{year}/{round_num}/telemetry")

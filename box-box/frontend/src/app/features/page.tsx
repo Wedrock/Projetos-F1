@@ -494,7 +494,7 @@ export default function FeaturesPage() {
             </div>
             <SessionChips practice qualifying race />
             <p className="text-f1-text leading-relaxed mb-3">
-              Um painel para analisar o ritmo dos pilotos. No computador, abra pelo botão &quot;Voltas&quot; no mapa da pista &mdash; o painel abre à esquerda. No celular, aparece como uma seção recolhível. Ao vivo, ele vai sendo montado com as voltas completadas desde que a cronometragem ao vivo conectou.
+              Um painel para analisar o ritmo dos pilotos. No computador, abra pelo botão &quot;Voltas&quot; no mapa da pista &mdash; o painel abre à esquerda. Ao vivo, ele vai sendo montado com as voltas completadas desde que a cronometragem ao vivo conectou.
             </p>
             <p className="text-xs font-bold text-f1-muted uppercase tracking-wider mb-2">Corridas</p>
             <p className="text-f1-text leading-relaxed mb-3">
