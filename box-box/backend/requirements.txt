@@ -1,8 +1,9 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 # 3.9 adds F1 TV sign-in, required for timing data since 15 Oct 2026.
-# Pinned exactly while it is an alpha.
-fastf1==3.9.0a0
+# Pinned exactly: services/f1_account.py uses FastF1's sign-in internals.
+# 3.9.0a0's sign-in broke when F1 changed its login (400 from id.formula1.com).
+fastf1==3.9.2
 cryptography>=42.0.0
 PyJWT>=2.8.0
 numpy>=1.24.0
