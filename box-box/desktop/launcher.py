@@ -90,10 +90,14 @@ def configure_env(home: Path, bundle: Path) -> None:
     data = home / "data"
     (data / "fastf1-cache").mkdir(parents=True, exist_ok=True)
 
-    env_file = home / ".env"
-    if env_file.is_file():
-        from dotenv import load_dotenv
-        load_dotenv(env_file, override=False)
+    # Windows Explorer makes ".env" hard to name: accept the names people end
+    # up with ("env", or a hidden ".txt" from Notepad) too.
+    for name in (".env", "env", ".env.txt", "env.txt"):
+        env_file = home / name
+        if env_file.is_file():
+            from dotenv import load_dotenv
+            load_dotenv(env_file, override=False)
+            break
 
     os.environ.setdefault("DATA_DIR", str(data))
     os.environ.setdefault("FASTF1_CACHE_DIR", str(data / "fastf1-cache"))
