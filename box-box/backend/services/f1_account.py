@@ -26,6 +26,7 @@ import os
 import tempfile
 import threading
 import urllib.parse
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -35,8 +36,8 @@ from cryptography.fernet import Fernet, InvalidToken
 from fastf1 import req as f1req
 from fastf1.exceptions import F1AuthError
 from fastf1.internals import f1account
-from fastf1.internals.f1account.login import Credentials, login
-from fastf1.internals.f1account.tokens import SubscriptionToken, TokenStore
+from fastf1.internals.f1account.login import login
+from fastf1.internals.f1account.tokens import SubscriptionToken
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,17 @@ REQUEST_TIMEOUT = (10, 60)
 
 ENV_USERNAME = "F1_USERNAME"
 ENV_PASSWORD = "F1_PASSWORD"
+
+
+@dataclass(frozen=True)
+class Credentials:
+    username: str
+    password: str = field(repr=False)
+
+
+# FastF1's own token file format (TokenManager.VERSION), so FastF1 and this
+# module read and write the same file.
+TOKEN_FILE_VERSION = 1
 
 
 class F1AccountError(Exception):
@@ -161,7 +173,7 @@ def _authenticate() -> SubscriptionToken:
     creds, _source = _credentials()
     if creds is None:
         raise F1AuthError("No F1 TV sign-in available")
-    return login(creds)
+    return login(creds.username, creds.password)
 
 
 def configure() -> None:
@@ -172,8 +184,8 @@ def configure() -> None:
         if _configured:
             return
         manager = f1account.token_manager
-        manager._store = TokenStore(_token_path())
-        manager._authenticate = _authenticate
+        manager._token_path = _token_path()
+        manager._default_auth_func = _authenticate
         manager._token = None
 
         original_send = f1req._SessionWithRateLimiting.send
@@ -232,7 +244,13 @@ def timeout_count() -> int:
 # --- Public API -----------------------------------------------------------
 
 def _stored_token() -> SubscriptionToken | None:
-    return TokenStore(_token_path()).load()
+    try:
+        data = json.loads(_token_path().read_text())
+        if data.pop("version") != TOKEN_FILE_VERSION:
+            return None
+        return SubscriptionToken(**data)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        return None
 
 
 def _claims(token: str) -> dict[str, Any]:
@@ -283,7 +301,7 @@ def ready() -> bool:
 def sign_in_password(email: str, password: str, remember: bool) -> dict[str, Any]:
     configure()
     try:
-        token = login(Credentials(email.strip(), password))
+        token = login(email.strip(), password)
     except F1AuthError as e:
         raise F1AccountError(str(e)) from e
     _store(token)
@@ -315,7 +333,8 @@ def sign_out() -> dict[str, Any]:
 
 
 def _store(token: SubscriptionToken) -> None:
-    TokenStore(_token_path()).save(token)
+    payload = json.dumps({"version": TOKEN_FILE_VERSION, **asdict(token)}).encode()
+    _write_private(_token_path(), payload)
     f1account.token_manager._token = token
 
 
